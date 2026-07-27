@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -24,6 +24,13 @@ export default function AdminReportPage() {
     const [rawQueues, setRawQueues] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState("");
+
+    // JSON Export modal state
+    const [showJsonModal, setShowJsonModal] = useState(false);
+    const [jsonCourses, setJsonCourses] = useState<{ id: string; name: string; type: string }[]>([]);
+    const [selectedJsonCourse, setSelectedJsonCourse] = useState<string>("");
+    const [selectedJsonMode, setSelectedJsonMode] = useState<"training" | "test" | "all">("training");
+    const [exportingJson, setExportingJson] = useState(false);
 
     const loadReport = useCallback(async () => {
         setLoading(true);
@@ -210,6 +217,73 @@ export default function AdminReportPage() {
         window.print();
     };
 
+    // ─── JSON Export (DSD Standard 50-field) ────────────────────────────────
+    const openJsonModal = async () => {
+        // Load courses & branches for the picker
+        const [courseRes, branchRes] = await Promise.all([
+            fetch("/api/master/courses"),
+            fetch("/api/master/branches"),
+        ]);
+        const courses = courseRes.ok ? await courseRes.json() : [];
+        const branches = branchRes.ok ? await branchRes.json() : [];
+
+        const courseList = [
+            { id: "__all__", name: "สมาชิกทั้งหมด (All Members)", type: "all" },
+            ...courses.map((c: any) => ({ id: c.id, name: c.courseName, type: "training" })),
+            ...branches.map((b: any) => ({ id: b.id, name: b.branchName, type: "test" })),
+        ];
+        setJsonCourses(courseList);
+        setSelectedJsonCourse("__all__");
+        setSelectedJsonMode("all");
+        setShowJsonModal(true);
+    };
+
+    const handleExportJSON = async () => {
+        setExportingJson(true);
+        try {
+            const selected = jsonCourses.find((c) => c.id === selectedJsonCourse);
+            const isAll = !selected || selected.id === "__all__";
+
+            const params = new URLSearchParams();
+            if (!isAll && selected) {
+                params.set("courseId", selected.id);
+                params.set("courseName", selected.name);
+                params.set("mode", selected.type);
+            } else {
+                params.set("courseName", "DSD_YALA_ALL_MEMBERS");
+            }
+
+            const res = await fetch(`/api/admin/export-json?${params.toString()}`);
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || "Export failed");
+            }
+
+            // Determine filename from Content-Disposition or fallback
+            const disposition = res.headers.get("Content-Disposition") || "";
+            let filename = "DSD_Export.json";
+            const match = disposition.match(/filename\*=UTF-8''(.+)/);
+            if (match) filename = decodeURIComponent(match[1]);
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast.success(`ดาวน์โหลดไฟล์ JSON สำเร็จ: ${filename}`);
+            setShowJsonModal(false);
+        } catch (e: any) {
+            toast.error(`เกิดข้อผิดพลาด: ${e.message}`);
+        } finally {
+            setExportingJson(false);
+        }
+    };
+
     useEffect(() => { loadReport(); }, [loadReport]);
 
     if (loading) return (
@@ -243,7 +317,7 @@ export default function AdminReportPage() {
                     <h1 className="text-2xl font-black text-slate-800 tracking-tight">รายงานสรุปภาพรวม</h1>
                     <p className="text-xs text-slate-400 mt-0.5">ข้อมูลสถิติการใช้งานระบบ สพร.24 ยะลา • อัปเดตล่าสุด {lastUpdated}</p>
                 </div>
-                <div className="flex items-center gap-2 print-hide">
+                <div className="flex items-center gap-2 print-hide flex-wrap">
                     <button onClick={loadReport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-2xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
                         <i className="fa-solid fa-rotate-right"></i> รีเฟรช
                     </button>
@@ -252,6 +326,9 @@ export default function AdminReportPage() {
                     </button>
                     <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs font-semibold text-emerald-600 hover:bg-emerald-100 transition-all shadow-sm">
                         <i className="fa-solid fa-file-excel"></i> Excel
+                    </button>
+                    <button onClick={openJsonModal} className="flex items-center gap-2 px-4 py-2 bg-violet-50 border border-violet-100 rounded-2xl text-xs font-semibold text-violet-600 hover:bg-violet-100 transition-all shadow-sm">
+                        <i className="fa-solid fa-file-code"></i> JSON (DSD)
                     </button>
                 </div>
             </div>
@@ -411,15 +488,121 @@ export default function AdminReportPage() {
                     <p className="text-lg font-black text-white">ส่งออกรายงานฉบับสมบูรณ์</p>
                     <p className="text-sm text-slate-300 mt-1">คุณสามารถดาวน์โหลดข้อมูลทั้งหมดในรูปแบบตาราง Excel หรือพิมพ์เป็น PDF เพื่อนำไปเสนอผู้บริหารได้ทันที</p>
                 </div>
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
                     <button onClick={handleExportExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-emerald-500/20">
                         <i className="fa-solid fa-file-excel"></i> ดาวน์โหลด Excel
+                    </button>
+                    <button onClick={openJsonModal} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-violet-500 hover:bg-violet-400 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-violet-500/20">
+                        <i className="fa-solid fa-file-code"></i> ส่งออก JSON (DSD)
                     </button>
                     <button onClick={handlePrintPDF} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-sm font-bold transition-all">
                         <i className="fa-solid fa-print"></i> พิมพ์ PDF
                     </button>
                 </div>
             </div>
+
+            {/* ─── JSON Export Modal ─────────────────────────────────────────── */}
+            <AnimatePresence>
+                {showJsonModal && (
+                    <motion.div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        {/* Backdrop */}
+                        <motion.div
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => !exportingJson && setShowJsonModal(false)}
+                        />
+
+                        {/* Modal Card */}
+                        <motion.div
+                            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-7 z-10"
+                            initial={{ scale: 0.92, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.92, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-200">
+                                    <i className="fa-solid fa-file-code text-white text-base"></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-slate-800">ส่งออก JSON มาตรฐาน กรมฯ</h3>
+                                    <p className="text-xs text-slate-400 mt-0.5">50 ฟิลด์ DSD Standard — ใช้งานต่อได้ทันที</p>
+                                </div>
+                                <button
+                                    onClick={() => !exportingJson && setShowJsonModal(false)}
+                                    className="ml-auto text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    <i className="fa-solid fa-xmark text-lg"></i>
+                                </button>
+                            </div>
+
+                            {/* Course selector */}
+                            <div className="mb-5">
+                                <label className="block text-xs font-bold text-slate-600 mb-2">
+                                    <i className="fa-solid fa-book-open mr-1.5 text-violet-500"></i>
+                                    เลือกหลักสูตร / รุ่น
+                                </label>
+                                <select
+                                    value={selectedJsonCourse}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedJsonCourse(val);
+                                        const found = jsonCourses.find((c) => c.id === val);
+                                        if (found) setSelectedJsonMode(found.type as any);
+                                    }}
+                                    className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                                >
+                                    {jsonCourses.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.type === "training" ? "🎓 " : c.type === "test" ? "📋 " : "👥 "}{c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Info box */}
+                            <div className="bg-violet-50 border border-violet-100 rounded-2xl p-4 mb-6">
+                                <p className="text-xs text-violet-700 font-semibold mb-1">
+                                    <i className="fa-solid fa-circle-info mr-1.5"></i>โครงสร้างไฟล์ Output
+                                </p>
+                                <ul className="text-xs text-violet-600 space-y-1 list-none">
+                                    <li>✅ <strong>50 ฟิลด์มาตรฐาน</strong> กรมพัฒนาฝีมือแรงงาน ครบถ้วน</li>
+                                    <li>✅ <strong>profileImage</strong> เป็น Raw Base64 (ไม่มี prefix)</li>
+                                    <li>✅ <strong>regist_date / reg_birth</strong> รูปแบบ ISO DateTime</li>
+                                    <li>✅ ฟิลด์ที่ไม่มีข้อมูลจะใส่ค่า Default อัตโนมัติ</li>
+                                </ul>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => !exportingJson && setShowJsonModal(false)}
+                                    disabled={exportingJson}
+                                    className="flex-1 px-5 py-3 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={handleExportJSON}
+                                    disabled={exportingJson}
+                                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-violet-200 disabled:opacity-60"
+                                >
+                                    {exportingJson ? (
+                                        <><span className="loading loading-spinner loading-xs"></span> กำลังสร้างไฟล์...</>
+                                    ) : (
+                                        <><i className="fa-solid fa-download"></i> ดาวน์โหลด JSON</>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
