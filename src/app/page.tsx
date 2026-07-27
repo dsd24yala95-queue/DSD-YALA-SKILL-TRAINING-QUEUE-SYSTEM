@@ -104,33 +104,33 @@ export default function Home() {
 
                         {/* Buttons */}
                         <div className="flex flex-col gap-4 w-full max-w-md">
-                            <Link href="/booking?type=test" className="group relative flex items-center bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 text-white rounded-2xl overflow-hidden hover:bg-slate-800/80 transition-all duration-300 shadow-xl">
-                                <div className="p-4 bg-[#1E3A8A] flex items-center justify-center">
-                                    <i className="fa-solid fa-clipboard-check text-2xl text-blue-200"></i>
+                            <Link href="/login" className="group relative flex items-center bg-slate-900/70 backdrop-blur-2xl border border-slate-700/60 hover:border-blue-500/60 text-white rounded-2xl overflow-hidden transition-all duration-300 shadow-xl hover:shadow-[0_0_30px_rgba(59,130,246,0.35)] hover:-translate-y-0.5">
+                                <div className="p-4 bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+                                    <i className="fa-solid fa-clipboard-check text-2xl text-blue-100 group-hover:scale-110 transition-transform duration-300"></i>
                                 </div>
                                 <div className="px-6 py-4 flex-1 flex items-center justify-between">
                                     <div className="text-left">
-                                        <div className="font-bold text-sm md:text-base flex items-center gap-2">
-                                            ทดสอบมาตรฐานฝีมือ <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded leading-none uppercase">HOT</span>
+                                        <div className="font-bold text-sm md:text-base flex items-center gap-2 text-white group-hover:text-blue-200 transition-colors">
+                                            ทดสอบมาตรฐานฝีมือ <span className="bg-red-500/90 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full leading-none uppercase shadow-sm shadow-red-500/50 animate-pulse">HOT</span>
                                         </div>
                                         <div className="text-[10px] md:text-xs text-slate-400 font-semibold tracking-wider uppercase mt-1">Skills Testing</div>
                                     </div>
-                                    <i className="fa-solid fa-chevron-right text-slate-500 group-hover:text-white transition-colors group-hover:translate-x-1"></i>
+                                    <i className="fa-solid fa-chevron-right text-slate-500 group-hover:text-blue-400 transition-all duration-300 group-hover:translate-x-1.5 text-lg"></i>
                                 </div>
                             </Link>
 
-                            <Link href="/booking?type=training" className="group relative flex items-center bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 text-white rounded-2xl overflow-hidden hover:bg-slate-800/80 transition-all duration-300 shadow-xl">
-                                <div className="p-4 bg-emerald-700 flex items-center justify-center">
-                                    <i className="fa-solid fa-graduation-cap text-2xl text-emerald-200"></i>
+                            <Link href="/login" className="group relative flex items-center bg-slate-900/70 backdrop-blur-2xl border border-slate-700/60 hover:border-emerald-500/60 text-white rounded-2xl overflow-hidden transition-all duration-300 shadow-xl hover:shadow-[0_0_30px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
+                                <div className="p-4 bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+                                    <i className="fa-solid fa-graduation-cap text-2xl text-emerald-100 group-hover:scale-110 transition-transform duration-300"></i>
                                 </div>
                                 <div className="px-6 py-4 flex-1 flex items-center justify-between">
                                     <div className="text-left">
-                                        <div className="font-bold text-sm md:text-base flex items-center gap-2">
-                                            สมัครฝึกอบรมอาชีพ <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded leading-none uppercase">Available</span>
+                                        <div className="font-bold text-sm md:text-base flex items-center gap-2 text-white group-hover:text-emerald-200 transition-colors">
+                                            สมัครฝึกอบรมอาชีพ <span className="bg-emerald-500/90 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full leading-none uppercase shadow-sm shadow-emerald-500/50 animate-pulse">AVAILABLE</span>
                                         </div>
                                         <div className="text-[10px] md:text-xs text-slate-400 font-semibold tracking-wider uppercase mt-1">Training Courses</div>
                                     </div>
-                                    <i className="fa-solid fa-chevron-right text-slate-500 group-hover:text-white transition-colors group-hover:translate-x-1"></i>
+                                    <i className="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 transition-all duration-300 group-hover:translate-x-1.5 text-lg"></i>
                                 </div>
                             </Link>
                         </div>
