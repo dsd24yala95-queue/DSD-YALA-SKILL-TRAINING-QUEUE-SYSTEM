@@ -1,0 +1,577 @@
+﻿"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+
+interface QueueRow {
+    id: string;
+    userId: string;
+    memberName: string;
+    memberPhone: string;
+    type: "test" | "training";
+    itemId: string;
+    itemName: string;
+    status: string;
+    appointedDate: string;
+    createdAt: any;
+}
+
+const STATUS_LABELS: { [key: string]: { label: string; cls: string } } = {
+    pending: { label: "à¸£à¸­à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£", cls: "bg-amber-500/10  text-amber-500  border-amber-500/20" },
+    approved: { label: "à¸¢à¸·à¸™à¸¢à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢", cls: "bg-blue-500/10   text-blue-500   border-blue-500/20" },
+    confirmed: { label: "à¸¢à¸·à¸™à¸¢à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢", cls: "bg-blue-500/10   text-blue-500   border-blue-500/20" },
+    checked_in: { label: "à¸£à¸­à¸—à¸”à¸ªà¸­à¸šà¸«à¸™à¹‰à¸²à¸‡à¸²à¸™", cls: "bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/20" },
+    training: { label: "à¸à¸³à¸¥à¸±à¸‡à¸­à¸šà¸£à¸¡", cls: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20" },
+    testing: { label: "à¸à¸³à¸¥à¸±à¸‡à¸—à¸”à¸ªà¸­à¸š", cls: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20" },
+    completed: { label: "à¸œà¹ˆà¸²à¸™à¸à¸²à¸£à¸›à¸£à¸°à¹€à¸¡à¸´à¸™", cls: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    passed: { label: "à¸œà¹ˆà¸²à¸™à¸à¸²à¸£à¸›à¸£à¸°à¹€à¸¡à¸´à¸™", cls: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    failed: { label: "à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™", cls: "bg-red-500/10    text-red-500    border-red-500/20" },
+    cancelled: { label: "à¸¢à¸à¹€à¸¥à¸´à¸à¹à¸¥à¹‰à¸§", cls: "bg-slate-500/10  text-slate-400  border-slate-500/20" },
+};
+
+export default function AdminQueuePage() {
+    const [queues, setQueues] = useState<QueueRow[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchText, setSearchText] = useState("");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterType, setFilterType] = useState("all");
+
+    // Modal state for appointment scheduling
+    const [modalQueue, setModalQueue] = useState<QueueRow | null>(null);
+    const [appointedDate, setAppointedDate] = useState("");
+    const [modalLoading, setModalLoading] = useState(false);
+
+    // Confirm delete state
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+    const loadQueues = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/queues");
+            if (!res.ok) throw new Error("Failed to load queues");
+            const data = await res.json();
+            setQueues(data);
+        } catch (e) {
+            console.error(e);
+            toast.error("à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸„à¸´à¸§à¹„à¸”à¹‰");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadQueues();
+    }, [loadQueues]);
+
+    // â”€â”€ Status update helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const updateStatus = async (queueId: string, newStatus: string, extraData?: object) => {
+        try {
+                      const msgMap: { [k: string]: string } = {
+                    approved: `âœ… à¸„à¸´à¸§à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¹„à¸”à¹‰à¸£à¸±à¸šà¸à¸²à¸£à¸¢à¸·à¸™à¸¢à¸±à¸™à¹à¸¥à¸°à¸à¸³à¸«à¸™à¸”à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢à¹à¸¥à¹‰à¸§ à¸§à¸±à¸™à¸—à¸µà¹ˆ ${(extraData as any)?.appointedDate ? new Date((extraData as any).appointedDate).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}`,
+                    testing: "ðŸ“¢ à¸–à¸¶à¸‡à¸„à¸´à¸§à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¹à¸¥à¹‰à¸§! à¸à¸£à¸¸à¸“à¸²à¹à¸ªà¸”à¸‡à¸•à¸±à¸§à¸—à¸µà¹ˆà¸ˆà¸¸à¸”à¸—à¸”à¸ªà¸­à¸š",
+                    training: "ðŸ“¢ à¸–à¸¶à¸‡à¸„à¸´à¸§à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¹à¸¥à¹‰à¸§! à¸à¸£à¸¸à¸“à¸²à¹€à¸‚à¹‰à¸²à¸£à¹ˆà¸§à¸¡à¸ˆà¸¸à¸”à¸à¸¶à¸à¸­à¸šà¸£à¸¡",
+                    completed: "ðŸŽ‰ à¸‚à¸­à¹à¸ªà¸”à¸‡à¸„à¸§à¸²à¸¡à¸¢à¸´à¸™à¸”à¸µ! à¸—à¹ˆà¸²à¸™à¸œà¹ˆà¸²à¸™à¸à¸²à¸£à¸›à¸£à¸°à¹€à¸¡à¸´à¸™à¹€à¸£à¸µà¸¢à¸šà¸£à¹‰à¸­à¸¢à¹à¸¥à¹‰à¸§",
+                    failed: "âŒ à¸œà¸¥à¸à¸²à¸£à¸›à¸£à¸°à¹€à¸¡à¸´à¸™à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™ à¸à¸£à¸¸à¸“à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¹€à¸ˆà¹‰à¸²à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¹€à¸žà¸·à¹ˆà¸­à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢à¹ƒà¸«à¸¡à¹ˆ",
+                    cancelled: "ðŸš« à¸„à¸´à¸§à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¸–à¸¹à¸à¸¢à¸à¹€à¸¥à¸´à¸à¹à¸¥à¹‰à¸§ à¸«à¸²à¸à¸¡à¸µà¸‚à¹‰à¸­à¸ªà¸‡à¸ªà¸±à¸¢à¸à¸£à¸¸à¸“à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¸ªà¸³à¸™à¸±à¸à¸‡à¸²à¸™",
+                };
+                const notifTypeMap: { [k: string]: string } = {
+                    approved: "appointment",
+                    testing: "queue_call",
+                    training: "queue_call",
+                    completed: "result",
+                    failed: "result",
+                };
+                const msg = msgMap[newStatus];
+                if (msg) {
+                    await fetch("/api/notifications", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userId: q.userId,
+                            title: newStatus === "approved" ? "ðŸ—“ï¸ à¸¢à¸·à¸™à¸¢à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢à¹à¸¥à¹‰à¸§ â€” à¸à¸£à¸¸à¸“à¸²à¸£à¸±à¸šà¸™à¸±à¸”à¸«à¸¡à¸²à¸¢" : "à¸­à¸±à¸›à¹€à¸”à¸•à¸ªà¸–à¸²à¸™à¸°à¸„à¸´à¸§",
+                            message: msg,
+                            type: notifTypeMap[newStatus] || "general",
+                            metadata: newStatus === "approved" ? JSON.stringify({
+                                appointedDate: (extraData as any)?.appointedDate,
+                                itemName: q.itemName,
+                                bookingType: q.type,
+                                location: "à¸ªà¸–à¸²à¸šà¸±à¸™à¸žà¸±à¸’à¸™à¸²à¸à¸µà¸¡à¸·à¸­à¹à¸£à¸‡à¸‡à¸²à¸™ 24 à¸¢à¸°à¸¥à¸²"
+                            }) : null
+                        })
+                    });‰à¸­à¸¢à¹à¸¥à¹‰à¸§",
+                    failed: "âŒ à¸œà¸¥à¸à¸²à¸£à¸›à¸£à¸°à¹€à¸¡à¸´à¸™à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™ à¸à¸£à¸¸à¸“à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¹€à¸ˆà¹‰à¸²à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¹€à¸žà¸·à¹ˆà¸­à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢à¹ƒà¸«à¸¡à¹ˆ",
+                    cancelled: "ðŸš« à¸„à¸´à¸§à¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¸–à¸¹à¸à¸¢à¸à¹€à¸¥à¸´à¸à¹à¸¥à¹‰à¸§ à¸«à¸²à¸à¸¡à¸µà¸‚à¹‰à¸­à¸ªà¸‡à¸ªà¸±à¸¢à¸à¸£à¸¸à¸“à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¸ªà¸³à¸™à¸±à¸à¸‡à¸²à¸™",
+                };
+                const msg = msgMap[newStatus];
+                if (msg) {
+                    await fetch("/api/notifications", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userId: q.userId,
+                            title: "à¸­à¸±à¸›à¹€à¸”à¸•à¸ªà¸–à¸²à¸™à¸°à¸„à¸´à¸§",
+                            message: msg
+                        })
+                    });
+
+                    // Trigger LINE Notification
+                    fetch("/api/notify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            memberId: q.userId,
+                            messageType: newStatus,
+                            data: {
+                                itemName: q.itemName,
+                                appointedDate: (extraData as any)?.appointedDate,
+                            }
+                        })
+                    }).catch(err => console.error("Failed to notify via LINE:", err));
+                }
+            }
+            toast.success("à¸­à¸±à¸›à¹€à¸”à¸•à¸ªà¸–à¸²à¸™à¸°à¸„à¸´à¸§à¸ªà¸³à¹€à¸£à¹‡à¸ˆ!");
+            await loadQueues();
+        } catch (e) {
+            console.error(e);
+            toast.error("à¹€à¸à¸´à¸”à¸‚à¹‰à¸­à¸œà¸´à¸”à¸žà¸¥à¸²à¸”à¹ƒà¸™à¸à¸²à¸£à¸­à¸±à¸›à¹€à¸”à¸•à¸ªà¸–à¸²à¸™à¸°");
+        }
+    };
+
+    const handleApproveSubmit = async () => {
+        if (!modalQueue || !appointedDate) {
+            toast.error("à¸à¸£à¸¸à¸“à¸²à¹€à¸¥à¸·à¸­à¸à¸§à¸±à¸™à¹à¸¥à¸°à¹€à¸§à¸¥à¸²à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢");
+            return;
+        }
+        setModalLoading(true);
+        await updateStatus(modalQueue.id, "approved", { appointedDate });
+        setModalQueue(null);
+        setAppointedDate("");
+        setModalLoading(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        try {
+            await fetch(`/api/bookings?id=${id}`, { method: "DELETE" });
+            toast.success("à¸¥à¸šà¸„à¸´à¸§à¸ªà¸³à¹€à¸£à¹‡à¸ˆ");
+            setDeleteTarget(null);
+            await loadQueues();
+        } catch (e) {
+            toast.error("à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¸¥à¸šà¸£à¸²à¸¢à¸à¸²à¸£à¹„à¸”à¹‰");
+        }
+    };
+
+    // â”€â”€ Filter logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const filtered = queues.filter(q => {
+        const matchSearch =
+            !searchText ||
+            q.memberName.includes(searchText) ||
+            q.memberPhone.includes(searchText) ||
+            q.itemName.includes(searchText) ||
+            q.id.includes(searchText);
+        const matchStatus = filterStatus === "all" || q.status === filterStatus;
+        const matchType = filterType === "all" || q.type === filterType;
+        return matchSearch && matchStatus && matchType;
+    });
+
+    // â”€â”€ Counts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const pendingCount = queues.filter(q => q.status === "pending").length;
+    const approvedCount = queues.filter(q => q.status === "approved" || q.status === "confirmed").length;
+
+    return (
+        <div className="p-6 bg-[#f8fafc] min-h-screen font-sans">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                    <i className="fa-solid fa-list-check text-indigo-600"></i>
+                    à¸ˆà¸±à¸”à¸à¸²à¸£à¸„à¸´à¸§à¸ˆà¸­à¸‡à¹à¸¥à¸°à¸ªà¸¡à¸±à¸„à¸£à¸­à¸šà¸£à¸¡
+                </h1>
+                <p className="text-xs text-slate-400 mt-1">à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´à¸„à¸´à¸§ à¸à¸³à¸«à¸™à¸”à¸§à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢ à¸­à¸±à¸›à¹€à¸”à¸•à¸ªà¸–à¸²à¸™à¸° à¹à¸¥à¸°à¸ˆà¸±à¸”à¸à¸²à¸£à¸£à¸²à¸¢à¸à¸²à¸£à¸ˆà¸­à¸‡à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”à¸‚à¸­à¸‡ à¸ªà¸žà¸£.24 à¸¢à¸°à¸¥à¸²</p>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {[
+                    { label: "à¸£à¸²à¸¢à¸à¸²à¸£à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”", value: queues.length, icon: "fa-database", color: "from-slate-500 to-slate-600" },
+                    { label: "à¸£à¸­à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£", value: pendingCount, icon: "fa-hourglass-half", color: "from-amber-400 to-orange-500" },
+                    { label: "à¸¢à¸·à¸™à¸¢à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢à¹à¸¥à¹‰à¸§", value: approvedCount, icon: "fa-calendar-check", color: "from-blue-500 to-indigo-600" },
+                    { label: "à¹€à¸ªà¸£à¹‡à¸ˆà¸ªà¸´à¹‰à¸™", value: queues.filter(q => q.status === "completed" || q.status === "passed").length, icon: "fa-check-double", color: "from-emerald-400 to-teal-600" },
+                ].map((c, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-md shrink-0`}>
+                            <i className={`fa-solid ${c.icon} text-white text-sm`}></i>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-black text-slate-800">{c.value}</p>
+                            <p className="text-[11px] font-semibold text-slate-400">{c.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Live Queue Check-in Section */}
+            <div className="bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 className="text-lg font-bold text-indigo-700 flex items-center gap-2">
+                        <i className="fa-solid fa-qrcode text-indigo-500"></i>
+                        à¸£à¸°à¸šà¸šà¸£à¸±à¸šà¸£à¸²à¸¢à¸‡à¸²à¸™à¸•à¸±à¸§à¸«à¸™à¹‰à¸²à¸‡à¸²à¸™ (Live Queue Check-in)
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">à¹ƒà¸Šà¹‰à¹€à¸¥à¸‚à¸šà¸±à¸•à¸£à¸›à¸£à¸°à¸Šà¸²à¸Šà¸™à¸‚à¸­à¸‡à¸›à¸£à¸°à¸Šà¸²à¸Šà¸™à¸—à¸µà¹ˆà¹€à¸”à¸´à¸™à¸—à¸²à¸‡à¸¡à¸²à¸–à¸¶à¸‡ à¹€à¸žà¸·à¹ˆà¸­à¸à¸”à¸¢à¸·à¸™à¸¢à¸±à¸™à¸à¸²à¸£à¸£à¸²à¸¢à¸‡à¸²à¸™à¸•à¸±à¸§à¹€à¸‚à¹‰à¸²à¸„à¸´à¸§à¸‚à¸­à¸‡à¸§à¸±à¸™à¸™à¸µà¹‰</p>
+                </div>
+                <div className="flex w-full md:w-auto gap-2">
+                    <input 
+                        type="text" 
+                        id="checkinInput"
+                        placeholder="à¸à¸£à¸­à¸à¹€à¸¥à¸‚à¸šà¸±à¸•à¸£à¸›à¸£à¸°à¸Šà¸²à¸Šà¸™ 13 à¸«à¸¥à¸±à¸" 
+                        className="flex-1 md:w-64 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                    />
+                    <button 
+                        onClick={async () => {
+                            const input = document.getElementById("checkinInput") as HTMLInputElement;
+                            const idCard = input.value.trim();
+                            if(!idCard) { toast.error("à¸à¸£à¸¸à¸“à¸²à¸à¸£à¸­à¸à¹€à¸¥à¸‚à¸šà¸±à¸•à¸£à¸›à¸£à¸°à¸Šà¸²à¸Šà¸™"); return; }
+                            
+                            const tId = toast.loading("à¸à¸³à¸¥à¸±à¸‡à¸„à¹‰à¸™à¸«à¸²à¸‚à¹‰à¸­à¸¡à¸¹à¸¥...");
+                            try {
+                                const res = await fetch("/api/admin/checkin", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ idCard })
+                                });
+                                const data = await res.json();
+                                if(!res.ok) throw new Error(data.error || "Check-in failed");
+                                
+                                toast.success(`à¸£à¸²à¸¢à¸‡à¸²à¸™à¸•à¸±à¸§à¸ªà¸³à¹€à¸£à¹‡à¸ˆ: ${data.user.fullName || data.user.idCard}`, { id: tId });
+                                input.value = "";
+                                loadQueues(); // Refresh the table
+                            } catch (e: any) {
+                                toast.error(e.message, { id: tId });
+                            }
+                        }}
+                        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-indigo-500/20 shrink-0"
+                    >
+                        à¸£à¸±à¸šà¸£à¸²à¸¢à¸‡à¸²à¸™à¸•à¸±à¸§
+                    </button>
+                    <button 
+                        onClick={async () => {
+                            const newTime = window.prompt("à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¹€à¸§à¸¥à¸²à¸£à¸­à¹€à¸‰à¸¥à¸µà¹ˆà¸¢à¸•à¹ˆà¸­ 1 à¸„à¸´à¸§ (à¸™à¸²à¸—à¸µ):", "15");
+                            if(newTime && !isNaN(Number(newTime))) {
+                                const tId = toast.loading("à¸à¸³à¸¥à¸±à¸‡à¸šà¸±à¸™à¸—à¸¶à¸...");
+                                try {
+                                    const res = await fetch("/api/admin/settings", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ key: "liveWaitTime", value: newTime })
+                                    });
+                                    if(!res.ok) throw new Error("Failed to save");
+                                    toast.success("à¸šà¸±à¸™à¸—à¸¶à¸à¸à¸²à¸£à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸ªà¸³à¹€à¸£à¹‡à¸ˆ", { id: tId });
+                                } catch(e) {
+                                    toast.error("à¹€à¸à¸´à¸”à¸‚à¹‰à¸­à¸œà¸´à¸”à¸žà¸¥à¸²à¸”", { id: tId });
+                                }
+                            }
+                        }}
+                        className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all shrink-0 tooltip tooltip-bottom"
+                        data-tip="à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¹€à¸§à¸¥à¸²à¸£à¸­à¹€à¸‰à¸¥à¸µà¹ˆà¸¢"
+                    >
+                        <i className="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm mb-6 flex flex-wrap gap-3 items-center">
+                <div className="relative flex-1 min-w-[200px]">
+                    <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input
+                        type="text"
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        placeholder="à¸„à¹‰à¸™à¸«à¸²à¸Šà¸·à¹ˆà¸­, à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£, à¸šà¸£à¸´à¸à¸²à¸£..."
+                        className="w-full pl-8 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-400 bg-slate-50"
+                    />
+                </div>
+                <select
+                    value={filterStatus}
+                    onChange={e => setFilterStatus(e.target.value)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-indigo-400 min-w-[160px]"
+                >
+                    <option value="all">à¸—à¸¸à¸à¸ªà¸–à¸²à¸™à¸°</option>
+                    <option value="pending">à¸£à¸­à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£</option>
+                    <option value="approved">à¸¢à¸·à¸™à¸¢à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢</option>
+                    <option value="completed">à¸œà¹ˆà¸²à¸™à¸à¸²à¸£à¸›à¸£à¸°à¹€à¸¡à¸´à¸™</option>
+                    <option value="failed">à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™</option>
+                    <option value="cancelled">à¸¢à¸à¹€à¸¥à¸´à¸</option>
+                </select>
+                <select
+                    value={filterType}
+                    onChange={e => setFilterType(e.target.value)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-indigo-400 min-w-[160px]"
+                >
+                    <option value="all">à¸—à¸¸à¸à¸›à¸£à¸°à¹€à¸ à¸—</option>
+                    <option value="test">à¸—à¸”à¸ªà¸­à¸šà¸¡à¸²à¸•à¸£à¸à¸²à¸™</option>
+                    <option value="training">à¸à¸¶à¸à¸­à¸šà¸£à¸¡</option>
+                </select>
+                <button
+                    onClick={loadQueues}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2 shrink-0"
+                >
+                    <i className="fa-solid fa-rotate-right"></i>
+                    à¸£à¸µà¹€à¸Ÿà¸£à¸Š
+                </button>
+            </div>
+
+            {/* Queue Table */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                {loading ? (
+                    <div className="py-20 flex flex-col items-center justify-center gap-3">
+                        <span className="loading loading-spinner loading-lg text-indigo-500"></span>
+                        <p className="text-sm text-slate-400 font-medium">à¸à¸³à¸¥à¸±à¸‡à¸”à¸¶à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸„à¸´à¸§à¸ˆà¸²à¸ Firestore...</p>
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="py-20 text-center text-slate-400">
+                        <i className="fa-solid fa-folder-open text-4xl mb-3 block"></i>
+                        <p className="font-semibold text-sm">à¹„à¸¡à¹ˆà¸žà¸šà¸£à¸²à¸¢à¸à¸²à¸£à¸„à¸´à¸§à¸—à¸µà¹ˆà¸•à¸£à¸‡à¸à¸±à¸šà¹€à¸‡à¸·à¹ˆà¸­à¸™à¹„à¸‚à¸—à¸µà¹ˆà¸„à¹‰à¸™à¸«à¸²</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase">à¸£à¸«à¸±à¸ªà¸„à¸´à¸§</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase">à¸œà¸¹à¹‰à¸ˆà¸­à¸‡</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase hidden md:table-cell">à¸šà¸£à¸´à¸à¸²à¸£</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase hidden lg:table-cell">à¸§à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase">à¸ªà¸–à¸²à¸™à¸°</th>
+                                    <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-500 uppercase">à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {filtered.map((q, i) => {
+                                    const statusInfo = STATUS_LABELS[q.status] || { label: q.status, cls: "bg-slate-100 text-slate-500 border-slate-200" };
+                                    return (
+                                        <motion.tr
+                                            key={q.id}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: i * 0.02 }}
+                                            className="hover:bg-slate-50/50 transition-colors"
+                                        >
+                                            <td className="px-4 py-3.5">
+                                                <span className="font-mono text-[11px] text-slate-400">{q.id.slice(0, 10)}...</span>
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <p className="font-bold text-slate-800 text-sm leading-tight">{q.memberName}</p>
+                                                <p className="text-[11px] text-slate-400 mt-0.5">{q.memberPhone}</p>
+                                            </td>
+                                            <td className="px-4 py-3.5 hidden md:table-cell">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${q.type === "test"
+                                                        ? "bg-blue-50 text-blue-600 border-blue-100"
+                                                        : "bg-purple-50 text-purple-600 border-purple-100"
+                                                    }`}>
+                                                    {q.type === "test" ? "à¸—à¸”à¸ªà¸­à¸š" : "à¸­à¸šà¸£à¸¡"}
+                                                </span>
+                                                <p className="text-xs text-slate-700 mt-1 font-medium">{q.itemName}</p>
+                                            </td>
+                                            <td className="px-4 py-3.5 hidden lg:table-cell">
+                                                {q.appointedDate ? (
+                                                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5">
+                                                        <i className="fa-regular fa-calendar-check text-emerald-400"></i>
+                                                        {new Date(q.appointedDate).toLocaleDateString("th-TH", {
+                                                            year: "numeric", month: "short", day: "numeric"
+                                                        })}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] text-slate-300">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸à¸³à¸«à¸™à¸”</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusInfo.cls}`}>
+                                                    {statusInfo.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3.5 text-right">
+                                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                                    {(q.status === "pending") && (
+                                                        <button
+                                                            onClick={() => { setModalQueue(q); setAppointedDate(""); }}
+                                                            className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition-all flex items-center gap-1"
+                                                        >
+                                                            <i className="fa-solid fa-calendar-plus"></i>
+                                                            à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´ & à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢
+                                                        </button>
+                                                    )}
+                                                    {(q.status === "checked_in") && (
+                                                        <button
+                                                            onClick={() => updateStatus(q.id, q.type === "test" ? "testing" : "training")}
+                                                            className="px-2.5 py-1 rounded-lg bg-fuchsia-600 text-white text-[11px] font-bold hover:bg-fuchsia-700 transition-all flex items-center gap-1 shadow-md shadow-fuchsia-500/20"
+                                                        >
+                                                            <i className="fa-solid fa-bullhorn"></i>
+                                                            à¹€à¸£à¸µà¸¢à¸à¸„à¸´à¸§
+                                                        </button>
+                                                    )}
+                                                    {(q.status === "approved" || q.status === "confirmed" || q.status === "testing" || q.status === "training") && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => updateStatus(q.id, "completed")}
+                                                                className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-all flex items-center gap-1"
+                                                            >
+                                                                <i className="fa-solid fa-check"></i>
+                                                                à¸œà¹ˆà¸²à¸™
+                                                            </button>
+                                                            <button
+                                                                onClick={() => updateStatus(q.id, "failed")}
+                                                                className="px-2.5 py-1 rounded-lg bg-red-500 text-white text-[11px] font-bold hover:bg-red-600 transition-all flex items-center gap-1"
+                                                            >
+                                                                <i className="fa-solid fa-xmark"></i>
+                                                                à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {q.status !== "cancelled" && q.status !== "completed" && q.status !== "passed" && (
+                                                        <button
+                                                            onClick={() => updateStatus(q.id, "cancelled")}
+                                                            className="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-300 transition-all"
+                                                        >
+                                                            à¸¢à¸à¹€à¸¥à¸´à¸
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => setDeleteTarget(q.id)}
+                                                        className="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center text-xs"
+                                                    >
+                                                        <i className="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* â”€â”€ Appointment Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            <AnimatePresence>
+                {modalQueue && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={e => e.target === e.currentTarget && setModalQueue(null)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.92 }}
+                            className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 w-full max-w-md"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                                    <i className="fa-solid fa-calendar-plus text-white"></i>
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-slate-800 text-lg">à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´ & à¸à¸³à¸«à¸™à¸”à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢</h3>
+                                    <p className="text-xs text-slate-400">à¹€à¸¥à¸·à¸­à¸à¸§à¸±à¸™à¹€à¸§à¸¥à¸²à¸—à¸µà¹ˆà¸ˆà¸°à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢à¸›à¸£à¸°à¹€à¸¡à¸´à¸™</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 rounded-2xl p-4 mb-5 space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">à¸œà¸¹à¹‰à¸ˆà¸­à¸‡</span>
+                                    <span className="font-bold text-slate-800">{modalQueue.memberName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">à¸šà¸£à¸´à¸à¸²à¸£</span>
+                                    <span className="font-bold text-slate-800">{modalQueue.itemName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">à¸›à¸£à¸°à¹€à¸ à¸—</span>
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${modalQueue.type === "test" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                                        {modalQueue.type === "test" ? "à¸—à¸”à¸ªà¸­à¸šà¸¡à¸²à¸•à¸£à¸à¸²à¸™" : "à¸à¸¶à¸à¸­à¸šà¸£à¸¡"}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="text-sm font-bold text-slate-700 block mb-2">
+                                    <i className="fa-regular fa-calendar text-indigo-500 mr-2"></i>
+                                    à¸§à¸±à¸™à¹à¸¥à¸°à¹€à¸§à¸¥à¸²à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢ *
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={appointedDate}
+                                    onChange={e => setAppointedDate(e.target.value)}
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setModalQueue(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-all"
+                                >
+                                    à¸¢à¸à¹€à¸¥à¸´à¸
+                                </button>
+                                <button
+                                    onClick={handleApproveSubmit}
+                                    disabled={modalLoading || !appointedDate}
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {modalLoading ? (
+                                        <span className="loading loading-spinner loading-xs"></span>
+                                    ) : (
+                                        <i className="fa-solid fa-check"></i>
+                                    )}
+                                    à¸¢à¸·à¸™à¸¢à¸±à¸™à¸™à¸±à¸”à¸«à¸¡à¸²à¸¢
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* â”€â”€ Delete Confirm Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            <AnimatePresence>
+                {deleteTarget && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.92 }}
+                            className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center"
+                        >
+                            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                                <i className="fa-solid fa-trash text-red-500 text-2xl"></i>
+                            </div>
+                            <h3 className="font-black text-slate-800 text-lg mb-2">à¸¢à¸·à¸™à¸¢à¸±à¸™à¸à¸²à¸£à¸¥à¸šà¸£à¸²à¸¢à¸à¸²à¸£</h3>
+                            <p className="text-sm text-slate-400 mb-6">à¸à¸²à¸£à¸¥à¸šà¸™à¸µà¹‰à¸ˆà¸°à¸¥à¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸„à¸´à¸§à¸­à¸­à¸à¸ˆà¸²à¸à¸à¸²à¸™à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸–à¸²à¸§à¸£ à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¸à¸¹à¹‰à¸„à¸·à¸™à¹„à¸”à¹‰</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteTarget(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-all"
+                                >
+                                    à¸¢à¸à¹€à¸¥à¸´à¸
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(deleteTarget)}
+                                    className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-all"
+                                >
+                                    à¸¥à¸šà¸­à¸­à¸à¸ˆà¸²à¸à¸£à¸°à¸šà¸š
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+

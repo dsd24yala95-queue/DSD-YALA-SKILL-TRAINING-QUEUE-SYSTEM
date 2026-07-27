@@ -1,0 +1,89 @@
+<script>
+// Scripts_Audio.html - (V3: Web Audio API ทะลวงการบล็อก 100%)
+const AudioModule = {
+  audioCtx: null,
+  isUnlocked: false,
+
+  // 1. ฟังก์ชันสร้างเครื่องเสียง (เรียกตอนผู้ใช้กดปุ่มเปิดเสียง)
+  unlock: function() {
+    try {
+      // สร้าง Audio Context (รองรับทั้ง Safari และ Chrome)
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this.audioCtx = new AudioContext();
+
+      // ปลุกระบบเสียงให้ตื่นจากการหลับ (Resume)
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+
+      // เล่นเสียงสั้นๆ แบบเบามากๆ 1 ครั้งเพื่อยืนยันการปลดล็อกกับ Browser
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      gain.gain.value = 0.01; // เบาจนแทบไม่ได้ยิน
+      osc.start(this.audioCtx.currentTime);
+      osc.stop(this.audioCtx.currentTime + 0.1);
+
+      this.isUnlocked = true;
+      console.log("🔊 ปลดล็อกระบบเสียง Web Audio สำเร็จ!");
+       // เพิ่มบรรทัดนี้เพื่อเช็คด้วยตา
+      
+    } catch (e) {
+      console.error("Web Audio API ไม่รองรับในเบราว์เซอร์นี้", e);
+      
+    }
+  },
+
+  // 2. ฟังก์ชันสั่งเรียกคิว (เสียง ติ๊ง-หน่อง)
+  play: function() {
+    if (!this.isUnlocked || !this.audioCtx) {
+      console.warn("ไม่สามารถเล่นเสียงได้: ผู้ใช้ยังไม่ได้กดปุ่มเปิดเสียง");
+      Toast.error("❌ ลำโพงทำงานไม่ได้! เพราะยังไม่ได้กดปุ่มเปิดเสียง"); // ดักเผื่อลืมกดปุ่ม
+      return;
+    }
+
+    // ถ้าเบราว์เซอร์แอบให้ระบบหลับ ให้ปลุกใหม่
+    if (this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+
+    const t = this.audioCtx.currentTime;
+
+    // จังหวะที่ 1: "ติ๊ง" (เสียงสูง ความถี่ 880 Hz)
+    this._createTone(t, 880, 0.4);
+    
+    // จังหวะที่ 2: "หน่อง" (เสียงต่ำลง ความถี่ 659 Hz) ดีเลย์ 0.3 วินาที
+    this._createTone(t + 0.3, 659, 0.6);
+  },
+
+  // ฟังก์ชันย่อยสำหรับสร้างคลื่นเสียง (ไม่ต้องไปยุ่งกับมันครับ)
+  _createTone: function(startTime, frequency, duration) {
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    
+    osc.type = 'sine'; // เสียงใสกังวาน
+    osc.frequency.setValueAtTime(frequency, startTime);
+    
+    // เฟดเสียงออกนุ่มๆ ไม่ให้เสียงกระชาก
+    gain.gain.setValueAtTime(0.8, startTime); // ความดังสูงสุด
+    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }
+};
+
+  // Auto-Unlock Audio on first interaction
+  const _autoUnlockAudio = () => {
+    if (!AudioModule.isUnlocked) {
+      AudioModule.unlock();
+    }
+  };
+  ['click', 'touchstart', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, _autoUnlockAudio, { once: true });
+  });
+</script>

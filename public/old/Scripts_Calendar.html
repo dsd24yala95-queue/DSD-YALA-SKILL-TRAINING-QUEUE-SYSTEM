@@ -1,0 +1,125 @@
+<script>
+// ============================================================
+//  Scripts_Calendar.html — Google Calendar Integration
+// ============================================================
+
+const CalendarMgr = {
+
+  // เรียกจาก Member กด "รับนัด"
+  async addEvent(queueId, type, title, appointedDate, description) {
+    if (!AppState.sessionToken) return false;
+
+    // ถ้ายังไม่ได้ authorize → แสดง popup อธิบายก่อน
+    if (!AppState.currentUser?.calendarAuthorized) {
+      const ok = await _calendarConsentPrompt();
+      if (!ok) return false;
+    }
+
+    const res = await callAPI('addCalendarEvent', {
+      token:         AppState.sessionToken,
+      queueId,
+      type,
+      title,
+      appointedDate,
+      description,
+    });
+
+    if (!res.success) {
+      Toast.error('บันทึกปฏิทินไม่สำเร็จ: ' + res.error);
+      return false;
+    }
+
+    // อัปเดต state
+    if (AppState.currentUser) {
+      AppState.currentUser.calendarAuthorized = true;
+      AppState.saveSession();
+    }
+
+    return res.data.eventId;
+  },
+
+  async deleteEvent(calendarEventId) {
+    if (!calendarEventId || !AppState.sessionToken) return;
+    await callAPI('deleteCalendarEvent', {
+      token: AppState.sessionToken,
+      calendarEventId,
+    });
+  },
+};
+
+// Prompt ขอ consent ก่อนเพิ่ม event
+function _calendarConsentPrompt() {
+  return new Promise(resolve => {
+    Modal.show(`
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="width:56px;height:56px;background:var(--blue-50);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <h3 class="fw-600" style="font-size:16px;margin-bottom:8px">บันทึกลงปฏิทิน Google</h3>
+        <p class="text-sm text-muted" style="margin-bottom:8px">ระบบจะบันทึกวันนัดหมายไปยัง Google Calendar ของคุณ</p>
+        
+        <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; padding:10px; margin-bottom:20px;">
+           <p style="font-size:13px; color:#c2410c; margin:0; font-weight:500;">
+             🔔 <b>พร้อมเด้งแจ้งเตือนบนหน้าจอมือถือ (มีเสียง)</b><br>
+             ล่วงหน้า 3 วัน และในวันนัดหมาย เวลา 07:00 น.
+           </p>
+        </div>
+
+        <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:12px;margin-bottom:20px;text-align:left">
+          <p class="text-xs text-muted">📅 ชื่อ event จะแสดงว่า <strong>"ทดสอบมาตรฐานฝีมือแรงงาน — สพร.24 ยะลา"</strong></p>
+          <p class="text-xs text-muted mt-4">📍 สถานที่: สำนักงานพัฒนาฝีมือแรงงานยะลา</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" style="flex:1" id="cal-deny">ไม่ต้องการ</button>
+          <button class="btn btn-primary"   style="flex:1" id="cal-allow">อนุญาต</button>
+        </div>
+      </div>
+    `);
+
+    document.getElementById('cal-allow').addEventListener('click', () => {
+      Modal.close();
+      resolve(true);
+    });
+    document.getElementById('cal-deny').addEventListener('click', () => {
+      Modal.close();
+      resolve(false);
+    });
+  });
+}
+
+// ── ACKNOWLEDGE APPOINTMENT (Member กด "รับนัด") ─────────────
+async function acknowledgeAppointment(queueId, type, appointedDate, branchName) {
+  const title = (type === 'test'
+    ? `ทดสอบมาตรฐานฝีมือแรงงาน — ${branchName}`
+    : `ฝึกอบรมฯ — ${branchName}`) + ' | สพร.24 ยะลา';
+
+  const desc = `รหัสคิว: ${queueId}\nสพร.24 ยะลา กรุณามาตรงเวลา`;
+  const btn  = document.getElementById('btn-ack-' + queueId);
+  if (btn) _setLoading(btn, true, '');
+
+  // เพิ่มใน Calendar
+  const eventId = await CalendarMgr.addEvent(queueId, type, title, appointedDate, desc);
+
+  // บอก backend ว่า member รับนัดแล้ว (พร้อม eventId)
+  const res = await callAPI('acknowledgeAppt', {
+    token:           AppState.sessionToken,
+    queueId,
+    type,
+    calendarEventId: eventId || '',
+  });
+
+  if (btn) _setLoading(btn, false);
+
+  if (res.success) {
+    Toast.success(eventId ? 'รับนัดและบันทึกปฏิทินแล้ว ✓' : 'รับนัดแล้ว ✓');
+    // refresh dashboard
+    setTimeout(() => Router.go('dashboard'), 800);
+  } else {
+    Toast.error(res.error);
+  }
+}
+</script>

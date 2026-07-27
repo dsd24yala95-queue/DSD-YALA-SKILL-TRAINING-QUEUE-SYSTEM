@@ -1,0 +1,1182 @@
+<script>
+// ============================================================
+//  View_Home.html — Home / Dashboard (Guest + Member + Admin)
+// ============================================================
+
+function renderViewHome() {
+  if (AppState.userRole === 'member')  { renderViewDashboard();      return; }
+  if (AppState.userRole === 'admin')   { renderViewAdminDashboard(); return; }
+
+  // ── GUEST HOME ──────────────────────────────────────────────
+  const app = document.getElementById('app-content');
+  app.innerHTML = `
+    <!-- HERO SECTION -->
+    <div style="background: linear-gradient(135deg, var(--fallback-p,oklch(var(--p)/1)) 0%, #1e3a8a 100%); position:relative; overflow:hidden; padding: 40px 24px 60px; border-bottom-left-radius: 32px; border-bottom-right-radius: 32px; text-align:center; color:white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);">
+      
+      <!-- Decorative Orbs -->
+      <div style="position:absolute; top:-40px; right:-20px; width:150px; height:150px; background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%); border-radius:50%;"></div>
+      <div style="position:absolute; bottom:10px; left:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(59,130,246,0.4) 0%, rgba(255,255,255,0) 70%); border-radius:50%;"></div>
+
+      <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); padding:6px 12px; border-radius:99px; margin-bottom:20px; backdrop-filter:blur(8px); font-size:12px; font-weight:600; letter-spacing:0.5px;">
+        <span style="display:block; width:8px; height:8px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981;"></span>
+        บริการออนไลน์ 24 ชม.
+      </div>
+      
+      <div style="width:84px; height:84px; margin: 0 auto 20px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:24px; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(10px); box-shadow:0 8px 32px rgba(0,0,0,0.1); transform:rotate(-3deg);">
+        <div style="transform:rotate(3deg);">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 style="font-size: 26px; font-weight:700; line-height:1.3; margin-bottom:8px; text-shadow:0 2px 4px rgba(0,0,0,0.1);">สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา</h1>
+      <p style="font-size: 14px; color:rgba(255,255,255,0.85); font-weight:400; max-width:280px; margin:0 auto; line-height:1.5;">111 ม.5 ตำบลวังพญา อำเภอรามัน จังหวัดยะลา 95140</p>
+    </div>
+
+    <!-- ACTION CARDS -->
+    <div style="padding: 0 20px 40px; margin-top:-30px; position:relative; z-index:10; max-width:480px; margin-left:auto; margin-right:auto; display:flex; flex-direction:column; gap:16px;">
+      
+      <!-- Card 1 -->
+      <a href="javascript:void(0)" onclick="Router.go('catalog',{tab:'test'})" style="display:flex; align-items:center; gap:16px; background:white; padding:16px 20px; border-radius:20px; box-shadow:0 10px 30px -10px rgba(0,0,0,0.08); text-decoration:none; border:1px solid rgba(0,0,0,0.03); transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1); position:relative; overflow:hidden;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 40px -10px rgba(59,130,246,0.15)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 10px 30px -10px rgba(0,0,0,0.08)';">
+        <div style="position:absolute; top:0; left:0; bottom:0; width:4px; background:#3b82f6;"></div>
+        <div style="width:52px; height:52px; border-radius:16px; background:#eff6ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+          </svg>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+            <span style="font-size:16px; font-weight:700; color:#0f172a;">ทดสอบมาตรฐานฝีมือ</span>
+            <span style="background:linear-gradient(135deg, #ef4444, #dc2626); color:white; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; letter-spacing:0.5px;">HOT</span>
+          </div>
+          <div style="font-size:12px; color:#64748b; font-weight:600; letter-spacing:0.5px;">SKILLS TESTING</div>
+        </div>
+        <div style="color:#cbd5e1;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </a>
+
+      <!-- Card 2 -->
+      <a href="javascript:void(0)" onclick="Router.go('catalog',{tab:'training'})" style="display:flex; align-items:center; gap:16px; background:white; padding:16px 20px; border-radius:20px; box-shadow:0 10px 30px -10px rgba(0,0,0,0.08); text-decoration:none; border:1px solid rgba(0,0,0,0.03); transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1); position:relative; overflow:hidden;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 40px -10px rgba(34,197,94,0.15)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 10px 30px -10px rgba(0,0,0,0.08)';">
+        <div style="position:absolute; top:0; left:0; bottom:0; width:4px; background:#10b981;"></div>
+        <div style="width:52px; height:52px; border-radius:16px; background:#ecfdf5; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+            <span style="font-size:16px; font-weight:700; color:#0f172a;">สมัครฝึกอบรมอาชีพ</span>
+            <span style="background:linear-gradient(135deg, #10b981, #059669); color:white; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; letter-spacing:0.5px;">เปิดรับ</span>
+          </div>
+          <div style="font-size:12px; color:#64748b; font-weight:600; letter-spacing:0.5px;">TRAINING COURSES</div>
+        </div>
+        <div style="color:#cbd5e1;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </a>
+
+      <div style="display:flex; align-items:center; margin:16px 0 8px;">
+        <div style="flex:1; height:1px; background:linear-gradient(90deg, rgba(226,232,240,0) 0%, #e2e8f0 50%, rgba(226,232,240,0) 100%);"></div>
+        <div style="padding:0 16px; font-size:12px; color:#94a3b8; font-weight:500;">สำหรับเจ้าหน้าที่</div>
+        <div style="flex:1; height:1px; background:linear-gradient(90deg, rgba(226,232,240,0) 0%, #e2e8f0 50%, rgba(226,232,240,0) 100%);"></div>
+      </div>
+
+      <div style="text-align:center;">
+        <button onclick="Router.go('auth-admin')" style="background:white; border:1px solid #e2e8f0; color:#475569; padding:10px 24px; border-radius:99px; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s;" onmouseover="this.style.background='#f8fafc';this.style.color='#0f172a';this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='white';this.style.color='#475569';this.style.borderColor='#e2e8f0';">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          เข้าสู่ระบบ Admin
+        </button>
+      </div>
+
+    </div>`;
+}
+
+// ── MEMBER DASHBOARD ──────────────────────────────────────────
+async function renderViewDashboard() {
+  const app = document.getElementById('app-content');
+  app.innerHTML = _skeletonPage();
+
+  const res = await callAPI('getMemberData', { token: AppState.sessionToken });
+  if (!res.success) {
+    Toast.error(res.error);
+    Router.go('home');
+    return;
+  }
+
+  const d = res.data;
+  AppState.set('notifications', d.notifications || []);
+  AppState.set('unreadCount', (d.notifications || []).filter(n => !n.read).length);
+  _updateNotifBadge();
+
+  // โหลด master data เพื่อ lookup ชื่อสาขา/หลักสูตร
+  const [brRes, crRes] = await Promise.all([
+    callAPI('getMasterData', { token: AppState.sessionToken, type: 'branch' }),
+    callAPI('getMasterData', { token: AppState.sessionToken, type: 'course' }),
+  ]);
+  const branchMap = {};
+  const courseMap = {};
+  (brRes.success ? brRes.data.items : []).forEach(b => { branchMap[b.id] = b.name; });
+  (crRes.success ? crRes.data.items : []).forEach(c => { courseMap[c.id] = c.name; });
+  AppState.set('masterBranches', brRes.success ? brRes.data.items : []);
+  AppState.set('masterCourses',  crRes.success ? crRes.data.items : []);
+
+  const testCount  = (d.testQueues  || []).length;
+  const trainCount = (d.trainQueues || []).length;
+  const activeTest  = (d.testQueues  || []).filter(q => !['cancelled','passed','failed'].includes(q.status)).length;
+  const activeTrain = (d.trainQueues || []).filter(q => !['cancelled','completed'].includes(q.status)).length;
+
+  app.innerHTML = `
+    <!-- ═══ HERO HEADER ═══ -->
+    <div style="background:linear-gradient(135deg,#0f3b75 0%,#1d4ed8 60%,#6366f1 100%);color:white;padding:20px 20px 48px;position:relative;overflow:hidden">
+      <!-- decorative circles -->
+      <div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.06)"></div>
+      <div style="position:absolute;bottom:-20px;left:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+
+      <!-- top row -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;position:relative">
+        <div>
+          <div style="font-size:13px;opacity:0.75;margin-bottom:2px">สวัสดีคุณ 👋</div>
+          <div style="font-size:21px;font-weight:700;line-height:1.2;margin-bottom:2px">${d.fullName}</div>
+          <div style="font-size:13px;opacity:0.65">${d.phone}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="Router.go('notifications')" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            ${AppState.unreadCount > 0 ? `<span style="position:absolute;top:-3px;right:-3px;background:#ef4444;color:white;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid transparent">${AppState.unreadCount}</span>` : ''}
+          </button>
+          <button onclick="Router.go('profile')" style="padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sarabun',sans-serif;transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            แก้ไขข้อมูล
+          </button>
+        </div>
+      </div>
+
+      <!-- mini stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;position:relative">
+        <div style="background:rgba(255,255,255,0.12);border-radius:12px;padding:10px 12px;border:1px solid rgba(255,255,255,0.15)">
+          <div style="font-size:22px;font-weight:700;line-height:1">${testCount + trainCount}</div>
+          <div style="font-size:12px;opacity:0.75;margin-top:2px">คิวทั้งหมด</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.12);border-radius:12px;padding:10px 12px;border:1px solid rgba(255,255,255,0.15)">
+          <div style="font-size:22px;font-weight:700;line-height:1;color:#86efac">${activeTest + activeTrain}</div>
+          <div style="font-size:12px;opacity:0.75;margin-top:2px">กำลังดำเนินการ</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.12);border-radius:12px;padding:10px 12px;border:1px solid rgba(255,255,255,0.15)">
+          <div style="font-size:22px;font-weight:700;line-height:1;color:#fde68a">${AppState.unreadCount || 0}</div>
+          <div style="font-size:12px;opacity:0.75;margin-top:2px">แจ้งเตือนใหม่</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ QUICK ACTIONS (floating over header) ═══ -->
+    <div style="margin:-24px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:10">
+      <button onclick="Router.go('catalog',{tab:'test'})" style="background:white;border:none;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.1);transition:all 0.2s;text-align:left" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'">
+        <div style="width:36px;height:36px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#0f172a">สมัครทดสอบ</div>
+          <div style="font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Skills Test</div>
+        </div>
+      </button>
+      <button onclick="Router.go('catalog',{tab:'training'})" style="background:white;border:none;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.1);transition:all 0.2s;text-align:left" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#0f172a">สมัครอบรม</div>
+          <div style="font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Training</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- ═══ CONTENT ═══ -->
+    <div style="padding:0 16px 120px;max-width:480px;margin:0 auto">
+
+      <!-- Audio Alert Banner -->
+      <div id="audio-alert-banner" style="display:none;background:linear-gradient(135deg,#0d9488,#0f766e);border-radius:14px;padding:12px 14px;margin-bottom:14px;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:white">รอเรียกคิวอยู่ใช่ไหม?</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.8)">เปิดเสียงแจ้งเตือนเพื่อไม่พลาดคิว</div>
+        </div>
+        <button onclick="AudioModule.unlock();this.textContent='✓';this.disabled=true;this.style.opacity='0.6'" style="padding:7px 12px;border-radius:8px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;flex-shrink:0">เปิดเสียง</button>
+      </div>
+      \x3Cscript>
+        setTimeout(() => { if(typeof AudioModule !== 'undefined' && AudioModule.isLocked) { const b = document.getElementById('audio-alert-banner'); if(b) b.style.display='flex'; } }, 1000);
+      \x3C/script>
+
+      <!-- Notification Banners -->
+      ${_renderNotifBanners(d.notifications || [])}
+
+      <!-- ── TEST QUEUES ── -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:4px;height:18px;background:#3b82f6;border-radius:2px"></div>
+            <span style="font-size:16px;font-weight:700;color:#0f172a">ทดสอบมาตรฐานฝีมือ</span>
+          </div>
+          ${activeTest > 0 ? `<span style="background:#eff6ff;color:#3b82f6;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px">${activeTest} กำลังดำเนินการ</span>` : ''}
+        </div>
+        ${d.testQueues && d.testQueues.length > 0
+          ? d.testQueues.map(q => _renderTestQueueCard(q, branchMap)).join('')
+          : `<div style="background:white;border:2px dashed #e2e8f0;border-radius:14px;padding:28px 16px;text-align:center">
+               <div style="font-size:32px;margin-bottom:8px">📋</div>
+               <div style="font-size:15px;color:#94a3b8;font-weight:500">ยังไม่มีการสมัครทดสอบ</div>
+               <button onclick="Router.go('catalog',{tab:'test'})" style="margin-top:12px;padding:8px 18px;background:#3b82f6;color:white;border:none;border-radius:99px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif">สมัครทดสอบ →</button>
+             </div>`}
+      </div>
+
+      <!-- ── TRAINING QUEUES ── -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:4px;height:18px;background:#22c55e;border-radius:2px"></div>
+            <span style="font-size:16px;font-weight:700;color:#0f172a">ฝึกอบรมอาชีพ</span>
+          </div>
+          ${activeTrain > 0 ? `<span style="background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px">${activeTrain} กำลังดำเนินการ</span>` : ''}
+        </div>
+        ${d.trainQueues && d.trainQueues.length > 0
+          ? d.trainQueues.map(q => _renderTrainQueueCard(q, courseMap)).join('')
+          : `<div style="background:white;border:2px dashed #e2e8f0;border-radius:14px;padding:28px 16px;text-align:center">
+               <div style="font-size:32px;margin-bottom:8px">📚</div>
+               <div style="font-size:15px;color:#94a3b8;font-weight:500">ยังไม่มีการสมัครอบรม</div>
+               <button onclick="Router.go('catalog',{tab:'training'})" style="margin-top:12px;padding:8px 18px;background:#22c55e;color:white;border:none;border-radius:99px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif">สมัครอบรม →</button>
+             </div>`}
+      </div>
+
+    </div>`;
+}
+
+function _renderNotifBanners(notifications) {
+  if (!notifications || notifications.length === 0) return '';
+  return notifications.filter(n => !n.read).map(n => `
+    <div class="notif-banner" id="notif-${n.id}">
+      <span class="notif-banner-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      <div style="flex:1">
+        <div class="notif-banner-title">📅 มีการนัดหมาย ${n.type === 'test' ? 'ทดสอบ' : 'อบรม'}</div>
+        <div class="notif-banner-desc">วันที่ ${_formatDate(n.date)}</div>
+        <p class="text-xs text-muted mt-4">กรุณาเลื่อนลงเพื่อกดรับนัดในรายการคิวด้านล่าง</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function _renderTestQueueCard(q, branchMap) {
+  const isActive  = !['cancelled','passed','failed'].includes(q.status);
+  const branchName = (branchMap && branchMap[q.branchId]) || q.branchId;
+  return `
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size: 15px;font-weight:600">${branchName}</div>
+            <div style="font-size: 14px;color:var(--gray-400)">ระดับ ${q.level} · ${q.queueId}</div>
+          </div>
+          <span class="badge badge-${q.status}">${_statusLabel(q.status)}</span>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline" style="margin-bottom:12px">
+          ${_testTimeline(q.status, q.appointedDate)}
+        </div>
+
+        ${q.appointedDate && q.memberAcknowledged ? `
+          <div style="display:flex;align-items:center;gap:6px;font-size: 14px;color:var(--green-600);margin-bottom:10px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            รับนัดแล้ว · ${_formatDate(q.appointedDate)}
+          </div>` : ''}
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${q.pdfUrl ? `<a href="${q.pdfUrl}" target="_blank" class="btn btn-secondary btn-sm">${_icon('printer')} ใบสมัคร</a>` : ''}
+          ${!q.pdfUrl && isActive ? `<button class="btn btn-secondary btn-sm" onclick="printPDF('${q.queueId}','test')">${_icon('printer')} พิมพ์ใบสมัคร</button>` : ''}
+          ${isActive ? `<button class="btn btn-secondary btn-sm" style="color:var(--red-600)" onclick="cancelQueueConfirm('${q.queueId}','test','${q.calendarEventId || ''}')">ยกเลิกคิว</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function _renderTrainQueueCard(q, courseMap) {
+  const isActive   = !['cancelled','completed'].includes(q.status);
+  const courseName = (courseMap && courseMap[q.courseId]) || q.courseId;
+  return `
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size: 15px;font-weight:600">${courseName}</div>
+            <div style="font-size: 14px;color:var(--gray-400)">${q.enrollId}</div>
+          </div>
+          <span class="badge badge-${q.status}">${_statusLabel(q.status)}</span>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline" style="margin-bottom:12px">
+          ${_trainTimeline(q.status, q.appointedDate)}
+        </div>
+
+        ${q.appointedDate && q.memberAcknowledged ? `
+          <div style="display:flex;align-items:center;gap:6px;font-size: 14px;color:var(--green-600);margin-bottom:10px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            รับนัดแล้ว · ${_formatDate(q.appointedDate)}
+          </div>` : ''}
+
+        <div style="display:flex;gap:8px">
+          ${isActive ? `<button class="btn btn-secondary btn-sm" style="color:var(--red-600)" onclick="cancelQueueConfirm('${q.enrollId}','training','${q.calendarEventId || ''}')">ยกเลิก</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function _testTimeline(status, apptDate) {
+  const steps = [
+    { key: 'pending',   label: 'รอตรวจสอบ' },
+    { key: 'confirmed', label: 'ยืนยันแล้ว' },
+    { key: 'testing',   label: 'กำลังทดสอบ' },
+    { key: 'passed',    label: 'ผ่านการทดสอบ' },
+  ];
+  const failKeys = ['failed','cancelled'];
+  if (failKeys.includes(status)) {
+    return `<div class="timeline-item"><span class="timeline-dot danger"></span><div class="text-sm">${_statusLabel(status)}</div></div>`;
+  }
+
+  const order = steps.map(s => s.key);
+  const curIdx = order.indexOf(status);
+
+  return steps.map((s, i) => {
+    let cls = '';
+    if (i < curIdx)       cls = 'done';
+    else if (i === curIdx) cls = 'active';
+    const detail = s.key === 'confirmed' && apptDate
+      ? `<div class="text-xs text-muted">นัดหมาย: ${_formatDate(apptDate)}</div>` : '';
+    return `<div class="timeline-item">
+      <span class="timeline-dot ${cls}"></span>
+      <div class="text-sm ${i <= curIdx ? '' : 'text-muted'}">${s.label}${detail}</div>
+    </div>`;
+  }).join('');
+}
+
+function _trainTimeline(status, apptDate) {
+  const steps = [
+    { key: 'pending',   label: 'รอตรวจสอบ' },
+    { key: 'approved',  label: 'อนุมัติแล้ว' },
+    { key: 'training',  label: 'กำลังอบรม' },
+    { key: 'completed', label: 'จบอบรมแล้ว' },
+  ];
+  const failKeys = ['cancelled'];
+  if (failKeys.includes(status)) {
+    return `<div class="timeline-item"><span class="timeline-dot danger"></span><div class="text-sm">${_statusLabel(status)}</div></div>`;
+  }
+
+  let mappedStatus = status;
+  if (status === 'confirmed') mappedStatus = 'approved';
+
+  const order = steps.map(s => s.key);
+  const curIdx = order.indexOf(mappedStatus);
+
+  return steps.map((s, i) => {
+    let cls = '';
+    if (i < curIdx)       cls = 'done';
+    else if (i === curIdx) cls = 'active';
+    const detail = s.key === 'approved' && apptDate
+      ? `<div class="text-xs text-muted">เริ่ม: ${_formatDate(apptDate)}</div>` : '';
+    return `<div class="timeline-item">
+      <span class="timeline-dot ${cls}"></span>
+      <div class="text-sm ${i <= curIdx ? '' : 'text-muted'}">${s.label}${detail}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CANCEL QUEUE ──────────────────────────────────────────────
+async function cancelQueueConfirm(queueId, type, calendarEventId) {
+  Modal.confirm(
+    'ยืนยันการยกเลิกคิว',
+    'คุณต้องการยกเลิกคิวนี้ใช่หรือไม่? ไม่สามารถย้อนคืนได้',
+    async () => {
+      const res = await callAPI('cancelQueue', {
+        token: AppState.sessionToken,
+        queueId, type,
+      });
+      if (!res.success) { Toast.error(res.error); return; }
+
+      // ลบ calendar event
+      if (res.data.calendarEventId || calendarEventId) {
+        await CalendarMgr.deleteEvent(res.data.calendarEventId || calendarEventId);
+      }
+
+      Toast.success('ยกเลิกคิวแล้ว');
+      Router.go('dashboard');
+    },
+    'ยกเลิกคิว', true
+  );
+}
+
+// ── PRINT PDF ─────────────────────────────────────────────────
+async function printPDF(queueId, type) {
+  const btn = document.querySelector(`[onclick*="printPDF('${queueId}"]`);
+  if (btn) _setLoading(btn, true, '');
+
+  const res = await callAPI('generatePDF', {
+    token: AppState.sessionToken,
+    role:  'member',
+    queueId, type,
+  });
+
+  if (btn) _setLoading(btn, false);
+
+  if (!res.success) { Toast.error(res.error); return; }
+
+  Toast.success('สร้าง PDF แล้ว');
+  window.open(res.data.pdfUrl, '_blank');
+  // refresh
+  setTimeout(() => Router.go('dashboard'), 500);
+}
+
+// ── REGISTER BATCH SETUP ──────────────────────────────────────
+function showRegisterBatchSetup() {
+  // โหลด master data เพื่อ dropdown
+  const branches = AppState.masterBranches || [];
+  const courses  = AppState.masterCourses  || [];
+  const allItems = [
+    ...branches.filter(b => b.isOpen).map(b => ({ id: b.id, name: b.name, type: 'test'     })),
+    ...courses .filter(c => c.isOpen).map(c => ({ id: c.id, name: c.name, type: 'training' })),
+  ];
+
+  Modal.show(`
+    <div class="sheet-handle"></div>
+    <h3 style="font-size: 18px;font-weight:600;margin-bottom:6px">ลงทะเบียน Batch</h3>
+    <p style="font-size: 14px;color:var(--gray-500);margin-bottom:16px">
+      ไฟล์ที่บันทึกจะชื่อ <strong>ชื่อหลักสูตร-รุ่นที่X.json</strong>
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">หลักสูตร / สาขา <span class="required">*</span></label>
+      ${allItems.length > 0
+        ? `<select id="rb-course-select" class="form-control" onchange="rbUpdateCourseName(this)">
+            <option value="">-- เลือกจากรายการ --</option>
+            ${allItems.map(i => `<option value="${i.id}" data-name="${i.name}" data-type="${i.type}">${i.type==='test'?'[ทดสอบ]':'[อบรม]'} ${i.name}</option>`).join('')}
+            <option value="__custom__">กรอกเอง...</option>
+           </select>`
+        : `<p class="hint" style="color:var(--orange-600)">ยังไม่มี Master Data — กรอกชื่อเองได้</p>`}
+    </div>
+
+    <div class="form-group" id="rb-custom-name-row" style="${allItems.length > 0 ? 'display:none' : ''}">
+      <label class="form-label">ชื่อหลักสูตร (กรอกเอง)</label>
+      <input id="rb-custom-name" type="text" class="form-control" placeholder="เช่น ช่างเชื่อมอาร์ก" oninput="rbUpdatePreview()">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">รุ่นที่ <span class="required">*</span></label>
+      <input id="rb-batch" type="number" class="form-control" placeholder="1" min="1" max="999" value="1" oninput="rbUpdatePreview()">
+    </div>
+
+    <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px">
+      <div style="font-size: 13px;color:var(--gray-500);margin-bottom:3px">ชื่อไฟล์ที่จะบันทึก</div>
+      <div style="font-size: 15px;font-weight:600;color:var(--blue-600)" id="rb-preview">–</div>
+    </div>
+
+    <p style="font-size: 14px;color:var(--gray-500);margin-bottom:12px">
+      หรือ <strong>นำเข้าไฟล์ที่มีอยู่</strong> เพื่อแก้ไข/เพิ่มเติม
+    </p>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" style="flex:1" onclick="Modal.close()">ยกเลิก</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="Modal.close();document.getElementById('reg-json-input-admin').click()">
+        📂 เปิดไฟล์
+      </button>
+      <button class="btn btn-primary" style="flex:1.5" id="rb-start-btn" onclick="startBatchRegister()">
+        เริ่มลงทะเบียน
+      </button>
+    </div>
+  `);
+
+  // hidden file input สำหรับเปิดไฟล์เก่า
+  if (!document.getElementById('reg-json-input-admin')) {
+    const fi = document.createElement('input');
+    fi.type = 'file'; fi.accept = '.json';
+    fi.id   = 'reg-json-input-admin';
+    fi.style.display = 'none';
+    fi.onchange = function() { Modal.close(); handleImportJSON(this); };
+    document.body.appendChild(fi);
+  }
+
+  rbUpdatePreview();
+}
+
+function rbUpdateCourseName(sel) {
+  const custom = document.getElementById('rb-custom-name-row');
+  if (sel.value === '__custom__') {
+    custom.style.display = 'block';
+    document.getElementById('rb-custom-name').focus();
+  } else {
+    custom.style.display = 'none';
+  }
+  rbUpdatePreview();
+}
+
+function rbUpdatePreview() {
+  const selEl    = document.getElementById('rb-course-select');
+  const customEl = document.getElementById('rb-custom-name');
+  const batchEl  = document.getElementById('rb-batch');
+  const preEl    = document.getElementById('rb-preview');
+  if (!preEl) return;
+
+  let name = '';
+  if (selEl && selEl.value && selEl.value !== '__custom__') {
+    name = (selEl.options[selEl.selectedIndex] ? selEl.options[selEl.selectedIndex].dataset.name : null) || '';
+  } else if (customEl) {
+    name = customEl.value.trim();
+  }
+  const batch = (batchEl ? (batchEl.value || '').trim() : '') || '';
+  const clean = name.replace(/[/\\?%*:|"<>]/g, '-');
+  preEl.textContent = clean && batch ? `${clean}-รุ่นที่${batch}.json` : '–';
+}
+
+function startBatchRegister() {
+  const selEl    = document.getElementById('rb-course-select');
+  const customEl = document.getElementById('rb-custom-name');
+  const batchEl  = document.getElementById('rb-batch');
+
+  let courseName = '', courseId = '', type = '';
+  if (selEl && selEl.value && selEl.value !== '__custom__') {
+    const opt  = selEl.options[selEl.selectedIndex];
+    courseName = (opt ? opt.dataset.name : null) || '';
+    courseId   = selEl.value;
+    type       = (opt ? opt.dataset.type : null) || '';
+  } else if (customEl) {
+    courseName = customEl.value.trim();
+  }
+  const batch = (batchEl ? (batchEl.value || '').trim() : '') || '';
+
+  if (!courseName) { Toast.error('กรุณาเลือกหรือกรอกชื่อหลักสูตร'); return; }
+  if (!batch)      { Toast.error('กรุณากรอกรุ่นที่'); return; }
+
+  // reset RegState
+  RegState.courseName = courseName;
+  RegState.batch      = batch;
+  RegState.courseId   = courseId;
+  RegState.type       = type;
+  RegState.persons    = [];
+  RegState.activeIdx  = -1;
+
+  Modal.close();
+  Router.go('admin-register', { courseName, batch, courseId, type });
+}
+// renderViewAdminDashboard has been moved to View_Admin.html to support the premium dashboard layout.
+
+async function renderViewProfile() {
+  const app = document.getElementById('app-content');
+  app.innerHTML = _skeletonPage();
+
+  try {
+    const res = await callAPI('getMemberData', { token: AppState.sessionToken });
+    if (!res.success) {
+      Toast.error(res.error);
+      Router.go('home');
+      return;
+    }
+
+    const d = res.data || {};
+    let profile = {};
+    if (d.profileJson) {
+      try {
+        profile = JSON.parse(d.profileJson);
+      } catch (e) {
+        console.error('Failed to parse profileJson:', e);
+      }
+    }
+
+    // Fallback/merging values from basic columns in case they are updated or profileJson was empty/partial
+    profile.reg_telephone = profile.reg_telephone || d.phone || '';
+    profile.reg_citizenid = profile.reg_citizenid || d.idCard || '';
+    profile.reg_birth = profile.reg_birth || (d.birthDate ? String(d.birthDate).substring(0, 10) : '');
+    profile.reg_address_no = profile.reg_address_no || d.address || '';
+    profile.reg_address_moo = profile.reg_address_moo || d.moo || '';
+    profile.reg_address_subdistrict = profile.reg_address_subdistrict || d.subDistrict || '';
+    profile.reg_address_district = profile.reg_address_district || d.district || '';
+    profile.reg_address_province = profile.reg_address_province || d.province || '';
+    profile.postcode = profile.postcode || d.postalCode || '';
+    
+    // Parse titleTH & titleEN
+    const _getTitleLabelTH = (code) => {
+      const map = { '001': 'นาย', '002': 'นาง', '003': 'นางสาว', '004': 'อื่นๆ' };
+      return map[code] || '';
+    };
+    let titleTH = _getTitleLabelTH(profile.reg_title) || d.titleTH || '';
+    let titleEN = profile.reg_title_en || d.titleEN || '';
+
+    if (!profile.reg_title) {
+      if (titleTH === 'นาย') profile.reg_title = '001';
+      else if (titleTH === 'นาง') profile.reg_title = '002';
+      else if (titleTH === 'นางสาว') profile.reg_title = '003';
+      else if (titleTH === 'อื่นๆ') profile.reg_title = '004';
+      else profile.reg_title = '001';
+    }
+    if (!titleTH) titleTH = _getTitleLabelTH(profile.reg_title) || 'นาย';
+    if (!titleEN) {
+      const enMap = { '001': 'Mr.', '002': 'Mrs.', '003': 'Miss', '004': 'Other' };
+      titleEN = enMap[profile.reg_title] || 'Mr.';
+    }
+
+    // Better first/last name splitting
+    if (d.fullName && (!profile.reg_firstname || !profile.reg_lastname)) {
+      let nameStr = String(d.fullName).trim();
+      if (nameStr.startsWith('นาย')) nameStr = nameStr.substring(3).trim();
+      else if (nameStr.startsWith('นางสาว')) nameStr = nameStr.substring(6).trim();
+      else if (nameStr.startsWith('นาง')) nameStr = nameStr.substring(3).trim();
+
+      const parts = nameStr.split(/\s+/);
+      if (!profile.reg_firstname) profile.reg_firstname = parts[0] || '';
+      if (!profile.reg_lastname) profile.reg_lastname = parts.slice(1).join(' ') || '';
+    }
+
+    // Better english first/last name splitting
+    if (d.fullNameEN && (!profile.reg_firstnameEng || !profile.reg_lastnameEng)) {
+      let nameStrEN = String(d.fullNameEN).trim();
+      if (nameStrEN.toUpperCase().startsWith('MR.')) nameStrEN = nameStrEN.substring(3).trim();
+      else if (nameStrEN.toUpperCase().startsWith('MRS.')) nameStrEN = nameStrEN.substring(4).trim();
+      else if (nameStrEN.toUpperCase().startsWith('MISS.')) nameStrEN = nameStrEN.substring(5).trim();
+      else if (nameStrEN.toUpperCase().startsWith('MISS')) nameStrEN = nameStrEN.substring(4).trim();
+
+      const partsEN = nameStrEN.split(/\s+/);
+      if (!profile.reg_firstnameEng) profile.reg_firstnameEng = partsEN[0] || '';
+      if (!profile.reg_lastnameEng) profile.reg_lastnameEng = partsEN.slice(1).join(' ') || '';
+    }
+
+    if (!profile.reg_education && d.education) {
+      const eduMap = {
+        'ประถมศึกษา': '01',
+        'มัธยมศึกษาตอนต้น': '02',
+        'มัธยมศึกษาตอนต้น (ม.3)': '02',
+        'มัธยมศึกษาตอนปลาย': '03',
+        'มัธยมศึกษาตอนปลาย (ม.6/ปวช.)': '03',
+        'ปวช.': '04',
+        'อนุปริญญา': '05',
+        'อนุปริญญา / ปวส.': '05',
+        'ปวส.': '05',
+        'ปริญญาตรี': '06',
+        'สูงกว่าปริญญาตรี': '07'
+      };
+      profile.reg_education = eduMap[d.education] || d.education || '';
+    }
+
+    if (!profile.gender) profile.gender = '1';
+    if (!profile.work_state) profile.work_state = '0';
+    if (!profile.nationality) profile.nationality = '099';
+
+    // Helper functions for mapping labels
+    const _getEducationLabel = (code) => {
+      const map = {
+        '01': 'ประถมศึกษา',
+        '02': 'มัธยมศึกษาตอนต้น (ม.3)',
+        '03': 'มัธยมศึกษาตอนปลาย (ม.6/ปวช.)',
+        '04': 'ปวช.',
+        '05': 'อนุปริญญา / ปวส.',
+        '06': 'ปริญญาตรี',
+        '07': 'สูงกว่าปริญญาตรี'
+      };
+      return map[code] || code || '-';
+    };
+
+    const _getProvinceLabel = (code) => {
+      const map = {
+        '95': 'ยะลา',
+        '94': 'ปัตตานี',
+        '96': 'นราธิวาส',
+        '90': 'สงขลา',
+        '00': 'อื่นๆ'
+      };
+      return map[code] || code || '-';
+    };
+
+    const _getGenderLabel = (code) => {
+      const map = {
+        '1': 'ชาย',
+        '2': 'หญิง'
+      };
+      return map[code] || '-';
+    };
+
+    const _getWorkSectionLabel = (secCode, govSub, selfSub) => {
+      const secMap = {
+        '1': 'ภาคเอกชน',
+        '2': 'รัฐวิสาหกิจ',
+        '3': 'ภาครัฐ',
+        '4': 'ประกอบธุรกิจส่วนตัว/ประกอบอาชีพอิสระ'
+      };
+      let label = secMap[secCode] || secCode || '-';
+      if (secCode === '3' && govSub) {
+        const govMap = { 'civil': 'ข้าราชการพลเรือน', 'police': 'ข้าราชการตำรวจ', 'military': 'ข้าราชการทหาร', 'teacher': 'ข้าราชการครู' };
+        label += ` (${govMap[govSub] || govSub})`;
+      } else if (secCode === '4' && selfSub) {
+        const selfMap = { 'community': 'วิสาหกิจชุมชน', 'farmer': 'เกษตรกร', 'freelance': 'ผู้รับจ้างทั่วไปโดยไม่มีนายจ้าง (Freelance)' };
+        label += ` (${selfMap[selfSub] || selfSub})`;
+      }
+      return label;
+    };
+
+    // Define toggleProfileEditMode on window to make it accessible to inline onclick
+    window.toggleProfileEditMode = function(isEditing) {
+      const readEl = document.getElementById('profile-read-mode');
+      const editEl = document.getElementById('profile-edit-mode');
+      const readBtn = document.getElementById('btn-pf-edit-toggle');
+      const editActions = document.getElementById('profile-edit-actions');
+      const headerTitle = document.getElementById('pf-header-title');
+
+      if (isEditing) {
+        if (readEl) readEl.style.display = 'none';
+        if (editEl) editEl.style.display = 'block';
+        if (readBtn) readBtn.style.display = 'none';
+        if (editActions) editActions.style.display = 'flex';
+        if (headerTitle) headerTitle.textContent = 'แก้ไขข้อมูลส่วนตัว';
+      } else {
+        if (readEl) readEl.style.display = 'block';
+        if (editEl) editEl.style.display = 'none';
+        if (readBtn) readBtn.style.display = 'flex';
+        if (editActions) editActions.style.display = 'none';
+        if (headerTitle) headerTitle.textContent = 'ข้อมูลส่วนตัว';
+      }
+    };
+
+    app.innerHTML = `
+      <div class="page-header" style="margin-top: 60px">
+        <button class="back-btn" onclick="Router.back()">${_icon('arrow-left')}</button>
+        <h1 id="pf-header-title">ข้อมูลส่วนตัว</h1>
+      </div>
+      <div class="page-content" style="padding-top:16px; padding-bottom: 100px;">
+        
+        <!-- Profile Header Accent Card -->
+        <div class="card" style="margin-bottom:16px; background:linear-gradient(135deg, #185FA5 0%, #1e3a8a 100%); color:white; border:none; border-radius:16px; box-shadow: 0 4px 16px rgba(24,95,165,0.2);">
+          <div class="card-body" style="display:flex; align-items:center; gap:16px; padding:20px">
+            <div id="profile-avatar-display-ring" style="width:64px; height:64px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.5); overflow:hidden; position:relative; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+              <svg id="profile-avatar-display-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="${profile.profileImage ? 'display:none;' : 'display:block;'}">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <img id="profile-avatar-display-img" src="${profile.profileImage || ''}" style="width:100%; height:100%; object-fit:cover; ${profile.profileImage ? 'display:block;' : 'display:none;'} position:absolute; top:0; left:0;">
+            </div>
+            <div>
+              <div style="font-size: 18px; font-weight:700" id="profile-display-name">${titleTH} ${(profile.reg_firstname || d.fullName || '').trim()} ${(profile.reg_lastname || '').trim()}</div>
+              <div style="font-size: 14px; opacity:0.85" id="profile-display-phone">${String(d.phone || '-')}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- READ MODE: BEAUTIFUL CARDS -->
+        <div id="profile-read-mode" style="display:block;">
+          <div class="profile-info-grid" style="display:flex; flex-direction:column; gap:16px;">
+            
+            <!-- General Info Card -->
+            <div class="card" style="border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); border:1px solid var(--gray-100);">
+              <div style="font-size: 16px; font-weight:700; color:var(--blue-700); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                ข้อมูลทั่วไป
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size: 15px;">
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">ชื่อ-นามสกุล (ไทย)</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${titleTH} ${profile.reg_firstname || '-'} ${profile.reg_lastname || ''}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">ชื่อ-นามสกุล (อังกฤษ)</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${titleEN} ${profile.reg_firstnameEng || '-'} ${profile.reg_lastnameEng || ''}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">เลขบัตรประชาชน</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_citizenid || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">วันเกิด</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${_formatDate(profile.reg_birth) || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">เพศ</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${_getGenderLabel(profile.gender)}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">ระดับการศึกษา</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${_getEducationLabel(profile.reg_education)}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">สาขาวิชา / สถาบัน</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_education_section || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">สภาพร่างกาย</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_body_state === '1' ? `พิการ (${profile.reg_body_state_detail || ''})` : 'ปกติ'}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Card -->
+            <div class="card" style="border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); border:1px solid var(--gray-100);">
+              <div style="font-size: 16px; font-weight:700; color:var(--blue-700); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:4px;"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                ข้อมูลการติดต่อ
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size: 15px;">
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">เบอร์โทรศัพท์</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_telephone || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">อีเมล</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_email || '-'}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address Card -->
+            <div class="card" style="border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); border:1px solid var(--gray-100);">
+              <div style="font-size: 16px; font-weight:700; color:var(--blue-700); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ที่อยู่ตามทะเบียนบ้าน
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size: 15px;">
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">บ้านเลขที่</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_address_no || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">หมู่ที่</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_address_moo || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">ซอย</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_address_soi || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">ถนน</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_address_street || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">ตำบล / แขวง</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_address_subdistrict || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">อำเภอ / เขต</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.reg_address_district || '-'}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">จังหวัด</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${_getProvinceLabel(profile.reg_address_province)}</div>
+                </div>
+                <div>
+                  <div style="color:var(--gray-400); margin-bottom:2px;">รหัสไปรษณีย์</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.postcode || '-'}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Occupation Card -->
+            <div class="card" style="border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05); border:1px solid var(--gray-100);">
+              <div style="font-size: 16px; font-weight:700; color:var(--blue-700); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:4px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+                ข้อมูลอาชีพและการทำงาน
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size: 15px;">
+                <div style="grid-column: span 2;">
+                  <div style="color:var(--gray-400); margin-bottom:2px;">สถานะการทำงาน</div>
+                  <div style="font-weight:600; color:var(--gray-800);">${profile.work_state === '1' ? 'ทำงาน' : 'ว่างงาน'}</div>
+                </div>
+                ${profile.work_state === '1' ? `
+                  <div>
+                    <div style="color:var(--gray-400); margin-bottom:2px;">ประเภทธุรกิจ/การทำงาน</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${_getWorkSectionLabel(profile.work_section, profile.work_section_gov, profile.work_section_self)}</div>
+                  </div>
+                  <div>
+                    <div style="color:var(--gray-400); margin-bottom:2px;">ตำแหน่งงาน</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_position || '-'}</div>
+                  </div>
+                  <div>
+                    <div style="color:var(--gray-400); margin-bottom:2px;">อายุงาน (ปี)</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_experience || '-'} ปี</div>
+                  </div>
+                  <div>
+                    <div style="color:var(--gray-400); margin-bottom:2px;">รายได้เฉลี่ย (บาท/เดือน)</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_salary || '-'}</div>
+                  </div>
+                  <div style="grid-column: span 2;">
+                    <div style="color:var(--gray-400); margin-bottom:2px;">สถานที่ทำงาน / ชื่อหน่วยงาน</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_place || '-'}</div>
+                  </div>
+                  <div>
+                    <div style="color:var(--gray-400); margin-bottom:2px;">จังหวัดที่ทำงาน</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_province || '-'}</div>
+                  </div>
+                  <div>
+                    <div style="color:var(--gray-400); margin-bottom:2px;">โทรศัพท์ที่ทำงาน</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_telephone || '-'}</div>
+                  </div>
+                  <div style="grid-column: span 2;">
+                    <div style="color:var(--gray-400); margin-bottom:2px;">กลุ่มอุตสาหกรรม</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.work_group === 'อื่นๆ' ? (profile.work_group_other || 'อื่นๆ') : (profile.work_group || '-')}</div>
+                  </div>
+                ` : `
+                  <div style="grid-column: span 2;">
+                    <div style="color:var(--gray-400); margin-bottom:2px;">สาเหตุที่ว่างงาน</div>
+                    <div style="font-weight:600; color:var(--gray-800);">${profile.unwork_type || '-'}</div>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDIT MODE CONTAINER -->
+        <div id="profile-edit-mode" style="display:none; background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05); padding:16px; margin-bottom: 16px;">
+          <!-- คอนเทนเนอร์สำหรับยัด DsdPersonForm -->
+          <div id="dsd-profile-mount"></div>
+        </div>
+      </div>
+
+      <!-- Action Button fixed to bottom for READ mode -->
+      <div id="btn-pf-edit-toggle" style="position:fixed;bottom:80px;left:16px;right:16px;background:rgba(255,255,255,0.9);backdrop-filter:blur(12px);padding:12px;box-shadow:0 10px 40px -10px rgba(0,0,0,0.15);z-index:99;display:flex;justify-content:center;max-width:448px;margin:0 auto;border-radius:24px;border:1px solid rgba(255,255,255,0.5);">
+        <button class="btn btn-block" style="height:48px;font-size: 16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #185FA5 0%, #104374 100%);color:#fff;border:none;border-radius:16px;box-shadow:0 8px 20px -6px rgba(24,95,165,0.4);transition:all 0.2s;" onclick="toggleProfileEditMode(true)">
+          ${_icon('edit')} แก้ไขข้อมูลส่วนตัว
+        </button>
+      </div>
+
+      <!-- Action Buttons fixed to bottom for EDIT mode -->
+      <div id="profile-edit-actions" style="position:fixed;bottom:80px;left:16px;right:16px;background:rgba(255,255,255,0.9);backdrop-filter:blur(12px);padding:12px;box-shadow:0 10px 40px -10px rgba(0,0,0,0.15);z-index:99;display:none;justify-content:center;gap:12px;max-width:448px;margin:0 auto;border-radius:24px;border:1px solid rgba(255,255,255,0.5);">
+        <button class="btn" style="flex:1;height:48px;font-size: 16px;font-weight:600;background:#F3F4F6;color:#4B5563;border:1px solid #E5E7EB;border-radius:16px;transition:all 0.2s;" onclick="toggleProfileEditMode(false)">
+          ยกเลิก
+        </button>
+        <button id="btn-pf-save" class="btn" style="flex:2;height:48px;font-size: 16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #10B981 0%, #059669 100%);color:#fff;border:none;border-radius:16px;box-shadow:0 8px 20px -6px rgba(16,185,129,0.4);transition:all 0.2s;" onclick="submitProfileUpdate()">
+          ${_icon('check')} บันทึกข้อมูล
+        </button>
+      </div>
+    `;
+
+    // นำ DsdPersonForm มาแปะในหน้าจอ
+    setTimeout(() => {
+      const mountNode = document.getElementById('dsd-profile-mount');
+      if (typeof DsdPersonForm !== 'undefined' && mountNode) {
+        DsdPersonForm.mount(mountNode, profile, {});
+        
+        // ล็อคช่องเบอร์โทรไว้ เพื่อป้องกันการเปลี่ยนเบอร์เข้าสู่ระบบโดยตรง
+        const telInput = document.getElementById('dsd_reg_telephone') || DsdPersonForm._el('reg_telephone');
+        if (telInput) {
+          telInput.disabled = true;
+          telInput.style.background = 'var(--gray-50)';
+          telInput.style.cursor = 'not-allowed';
+        }
+
+        // แสดงรูปโปรไฟล์ใน Header ด้านบนแบบ real-time
+        const updateHeaderAvatar = () => {
+          const imgData = (DsdPersonForm._data ? DsdPersonForm._data.profileImage : null);
+          const displayImg = document.getElementById('profile-avatar-display-img');
+          const displayIcon = document.getElementById('profile-avatar-display-icon');
+          if (imgData && imgData.startsWith('data:')) {
+            if (displayImg) { displayImg.src = imgData; displayImg.style.display = 'block'; }
+            if (displayIcon) { displayIcon.style.display = 'none'; }
+          } else {
+            if (displayImg) { displayImg.style.display = 'none'; }
+            if (displayIcon) { displayIcon.style.display = 'block'; }
+          }
+        };
+
+        updateHeaderAvatar();
+
+        // ดักฟังการอัปเดตรูปถ่ายโปรไฟล์จาก input
+        const origUpdateProgress = DsdPersonForm.updateProgress;
+        DsdPersonForm.updateProgress = function() {
+          origUpdateProgress.call(this);
+          updateHeaderAvatar();
+        };
+
+      } else {
+        Toast.error('ไม่พบไฟล์แบบฟอร์ม DSD');
+      }
+    }, 100);
+
+  } catch (err) {
+    console.error('Error rendering profile:', err);
+    app.innerHTML = `
+      <div class="page-header" style="margin-top: 60px">
+        <button class="back-btn" onclick="Router.back()">${_icon('arrow-left')}</button>
+        <h1>ข้อมูลส่วนตัว</h1>
+      </div>
+      <div class="page-content" style="padding: 20px; text-align: center">
+        <div style="color: var(--red-600); font-weight: 600; margin-bottom: 12px">
+          เกิดข้อผิดพลาดในการโหลดข้อมูลส่วนตัว
+        </div>
+        <div style="font-family: monospace; font-size: 14px; color: var(--gray-600); background: var(--gray-50); padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: left; word-break: break-all">
+          ${err.stack || err.message || err}
+        </div>
+        <button class="btn btn-secondary" onclick="Router.go('dashboard')">กลับไปยังหน้าหลัก</button>
+      </div>
+    `;
+  }
+}
+
+
+async function renderViewNotifications() {
+  const app = document.getElementById('app-content');
+  app.innerHTML = _skeletonPage();
+
+  const res = await callAPI('getMemberData', { token: AppState.sessionToken });
+  if (!res.success) {
+    Toast.error(res.error);
+    Router.go('home');
+    return;
+  }
+
+  const d = res.data;
+
+  // โหลดหรือสร้าง lookup map สำหรับดึงชื่อหลักสูตรและสาขาทดสอบ
+  const branchMap = {};
+  const courseMap = {};
+  (AppState.masterBranches || []).forEach(b => { branchMap[b.id] = b.name; });
+  (AppState.masterCourses || []).forEach(c => { courseMap[c.id] = c.name; });
+
+  const notifications = d.notifications || [];
+
+  app.innerHTML = `
+    <div class="page-header" style="margin-top: 60px">
+      <button class="back-btn" onclick="Router.go('dashboard')">${_icon('arrow-left')}</button>
+      <h1 style="flex:1">การแจ้งเตือน</h1>
+    </div>
+    <div class="page-content" style="padding-top:16px">
+      ${notifications.length === 0 ? `
+        <div class="empty-state" style="padding:48px 16px; text-align:center">
+          <div style="width:56px;height:56px;background:var(--gray-50);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+          </div>
+          <p style="color:var(--gray-500)">ไม่มีการแจ้งเตือนนัดหมายในขณะนี้</p>
+        </div>
+      ` : notifications.map(n => {
+        const isTest = n.type === 'test';
+        let targetName = '';
+        if (isTest) {
+          const item = d.testQueues.find(q => q.queueId === n.queueId);
+          const branchId = item ? item.branchId : '';
+          targetName = branchMap[branchId] || branchId || 'การทดสอบมาตรฐานฝีมือแรงงาน';
+        } else {
+          const item = d.trainQueues.find(q => q.enrollId === n.queueId);
+          const courseId = item ? item.courseId : '';
+          targetName = courseMap[courseId] || courseId || 'หลักสูตรฝึกอบรมฯ';
+        }
+
+        // เช็คว่ามีคำว่า "กำหนดการนัดหมายใหม่" ไหม เพื่อจะโชว์ปุ่มรับนัด
+        const isAppt = n.message && n.message.includes('กำหนดการนัดหมายใหม่');
+        // ดึงวันที่นัดหมายออกจากข้อความ ถ้าเป็นไปได้
+        let apptDateStr = n.date;
+        if (isAppt) {
+          const match = n.message.match(/ในวันที่\s+([0-9/:\s]+)/);
+          if (match) apptDateStr = match[1];
+        }
+
+        return `
+          <div class="card" style="margin-bottom:12px; border-left: 4px solid ${isTest ? 'var(--blue-600)' : 'var(--purple-600)'}; position: relative;">
+            <div class="card-body" style="padding:16px">
+              <button onclick="deleteNotificationClient('${n.id}')" style="position:absolute; top:12px; right:12px; background:none; border:none; cursor:pointer; color:var(--gray-400); padding:4px;" title="ลบการแจ้งเตือน">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+              </button>
+              <div style="display:flex; gap:12px; align-items:flex-start">
+                <span style="font-size: 28px; line-height:1">${isTest ? '📝' : '🎓'}</span>
+                <div style="flex:1; padding-right: 24px;">
+                  <div style="font-weight:700; font-size: 16px; color:var(--gray-800)">
+                    ${n.message ? n.message : (isTest ? 'มีการนัดหมายทดสอบมาตรฐานฝีมือแรงงาน' : 'มีการนัดหมายฝึกอบรมฯ')}
+                  </div>
+                  <div style="font-size: 15px; color:var(--gray-600); margin-top:2px">
+                    ${targetName}
+                  </div>
+                  <div style="font-size: 14px; color:var(--blue-600); font-weight:600; margin-top:6px; display:flex; align-items:center; gap:4px">
+                    <span>📅</span> วันที่แจ้ง: ${_formatDate(n.date)}
+                  </div>
+                  
+                  ${isAppt ? `
+                  <div style="margin-top:12px; border-top:1px solid var(--gray-100); padding-top:12px; display:flex; justify-content:flex-end">
+                    <button class="btn btn-primary btn-sm" id="btn-ack-${n.id}"
+                      onclick="acknowledgeAppointment('${n.queueId}', '${n.type}', '${apptDateStr}', '${targetName.replace(/'/g,"\\'")}')">
+                      รับนัด + บันทึกปฏิทิน
+                    </button>
+                  </div>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function deleteNotificationClient(notifId) {
+  Modal.confirm(
+    'ลบการแจ้งเตือน',
+    'คุณต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?',
+    async () => {
+      const res = await callAPI('deleteNotification', {
+        token: AppState.sessionToken,
+        notifId
+      });
+      if (!res.success) {
+        Toast.error(res.error);
+        return;
+      }
+      Toast.success('ลบการแจ้งเตือนสำเร็จ');
+      renderViewNotifications();
+    }
+  );
+}
+
+async function submitProfileUpdate() {
+  if (typeof DsdPersonForm === 'undefined') {
+    Toast.error('ระบบฟอร์มขัดข้อง');
+    return;
+  }
+
+  // Validate form
+  if (!DsdPersonForm.validate()) {
+    Toast.error('กรุณากรอกข้อมูลบังคับ (*) ให้ครบถ้วน');
+    return;
+  }
+
+  // Collect form data
+  const profileData = DsdPersonForm.collect();
+  if (!profileData) return;
+
+  const btn = document.getElementById('btn-pf-save');
+  _setLoading(btn, true, 'กำลังบันทึกข้อมูล...');
+
+  // Convert to JSON String
+  const profileJsonStr = JSON.stringify(profileData);
+
+  const res = await callAPI('updateMemberProfile', {
+    token: AppState.sessionToken,
+    profileJson: profileJsonStr,
+  });
+
+  _setLoading(btn, false);
+
+  if (!res.success) {
+    Toast.error(res.error || 'บันทึกไม่สำเร็จ');
+    return;
+  }
+
+  // Update name and state
+  const newName = (profileData.reg_firstname + ' ' + (profileData.reg_lastname || '')).trim();
+  AppState.set('currentUser', { 
+    ...(AppState.currentUser || {}), 
+    fullName: newName,
+  });
+  AppState.saveSession();
+
+  Toast.success('ปรับปรุงข้อมูลส่วนตัวสำเร็จ!');
+  
+  // Reload profile view in read mode
+  renderViewProfile();
+}
+</script>

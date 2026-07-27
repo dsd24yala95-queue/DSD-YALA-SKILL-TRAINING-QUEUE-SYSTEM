@@ -1,0 +1,4 @@
+courseId,courseName,durationDays,maxSeats,currentQueue,isOpen,docTemplateId,Date,LocationName,LocationGPS,
+CRS-26055058,ช่างเครื่องปรับอากาศ,5,20,2,TRUE,,2026-06-01|2026-06-05,https://maps.app.goo.gl/671SyoQRKnKXafJA8,"6.549333234597481, 101.35066919551909",29/5/2026
+CRS-26055395,การทำเบเกอรี่,5,20,2,TRUE,,2026-06-22|2026-06-26,https://maps.app.goo.gl/8fmhTkkjws1DBrkg8,,
+CRS-26059533,ช่างติดตั้งเครื่องปรับอากาศและการพานิชย์ขนาดเล็ก ระดับ 1,5,20,1,TRUE,,2026-07-20|2026-07-25,https://maps.app.goo.gl/duXi9LjuXonBrwbE9,,

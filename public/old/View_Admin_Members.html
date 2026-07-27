@@ -1,0 +1,686 @@
+<script>
+  // ============================================================
+  //  View_Admin_Members.html – Member Data Management
+  // ============================================================
+
+  async function renderViewAdminMembers(params = {}) {
+    const app = document.getElementById('app-content');
+    const bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+
+    const contentHTML = `
+<style>
+  /* ─── View_Admin_Members.html – Member Data Management ─── */
+  .adm-mem-wrap    { padding: 20px; flex: 1; }
+  .adm-mem-topbar  {
+    background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04); padding: 16px 20px;
+    margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .adm-mem-title   { font-size: 21px; font-weight: 700; color: #1e293b; }
+  .adm-mem-sub     { font-size: 13px; color: #64748b; margin-top: 2px; }
+  .adm-mem-search  {
+    display: flex; align-items: center; gap: 10px;
+    background: #f8fafc; border: 1.5px solid #e2e8f0;
+    border-radius: 12px; padding: 0 14px; height: 44px;
+  }
+  .adm-mem-search input {
+    border: none; background: transparent; outline: none;
+    font-family: 'Sarabun', sans-serif; font-size: 15px; color: #1e293b; flex: 1;
+  }
+  .adm-mem-search input::placeholder { color: #94a3b8; }
+
+  /* Table card */
+  .adm-mem-card    {
+    background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04); overflow: hidden;
+  }
+  .adm-mem-table   { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .adm-mem-table thead { background: #f8fafc; }
+  .adm-mem-table th {
+    padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600;
+    color: #64748b; border-bottom: 1.5px solid #e2e8f0; white-space: nowrap;
+  }
+  .adm-mem-table td {
+    padding: 12px 16px; border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle; color: #334155;
+  }
+  .adm-mem-table tr:last-child td { border-bottom: none; }
+  .adm-mem-table tr:hover td { background: #f8fafc; }
+  .adm-mem-name    { font-weight: 600; color: #1e293b; }
+  .adm-mem-id      { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  /* Badge */
+  .mem-badge       { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+  .mem-badge.active{ background: #dcfce7; color: #16a34a; }
+  .mem-badge.banned{ background: #fee2e2; color: #dc2626; }
+
+  /* Action btn in table */
+  .mem-view-btn {
+    padding: 6px 14px; border-radius: 10px; background: #eff6ff; color: #2563eb;
+    border: none; cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: 'Sarabun', sans-serif; transition: background .15s;
+  }
+  .mem-view-btn:hover { background: #dbeafe; }
+
+  /* Pagination footer */
+  .adm-mem-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-top: 1px solid #f1f5f9; background: #f8fafc;
+    font-size: 13px; color: #64748b;
+  }
+  .adm-mem-pgbtn {
+    padding: 7px 18px; border-radius: 10px; background: #fff;
+    border: 1.5px solid #e2e8f0; cursor: pointer; font-size: 13px;
+    font-family: 'Sarabun', sans-serif; transition: background .15s;
+  }
+  .adm-mem-pgbtn:hover:not(:disabled) { background: #f1f5f9; }
+  .adm-mem-pgbtn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── SLIDE-OVER PANEL ── */
+  .mem-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 500;
+    display: none; animation: memFade .2s ease;
+  }
+  .mem-overlay.open { display: block; }
+  @keyframes memFade { from { opacity: 0; } to { opacity: 1; } }
+  .mem-panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 92%; max-width: 680px;
+    background: #fff; z-index: 501; display: flex; flex-direction: column;
+    animation: memSlide .25s ease;
+  }
+  @keyframes memSlide { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .mem-panel-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;
+  }
+  .mem-panel-hdr h2 { font-size: 18px; font-weight: 700; color: #1e293b; }
+  .mem-close-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: none; background: #f1f5f9;
+    font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #64748b; transition: background .15s;
+  }
+  .mem-close-btn:hover { background: #e2e8f0; }
+  .mem-panel-body  { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* Hero banner inside panel */
+  .mem-hero {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 16px; padding: 20px; color: #fff; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .mem-hero-name  { font-size: 22px; font-weight: 700; }
+  .mem-hero-meta  { font-size: 13px; color: #c7d2fe; margin-top: 4px; }
+  .mem-hero-badge { padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
+                    background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.3); }
+
+  /* Profile section groups */
+  .mem-sections   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width: 520px) { .mem-sections { grid-template-columns: 1fr; } }
+  .mem-section    {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px;
+  }
+  .mem-sec-title  {
+    font-size: 12px; font-weight: 700; color: #6366f1; text-transform: uppercase;
+    letter-spacing: .6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .mem-field      { margin-bottom: 8px; }
+  .mem-field-label{ font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+  .mem-field-val  { font-size: 13px; font-weight: 600; color: #1e293b; word-break: break-word; }
+
+  /* Action buttons at bottom */
+  .mem-panel-actions {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 20px;
+    border-top: 1px solid #e2e8f0; flex-shrink: 0;
+  }
+  .mem-act-btn {
+    flex: 1; min-width: 120px; padding: 11px 16px; border-radius: 12px; border: none;
+    font-size: 14px; font-weight: 600; font-family: 'Sarabun', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: opacity .15s;
+  }
+  .mem-act-btn:hover { opacity: .85; }
+  .mem-act-edit   { background: #4f46e5; color: #fff; }
+  .mem-act-ban    { background: #f59e0b; color: #fff; }
+  .mem-act-unban  { background: #10b981; color: #fff; }
+  .mem-act-del    { background: #ef4444; color: #fff; }
+
+  /* Edit Form inside panel */
+  .mem-edit-form  { display: none; }
+  .mem-edit-form.open { display: block; }
+  .mem-edit-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width: 520px) { .mem-edit-grid { grid-template-columns: 1fr; } }
+  .mem-edit-group { display: flex; flex-direction: column; gap: 4px; }
+  .mem-edit-label { font-size: 12px; font-weight: 600; color: #64748b; }
+  .mem-edit-input {
+    height: 40px; padding: 0 12px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+    font-family: 'Sarabun', sans-serif; font-size: 14px; color: #1e293b;
+    background: #fff; outline: none; transition: border-color .15s;
+  }
+  .mem-edit-input:focus { border-color: #6366f1; }
+  .mem-save-btn {
+    margin-top: 16px; width: 100%; padding: 12px; border-radius: 12px;
+    background: #4f46e5; color: #fff; border: none; font-size: 15px;
+    font-weight: 700; font-family: 'Sarabun', sans-serif; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .mem-save-btn:hover { opacity: .88; }
+
+  /* Empty state */
+  .mem-empty { text-align: center; padding: 48px 16px; color: #94a3b8; font-size: 15px; }
+</style>
+
+<div id="mem-topbar-wrapper"></div>
+
+
+<div class="adm-body" style="padding-top:0;">
+  <div class="adm-mem-card">
+    <div style="overflow-x:auto;">
+      <table class="adm-mem-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ชื่อ-นามสกุล</th>
+            <th>เลขบัตรประชาชน</th>
+            <th>เบอร์โทรศัพท์</th>
+            <th>วันที่สมัคร</th>
+            <th>สถานะ</th>
+            <th style="text-align:center;">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="mem-table-body"></tbody>
+      </table>
+    </div>
+    <div class="adm-mem-footer">
+      <span id="mem-pg-info">กำลังโหลด...</span>
+      <div style="display:flex;gap:8px;">
+        <button class="adm-mem-pgbtn" id="mem-prev-btn" disabled onclick="_memPrevPage()">← ก่อนหน้า</button>
+        <button class="adm-mem-pgbtn" id="mem-next-btn" disabled onclick="_memNextPage()">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE-OVER OVERLAY -->
+<div class="mem-overlay" id="mem-overlay" onclick="_memClosePanel()"></div>
+
+<!-- SLIDE-OVER PANEL -->
+<div class="mem-panel" id="mem-panel" style="display:none;">
+  <div class="mem-panel-hdr">
+    <div>
+      <h2>แฟ้มประวัติสมาชิก</h2>
+      <div style="font-size:12px;color:#94a3b8;margin-top:2px;">รายละเอียดข้อมูลสมาชิก</div>
+    </div>
+    <button class="mem-close-btn" onclick="_memClosePanel()">×</button>
+  </div>
+
+  <div class="mem-panel-body">
+    <!-- HERO -->
+    <div class="mem-hero">
+      <div>
+        <div class="mem-hero-name" id="mp-name">-</div>
+        <div class="mem-hero-meta" id="mp-phone">-</div>
+        <div class="mem-hero-meta" id="mp-idcard">-</div>
+      </div>
+      <div id="mp-status-badge" class="mem-hero-badge">Active</div>
+    </div>
+
+    <!-- VIEW MODE: profile sections -->
+    <div id="mem-view-mode">
+      <div class="mem-sections" id="mp-sections"></div>
+    </div>
+
+    <!-- EDIT MODE: form -->
+    <div id="mem-edit-mode" class="mem-edit-form">
+      <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">✏️ แก้ไขข้อมูลสมาชิก</div>
+      <div class="mem-edit-grid">
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">คำนำหน้า</label>
+          <input class="mem-edit-input" id="medit-title" placeholder="นาย / นาง / นางสาว" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">ชื่อ-นามสกุล</label>
+          <input class="mem-edit-input" id="medit-name" placeholder="ชื่อ นามสกุล" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">เบอร์โทรศัพท์</label>
+          <input class="mem-edit-input" id="medit-phone" placeholder="0xxxxxxxxx" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">เลขบัตรประชาชน</label>
+          <input class="mem-edit-input" id="medit-idcard" placeholder="1-xxxx-xxxxx-xx-x" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">วุฒิการศึกษา</label>
+          <input class="mem-edit-input" id="medit-edu" placeholder="เช่น ปริญญาตรี" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">อาชีพ</label>
+          <input class="mem-edit-input" id="medit-job" placeholder="เช่น ช่างไฟฟ้า" />
+        </div>
+        <div class="mem-edit-group" style="grid-column:1/-1;">
+          <label class="mem-edit-label">ที่อยู่</label>
+          <input class="mem-edit-input" id="medit-addr" placeholder="บ้านเลขที่ ถนน" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">ตำบล / แขวง</label>
+          <input class="mem-edit-input" id="medit-subdistrict" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">อำเภอ / เขต</label>
+          <input class="mem-edit-input" id="medit-district" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">จังหวัด</label>
+          <input class="mem-edit-input" id="medit-province" />
+        </div>
+        <div class="mem-edit-group">
+          <label class="mem-edit-label">รหัสไปรษณีย์</label>
+          <input class="mem-edit-input" id="medit-postal" />
+        </div>
+      </div>
+      <button class="mem-save-btn" onclick="_memSaveEdit()">💾 บันทึกการแก้ไข</button>
+      <button onclick="_memToggleEdit(false)" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-size:14px;font-family:'Sarabun',sans-serif;cursor:pointer;color:#64748b;">ยกเลิก</button>
+    </div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="mem-panel-actions">
+    <button class="mem-act-btn mem-act-edit" onclick="_memToggleEdit(true)">✏️ แก้ไขข้อมูล</button>
+    <button class="mem-act-btn mem-act-ban"  id="mem-ban-btn"  onclick="_memToggleStatus()">🚫 ระงับการใช้งาน</button>
+    <button class="mem-act-btn mem-act-del"  onclick="_memDelete()">🗑️ ลบสมาชิก</button>
+  </div>
+</div>
+
+
+  `;
+
+    app.innerHTML = AdminLayout.build(contentHTML, 'admin-members');
+
+    // Build topbar
+    document.getElementById('mem-topbar-wrapper').innerHTML = AdminLayout.buildTopbar('จัดการข้อมูลสมาชิก', 'ระบบจัดการฐานข้อมูลสมาชิกทั้งหมดในระบบ', `
+    <div class="adm-mem-search" style="height:36px; border-radius:10px; width:280px;">
+      <svg width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="mem-search-input" type="text" placeholder="ค้นหา ชื่อ / เลขบัตร..." style="font-size:14px;" />
+    </div>
+  `);
+
+    // Initialize - เรียกเมื่อมีการ render view เท่านั้น (ไม่ใช่ auto-boot)
+    if (typeof _init === 'function') {
+      _init();
+    }
+  }
+
+  // ────────────────────────────────────────────────
+  // STATE
+  // ────────────────────────────────────────────────
+  let _state = {
+    members: [],
+    filtered: [],
+    pagination: {},
+    currentPage: 1,
+    pageSize: 20,
+    search: '',
+    selected: null,    // member object currently in panel
+  };
+
+  // ────────────────────────────────────────────────
+  // INIT
+  // ────────────────────────────────────────────────
+  function _init() {
+    document.getElementById('mem-search-input').addEventListener('input', _handleSearch);
+    _loadMembers();
+  }
+
+  // ────────────────────────────────────────────────
+  // API CALLS
+  // ────────────────────────────────────────────────
+  function _loadMembers() {
+    _tableLoading(true);
+    callAPI('getAdminMembersList', {
+      token: AppState.sessionToken,
+      page: _state.currentPage,
+      pageSize: _state.pageSize,
+      search: _state.search,
+    }).then(res => {
+      _tableLoading(false);
+      if (!res.success) { Toast.error(res.error || 'โหลดข้อมูลไม่สำเร็จ'); return; }
+      _state.members = res.data.members || [];
+      _state.filtered = [..._state.members];
+      _state.pagination = res.data.pagination || {};
+      _renderTable();
+      _renderPagination();
+    }).catch(e => {
+      _tableLoading(false);
+      Toast.error('เกิดข้อผิดพลาด: ' + e.message);
+    });
+  }
+
+  // ────────────────────────────────────────────────
+  // SEARCH (client-side on current page + server reload)
+  // ────────────────────────────────────────────────
+  let _searchTimer = null;
+  function _handleSearch(e) {
+    const kw = e.target.value.trim();
+    _state.search = kw;
+
+    // Client-side instant filter for current page results
+    if (!kw) {
+      _state.filtered = [..._state.members];
+      _renderTable();
+    } else {
+      const kwL = kw.toLowerCase();
+      _state.filtered = _state.members.filter(m =>
+        (m.fullName || '').toLowerCase().includes(kwL) ||
+        (m.phone || '').toLowerCase().includes(kwL) ||
+        (m.idCard || '').toLowerCase().includes(kwL)
+      );
+      _renderTable();
+    }
+
+    // Server-side search (debounced 600ms) for cross-page results
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => {
+      _state.currentPage = 1;
+      _loadMembers();
+    }, 600);
+  }
+
+  // ────────────────────────────────────────────────
+  // RENDER TABLE
+  // ────────────────────────────────────────────────
+  function _renderTable() {
+    const tbody = document.getElementById('mem-table-body');
+    if (!_state.filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="mem-empty">📭 ไม่พบข้อมูลสมาชิก</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = _state.filtered.map((m, i) => {
+      const statusCls = m.status === 'banned' ? 'banned' : 'active';
+      const statusLbl = m.status === 'banned' ? 'ระงับแล้ว' : 'ปกติ';
+      const idx = (_state.pagination.page - 1) * _state.pageSize + i + 1;
+      return `
+        <tr>
+          <td style="color:#94a3b8;font-size:13px;">${idx}</td>
+          <td>
+            <div class="adm-mem-name">${_esc(m.fullName) || '-'}</div>
+            <div class="adm-mem-id">${_esc(m.memberId)}</div>
+          </td>
+          <td style="font-size:13px;">${_esc(m.idCard) || '-'}</td>
+          <td style="font-size:13px;">${_esc(m.phone) || '-'}</td>
+          <td style="font-size:13px;color:#64748b;">${_esc(m.createdAt) || '-'}</td>
+          <td><span class="mem-badge ${statusCls}">${statusLbl}</span></td>
+          <td style="text-align:center;">
+            <button class="mem-view-btn" onclick="_memOpenPanel(${m.rowIndex})">ดูข้อมูล</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function _renderPagination() {
+    const pg = _state.pagination;
+    document.getElementById('mem-pg-info').textContent =
+      `หน้า ${pg.page || 1} / ${pg.totalPages || 1}  •  สมาชิกทั้งหมด ${pg.total || 0} คน`;
+    document.getElementById('mem-prev-btn').disabled = !pg.hasPrev;
+    document.getElementById('mem-next-btn').disabled = !pg.hasNext;
+  }
+
+  function _tableLoading(on) {
+    const tbody = document.getElementById('mem-table-body');
+    if (on) tbody.innerHTML = '<tr><td colspan="7"><div class="mem-empty">⏳ กำลังโหลด...</div></td></tr>';
+  }
+
+  // ────────────────────────────────────────────────
+  // PAGINATION
+  // ────────────────────────────────────────────────
+  window._memPrevPage = function () {
+    if (!_state.pagination.hasPrev) return;
+    _state.currentPage--;
+    _loadMembers();
+  };
+  window._memNextPage = function () {
+    if (!_state.pagination.hasNext) return;
+    _state.currentPage++;
+    _loadMembers();
+  };
+
+  // ────────────────────────────────────────────────
+  // SLIDE-OVER PANEL
+  // ────────────────────────────────────────────────
+  window._memOpenPanel = function (rowIndex) {
+    const m = _state.members.find(x => x.rowIndex === rowIndex);
+    if (!m) return;
+    _state.selected = m;
+    _memToggleEdit(false);
+    _renderPanel(m);
+    document.getElementById('mem-overlay').classList.add('open');
+    document.getElementById('mem-panel').style.display = 'flex';
+  };
+
+  window._memClosePanel = function () {
+    document.getElementById('mem-overlay').classList.remove('open');
+    document.getElementById('mem-panel').style.display = 'none';
+    _state.selected = null;
+  };
+
+  function _renderPanel(m) {
+    document.getElementById('mp-name').textContent = m.fullName || '-';
+    document.getElementById('mp-phone').textContent = '📞 ' + (m.phone || '-');
+    document.getElementById('mp-idcard').textContent = '🪪 ' + (m.idCard || '-');
+
+    const isBanned = m.status === 'banned';
+    const badge = document.getElementById('mp-status-badge');
+    badge.textContent = isBanned ? '🚫 ระงับการใช้งาน' : '✅ ใช้งานปกติ';
+    badge.style.background = isBanned ? 'rgba(239,68,68,.25)' : 'rgba(16,185,129,.2)';
+
+    const banBtn = document.getElementById('mem-ban-btn');
+    if (isBanned) {
+      banBtn.textContent = '✅ ปลดระงับ';
+      banBtn.className = 'mem-act-btn mem-act-unban';
+    } else {
+      banBtn.textContent = '🚫 ระงับการใช้งาน';
+      banBtn.className = 'mem-act-btn mem-act-ban';
+    }
+
+    _renderProfileSections(m.profileObj || {}, m);
+  }
+
+  function _renderProfileSections(p, m) {
+    // กลุ่มที่ 1: ข้อมูลส่วนตัว
+    const personal = [
+      { label: 'ชื่อ', val: p.reg_firstname || m.fullName },
+      { label: 'นามสกุล', val: p.reg_lastname || '' },
+      { label: 'ชื่อเล่น', val: p.reg_nickname || '-' },
+      { label: 'เพศ', val: p.reg_gender || '-' },
+      { label: 'วันเกิด', val: p.reg_birth || '-' },
+      { label: 'สัญชาติ', val: p.reg_nation || '-' },
+      { label: 'ศาสนา', val: p.reg_religion || '-' },
+      { label: 'สถานภาพ', val: p.reg_status || '-' },
+    ];
+    // กลุ่มที่ 2: ข้อมูลติดต่อ
+    const contact = [
+      { label: 'เบอร์โทรศัพท์', val: m.phone || '-' },
+      { label: 'อีเมล', val: p.reg_email || '-' },
+      { label: 'Line ID', val: p.reg_line || '-' },
+      { label: 'Facebook', val: p.reg_facebook || '-' },
+    ];
+    // กลุ่มที่ 3: การศึกษา
+    const education = [
+      { label: 'วุฒิการศึกษา', val: p.reg_edu_level || '-' },
+      { label: 'สถานศึกษา', val: p.reg_edu_inst || '-' },
+      { label: 'คณะ', val: p.reg_edu_fac || '-' },
+      { label: 'สาขา', val: p.reg_edu_major || '-' },
+      { label: 'ปีที่จบการศึกษา', val: p.reg_edu_year || '-' },
+    ];
+    // กลุ่มที่ 4: ที่อยู่
+    const address = [
+      { label: 'ที่อยู่', val: p.reg_address || m.rowIndex },
+      { label: 'ตำบล', val: p.reg_subdistrict || '-' },
+      { label: 'อำเภอ', val: p.reg_district || '-' },
+      { label: 'จังหวัด', val: p.reg_province || '-' },
+      { label: 'รหัสไปรษณีย์', val: p.reg_postal || '-' },
+    ];
+    // กลุ่มที่ 5: อาชีพ
+    const work = [
+      { label: 'อาชีพ', val: p.reg_job || '-' },
+      { label: 'บริษัท', val: p.reg_company || '-' },
+      { label: 'ตำแหน่ง', val: p.reg_position || '-' },
+      { label: 'รายได้ต่อเดือน', val: p.reg_income || '-' },
+    ];
+    // กลุ่มที่ 6: ข้อมูลเพิ่มเติม
+    const extra = [
+      { label: 'ความสามารถพิเศษ', val: p.reg_special || '-' },
+      { label: 'งานอดิเรก', val: p.reg_hobby || '-' },
+      { label: 'บุคคลอ้างอิง', val: p.reg_ref || '-' },
+      { label: 'หมายเหตุ', val: p.reg_note || '-' },
+    ];
+
+    const groups = [
+      { icon: '👤', title: 'ข้อมูลส่วนตัว', fields: personal },
+      { icon: '📞', title: 'ข้อมูลติดต่อ', fields: contact },
+      { icon: '🎓', title: 'ข้อมูลการศึกษา', fields: education },
+      { icon: '🏠', title: 'ข้อมูลที่อยู่', fields: address },
+      { icon: '💼', title: 'ข้อมูลอาชีพ', fields: work },
+      { icon: 'ℹ️', title: 'ข้อมูลเพิ่มเติม', fields: extra },
+    ];
+
+    document.getElementById('mp-sections').innerHTML = groups.map(g => `
+      <div class="mem-section">
+        <div class="mem-sec-title">${g.icon} ${g.title}</div>
+        ${g.fields.map(f => `
+          <div class="mem-field">
+            <div class="mem-field-label">${f.label}</div>
+            <div class="mem-field-val">${_esc(String(f.val || '-'))}</div>
+          </div>`).join('')}
+      </div>`).join('');
+  }
+
+  // ────────────────────────────────────────────────
+  // EDIT MODE
+  // ────────────────────────────────────────────────
+  window._memToggleEdit = function (on) {
+    document.getElementById('mem-view-mode').style.display = on ? 'none' : 'block';
+    document.getElementById('mem-edit-mode').style.display = on ? 'block' : 'none';
+    if (on && _state.selected) {
+      const m = _state.selected;
+      const p = m.profileObj || {};
+      document.getElementById('medit-title').value = m.titleTH || '';
+      document.getElementById('medit-name').value = m.fullName || '';
+      document.getElementById('medit-phone').value = m.phone || '';
+      document.getElementById('medit-idcard').value = m.idCard || '';
+      document.getElementById('medit-edu').value = p.reg_edu_level || '';
+      document.getElementById('medit-job').value = p.reg_job || '';
+      document.getElementById('medit-addr').value = p.reg_address || '';
+      document.getElementById('medit-subdistrict').value = p.reg_subdistrict || '';
+      document.getElementById('medit-district').value = p.reg_district || '';
+      document.getElementById('medit-province').value = p.reg_province || '';
+      document.getElementById('medit-postal').value = p.reg_postal || '';
+    }
+  };
+
+  window._memSaveEdit = function () {
+    const m = _state.selected;
+    if (!m) return;
+    const updatedProfile = Object.assign({}, m.profileObj || {}, {
+      reg_edu_level: document.getElementById('medit-edu').value.trim(),
+      reg_job: document.getElementById('medit-job').value.trim(),
+      reg_address: document.getElementById('medit-addr').value.trim(),
+      reg_subdistrict: document.getElementById('medit-subdistrict').value.trim(),
+      reg_district: document.getElementById('medit-district').value.trim(),
+      reg_province: document.getElementById('medit-province').value.trim(),
+      reg_postal: document.getElementById('medit-postal').value.trim(),
+    });
+
+    Toast.info('กำลังบันทึก...');
+    callAPI('updateAdminMemberProfile', {
+      token: AppState.sessionToken,
+      rowIndex: m.rowIndex,
+      fullName: document.getElementById('medit-name').value.trim(),
+      phone: document.getElementById('medit-phone').value.trim(),
+      idCard: document.getElementById('medit-idcard').value.trim(),
+      titleTH: document.getElementById('medit-title').value.trim(),
+      profileObj: updatedProfile,
+    }).then(res => {
+      if (!res.success) { Toast.error(res.error || 'บันทึกไม่สำเร็จ'); return; }
+      Toast.success('บันทึกข้อมูลเรียบร้อย');
+      // อัปเดต local state
+      m.fullName = (document.getElementById('medit-title').value.trim() + ' ' +
+        document.getElementById('medit-name').value.trim()).trim();
+      m.phone = document.getElementById('medit-phone').value.trim();
+      m.idCard = document.getElementById('medit-idcard').value.trim();
+      m.titleTH = document.getElementById('medit-title').value.trim();
+      m.profileObj = updatedProfile;
+      _memToggleEdit(false);
+      _renderPanel(m);
+      _renderTable();
+    }).catch(e => Toast.error('เกิดข้อผิดพลาด: ' + e.message));
+  };
+
+  // ────────────────────────────────────────────────
+  // BAN / UNBAN
+  // ────────────────────────────────────────────────
+  window._memToggleStatus = function () {
+    const m = _state.selected;
+    if (!m) return;
+    const newStatus = m.status === 'banned' ? 'active' : 'banned';
+    const label = newStatus === 'banned' ? 'ระงับการใช้งาน' : 'ปลดระงับ';
+
+    Modal.confirm(
+      `⚠️ ยืนยันการ${label}`,
+      `ต้องการ${label}สมาชิก <b>${_esc(m.fullName)}</b> ใช่หรือไม่?`,
+      () => {
+        Toast.info('กำลังดำเนินการ...');
+        callAPI('updateAdminMemberStatus', {
+          token: AppState.sessionToken,
+          rowIndex: m.rowIndex,
+          status: newStatus,
+        }).then(res => {
+          if (!res.success) { Toast.error(res.error || 'ดำเนินการไม่สำเร็จ'); return; }
+          m.status = newStatus;
+          Toast.success(`${label}เรียบร้อย`);
+          _renderPanel(m);
+          _renderTable();
+        }).catch(e => Toast.error('เกิดข้อผิดพลาด: ' + e.message));
+      }
+    );
+  };
+
+  // ────────────────────────────────────────────────
+  // DELETE
+  // ────────────────────────────────────────────────
+  window._memDelete = function () {
+    const m = _state.selected;
+    if (!m) return;
+    Modal.confirm(
+      '🗑️ ยืนยันการลบสมาชิก',
+      `ต้องการลบสมาชิก <b>${_esc(m.fullName)}</b> ออกจากระบบถาวรใช่หรือไม่?
+       <br><span style="color:#ef4444;font-size:13px;margin-top:6px;display:block;">
+       ⚠️ ลบแล้วไม่สามารถกู้คืนได้ และข้อมูลคิวของสมาชิกนี้จะยังคงอยู่ในระบบ</span>`,
+      () => {
+        Toast.info('กำลังลบข้อมูล...');
+        callAPI('deleteAdminMember', {
+          token: AppState.sessionToken,
+          rowIndex: m.rowIndex,
+        }).then(res => {
+          if (!res.success) { Toast.error(res.error || 'ลบไม่สำเร็จ'); return; }
+          Toast.success('ลบสมาชิกเรียบร้อย');
+          _memClosePanel();
+          _loadMembers();
+        }).catch(e => Toast.error('เกิดข้อผิดพลาด: ' + e.message));
+      }
+    );
+  };
+
+  // ────────────────────────────────────────────────
+  // UTIL
+  // ────────────────────────────────────────────────
+  function _esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&')
+      .replace(/</g, '<')
+      .replace(/>/g, '>')
+      .replace(/"/g, '"');
+  }
+</script>

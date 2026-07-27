@@ -1,0 +1,51 @@
+{
+  "name": "DSD YALA SKILL QUEUE SYSTEM",
+  "short_name": "DSD YALA",
+  "description": "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา - ระบบรับสมัครและจองคิวพัฒนาฝีมือแรงงาน",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B3C74",
+  "theme_color": "#0B3C74",
+  "categories": ["government", "education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "จองคิวฝึกอบรม",
+      "short_name": "ฝึกอบรม",
+      "url": "/booking?type=training",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "จองคิวทดสอบมาตรฐาน",
+      "short_name": "ทดสอบ",
+      "url": "/booking?type=test",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

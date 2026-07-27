@@ -1,0 +1,292 @@
+<script>
+// ============================================================
+//  View_Catalog.html — Catalog (Test / Training) — Premium UI v3.0
+// ============================================================
+
+function getTestingBranchesAPI() {
+  return callAPI('getMasterData', { token: AppState.sessionToken || '', type: 'branch' });
+}
+function getTrainingCoursesAPI() {
+  return callAPI('getMasterData', { token: AppState.sessionToken || '', type: 'course' });
+}
+
+async function renderViewCatalog(params = {}) {
+  const app = document.getElementById('app-content');
+  app.innerHTML = _skeletonPage();
+
+  const activeTab = params.tab || 'test';
+
+  const [branchRes, courseRes] = await Promise.all([
+    getTestingBranchesAPI(),
+    getTrainingCoursesAPI(),
+  ]);
+
+  const branches = branchRes.success ? (branchRes.data.items || []) : [];
+  const courses  = courseRes.success ? (courseRes.data.items || []) : [];
+
+  AppState.set('masterBranches', branches);
+  AppState.set('masterCourses',  courses);
+
+  app.innerHTML = `
+    <style>
+      .catalog-card {
+        transform: translateY(0);
+        transition: transform .22s cubic-bezier(.4,0,.2,1), box-shadow .22s cubic-bezier(.4,0,.2,1), border-color .22s ease;
+        animation: cardSlideIn .3s ease both;
+      }
+      .catalog-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.10) !important; }
+      .catalog-card.test-card:hover  { border-color: rgba(99,102,241,.35) !important; }
+      .catalog-card.train-card:hover { border-color: rgba(168,85,247,.35) !important; }
+      .progress-bar { position:relative; overflow:hidden; }
+      .progress-bar::after { content:''; position:absolute; top:0; left:-60%; width:50%; height:100%;
+        background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+        animation:shimmer 2s infinite; }
+      @keyframes shimmer { to { left:120%; } }
+      .catalog-btn { transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+      .catalog-btn:not(:disabled):hover { transform:translateY(-1px); filter:brightness(1.08); }
+      .catalog-btn:not(:disabled):active { transform:scale(.97); }
+      .badge-warning { animation: badge-pulse 2s ease-in-out infinite; }
+      @keyframes badge-pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+      .catalog-tab-btn { transition: all .2s cubic-bezier(.4,0,.2,1); }
+      @keyframes cardSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+
+    <div class="page-header">
+      <button class="back-btn" onclick="Router.back()">${_icon('arrow-left')}</button>
+      <div>
+        <h1 class="text-lg font-bold text-slate-800">สมัครฝึกอบรมและทดสอบ</h1>
+        <p class="text-xs text-slate-400 mt-0.5">เลือกหลักสูตรที่สนใจ พัฒนาทักษะ เพื่อโอกาสในสายอาชีพ</p>
+      </div>
+    </div>
+
+    <div class="px-4 py-3 bg-white border-b border-slate-100 sticky top-14 z-30 shadow-sm">
+      <div class="flex bg-slate-100 p-1 rounded-2xl gap-1 max-w-md mx-auto">
+        <button id="tab-test" onclick="switchCatalogTab('test')"
+          class="catalog-tab-btn flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold border-0 rounded-xl cursor-pointer
+          ${activeTab==='test' ? 'bg-white text-indigo-700 shadow-sm' : 'bg-transparent text-slate-400'}">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+          <span class="whitespace-nowrap">ทดสอบมาตรฐาน</span>
+        </button>
+        <button id="tab-training" onclick="switchCatalogTab('training')"
+          class="catalog-tab-btn flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold border-0 rounded-xl cursor-pointer
+          ${activeTab==='training' ? 'bg-white text-purple-700 shadow-sm' : 'bg-transparent text-slate-400'}">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222m4 2.222v7.5"/>
+          </svg>
+          <span class="whitespace-nowrap">ฝึกอบรมอาชีพ</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="px-4 py-5 max-w-md mx-auto">
+      <div id="catalog-list" class="flex flex-col gap-4"></div>
+    </div>
+  `;
+
+  _renderCatalogList(activeTab, branches, courses);
+}
+
+function switchCatalogTab(tab) {
+  const branches = AppState.masterBranches || [];
+  const courses  = AppState.masterCourses  || [];
+  ['test','training'].forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    if (!btn) return;
+    const isActive = t === tab;
+    const activeText = t === 'test' ? 'text-indigo-700' : 'text-purple-700';
+    btn.className = `catalog-tab-btn flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold border-0 rounded-xl cursor-pointer ${
+      isActive ? `bg-white ${activeText} shadow-sm` : 'bg-transparent text-slate-400'
+    }`;
+  });
+  _renderCatalogList(tab, branches, courses);
+}
+
+// ── Shared Card Builder ─────────────────────────────────────
+function _buildCatalogCard({ item, index, type }) {
+  const isTest  = type === 'test';
+  const accent  = isTest ? 'indigo' : 'purple';
+  const isFull  = item.currentQueue >= item.maxQueue;
+  const pct     = Math.min(100, Math.round((item.currentQueue / item.maxQueue) * 100));
+  const nearFull = pct >= 80 && !isFull;
+
+  // Status badge
+  let statusBadge = '';
+  if (!item.isOpen) {
+    statusBadge = `<span class="px-2 py-0.5 text-[11px] font-bold bg-slate-100 text-slate-400 rounded-full">ปิดรับ</span>`;
+  } else if (isFull) {
+    statusBadge = `<span class="px-2 py-0.5 text-[11px] font-bold bg-red-50 text-red-500 rounded-full">เต็มแล้ว</span>`;
+  } else if (nearFull) {
+    statusBadge = `<span class="badge-warning px-2 py-0.5 text-[11px] font-bold bg-amber-50 text-amber-600 rounded-full">ใกล้เต็ม!</span>`;
+  } else {
+    statusBadge = `<span class="px-2 py-0.5 text-[11px] font-bold bg-${accent}-50 text-${accent}-600 rounded-full">รับสมัคร</span>`;
+  }
+
+  // Date info
+  let formattedDate = 'ยังไม่กำหนดวันที่';
+  if (item.courseDate) {
+    const fmt = typeof _formatDate === 'function' ? _formatDate : d => d;
+    if (isTest) {
+      formattedDate = fmt(item.courseDate);
+    } else {
+      const parts = item.courseDate.split('|');
+      formattedDate = parts[1] ? `${fmt(parts[0])} – ${fmt(parts[1])}` : fmt(parts[0]);
+    }
+  }
+
+  // Map link
+  const mapUI = item.mapUrl ? `<a href="${item.mapUrl}" target="_blank"
+    class="inline-flex items-center gap-1 text-[12px] text-${accent}-600 font-semibold hover:underline">
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+    </svg>ดูแผนที่</a>` : '';
+
+  // Progress bar color
+  const barColor = isFull ? 'from-red-400 to-red-500'
+    : nearFull ? 'from-amber-400 to-amber-500'
+    : isTest   ? 'from-indigo-400 to-indigo-600'
+    :            'from-purple-400 to-purple-600';
+
+  // Extra tag
+  const extraLabel = isTest
+    ? `ระดับ ${item.extra || '1'}`
+    : `ระยะเวลา ${item.extra || '?'} วัน`;
+
+  // Icon
+  const iconSvg = isTest
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>`;
+
+  const iconBg = `<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${accent}-500 to-${accent}-700 flex items-center justify-center shadow-md flex-shrink-0">
+    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${iconSvg}</svg>
+  </div>`;
+
+  // Action button
+  let actionBtn = '';
+  const safeId   = item.id;
+  const safeName = (item.name || '').replace(/'/g, '\\x27');
+  const btnLabel = isTest ? 'จองคิวทดสอบ' : 'สมัครฝึกอบรมอาชีพ';
+  const btnFn    = isTest
+    ? `applyTestQueue('${safeId}','${safeName}')`
+    : `applyTraining('${safeId}','${safeName}')`;
+  const btnGrad  = isTest
+    ? `from-indigo-600 to-indigo-700 shadow-[0_4px_14px_rgba(79,70,229,.35)]`
+    : `from-purple-600 to-purple-700 shadow-[0_4px_14px_rgba(147,51,234,.35)]`;
+
+  if (!item.isOpen) {
+    actionBtn = `<button disabled class="catalog-btn w-full py-3 bg-slate-100 text-slate-400 rounded-xl font-bold text-[15px] cursor-not-allowed flex items-center justify-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+      ปิดรับสมัครแล้ว</button>`;
+  } else if (isFull) {
+    actionBtn = `<button disabled class="catalog-btn w-full py-3 bg-red-50 text-red-400 rounded-xl font-bold text-[15px] cursor-not-allowed border border-red-100 flex items-center justify-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      โควตาเต็มแล้ว</button>`;
+  } else {
+    actionBtn = `<button onclick="${btnFn}"
+      class="catalog-btn w-full py-3 bg-gradient-to-r ${btnGrad} text-white rounded-xl font-bold text-[15px] flex items-center justify-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${iconSvg}</svg>
+      ${btnLabel}</button>`;
+  }
+
+  return `
+    <div class="catalog-card ${type}-card bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-[0_2px_16px_rgba(0,0,0,.06)] ${!item.isOpen ? 'opacity-60' : ''}"
+      style="animation-delay:${index * 60}ms">
+      <div class="h-1 w-full bg-gradient-to-r ${isTest ? 'from-indigo-400 via-indigo-500 to-indigo-600' : 'from-purple-400 via-purple-500 to-purple-600'}"></div>
+      <div class="p-4">
+        <!-- Header -->
+        <div class="flex items-start gap-3 mb-3">
+          ${iconBg}
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2 mb-1">
+              <h3 class="text-[15px] font-bold text-slate-800 leading-snug">${item.name}</h3>
+              ${statusBadge}
+            </div>
+            <span class="inline-flex items-center gap-1 text-[12px] font-semibold text-${accent}-600 bg-${accent}-50 px-2 py-0.5 rounded-lg border border-${accent}-100">${extraLabel}</span>
+          </div>
+        </div>
+        <!-- Info -->
+        <div class="flex items-center justify-between mb-3 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
+          <span class="inline-flex items-center gap-1 text-[12px] text-slate-500 font-medium">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            ${formattedDate}
+          </span>
+          ${mapUI}
+        </div>
+        <!-- Progress -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-[12px] text-slate-400 font-medium">ผู้สมัคร</span>
+            <span class="text-[13px] font-bold text-${accent}-600">${item.currentQueue} / ${item.maxQueue} คน</span>
+          </div>
+          <div class="w-full bg-slate-200/80 rounded-full h-2 progress-bar">
+            <div class="bg-gradient-to-r ${barColor} h-2 rounded-full transition-all duration-700" style="width:${pct}%"></div>
+          </div>
+        </div>
+        ${actionBtn}
+      </div>
+    </div>`;
+}
+
+function _renderCatalogList(tab, branches, courses) {
+  const container = document.getElementById('catalog-list');
+  if (!container) return;
+
+  const emptyHtml = msg => `<div class="text-center py-16 text-slate-400">
+    <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+    </svg><p class="text-sm font-medium">${msg}</p></div>`;
+
+  if (tab === 'test') {
+    if (!branches.length) { container.innerHTML = emptyHtml('ยังไม่มีสาขาทดสอบเปิดรับสมัคร'); return; }
+    const list = [...branches.filter(b => b.isOpen), ...branches.filter(b => !b.isOpen)];
+    container.innerHTML = list.map((b, i) => _buildCatalogCard({ item: b, index: i, type: 'test' })).join('');
+  } else {
+    if (!courses.length) { container.innerHTML = emptyHtml('ยังไม่มีหลักสูตรฝึกอบรมเปิดรับสมัคร'); return; }
+    const list = [...courses.filter(c => c.isOpen), ...courses.filter(c => !c.isOpen)];
+    container.innerHTML = list.map((c, i) => _buildCatalogCard({ item: c, index: i, type: 'training' })).join('');
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────
+async function applyTestQueue(branchId, branchName) {
+  if (!AppState.sessionToken) {
+    AppState.set('pendingAction', { view: 'catalog', params: { tab: 'test' } });
+    Router.go('auth-member'); return;
+  }
+  const branch = (AppState.masterBranches || []).find(b => b.id === branchId);
+  const level  = branch ? String(branch.extra || '1').split(',')[0].trim() : '1';
+
+  Modal.confirm('ยืนยันการสมัคร',
+    `<div class="text-center"><div class="text-3xl mb-2">📋</div>
+    <p class="font-bold text-slate-800 mb-1">${branchName}</p>
+    <p class="text-sm text-slate-500">ระดับ ${level} — ทดสอบมาตรฐานฝีมือแรงงาน</p></div>`,
+    async () => {
+      const btn = document.querySelector(`[onclick*="applyTestQueue('${branchId}'"]`);
+      if (btn) _setLoading(btn, true, 'กำลังสมัคร...');
+      const res = await callAPI('applyTestQueue', { token: AppState.sessionToken, branchId, level });
+      if (btn) _setLoading(btn, false);
+      if (!res.success) { Toast.error(res.error); return; }
+      Toast.success('🎉 สมัครทดสอบสำเร็จแล้ว!');
+      setTimeout(() => Router.go('dashboard'), 800);
+    }, 'ยืนยันสมัคร');
+}
+
+async function applyTraining(courseId, courseName) {
+  if (!AppState.sessionToken) {
+    AppState.set('pendingAction', { view: 'catalog', params: { tab: 'training' } });
+    Router.go('auth-member'); return;
+  }
+  Modal.confirm('ยืนยันการสมัคร',
+    `<div class="text-center"><div class="text-3xl mb-2">🎓</div>
+    <p class="font-bold text-slate-800 mb-1">${courseName}</p>
+    <p class="text-sm text-slate-500">หลักสูตรฝึกอบรมอาชีพ สพร.24 ยะลา</p></div>`,
+    async () => {
+      const res = await callAPI('applyTraining', { token: AppState.sessionToken, courseId });
+      if (!res.success) { Toast.error(res.error); return; }
+      Toast.success('🎉 สมัครอบรมสำเร็จแล้ว!');
+      setTimeout(() => Router.go('dashboard'), 800);
+    }, 'ยืนยันสมัคร');
+}
+</script>

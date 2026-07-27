@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  phoneNumber   String    @unique
+  passwordHash  String
+  fullName      String?
+  role          String    @default("member") // "member" or "admin"
+  memberId      String?   @unique
+  lineUserId    String?   @unique // Add line user id
+  profileJson   String?   // Store full form data as JSON string
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      QueueBooking[]
+  notifications Notification[]
+}
+
+model MasterCourse {
+  id            String    @id @default(uuid())
+  courseName    String
+  durationDays  Int
+  maxSeats      Int
+  LocationName  String?
+  LocationGPS   String?
+  Date          String?
+  DateEnd       String?
+  status        String    @default("active") // "active" or "inactive"
+  currentQueue  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model MasterBranch {
+  id            String    @id @default(uuid())
+  branchName    String
+  levels        String
+  maxQueue      Int
+  LocationName  String?
+  LocationGPS   String?
+  status        String    @default("active") // "active" or "inactive"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model QueueBooking {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingType   String    // "test" or "training"
+  itemId        String    // courseId or branchId
+  itemName      String
+  bookingDate   DateTime  @default(now())
+  status        String    @default("pending") // "pending", "approved", "completed", "cancelled"
+  queueNumber   Int
+  appointedDate DateTime? // Admin appointed date
+  isAcknowledged Boolean  @default(false) // User acknowledged
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  message       String
+  type          String    @default("general") // "general", "appointment", "queue_call", "result"
+  metadata      String?   // JSON string with extra data e.g. { appointedDate, itemName, location }
+  read          Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+}
+
+model SystemSetting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}

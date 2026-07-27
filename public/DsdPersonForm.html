@@ -1,0 +1,1302 @@
+<script>
+// ============================================================
+//  DsdPersonForm — ฟอร์มใบสมัคร DSD 50 fields (reusable)
+//  ใช้ใน Modal batch ของ View_Register_Full
+// ============================================================
+
+const SOUTHERN_ADDRESS_DB = {
+  "95": {
+    "เมืองยะลา": {
+      "สะเตง": "95000", "สะเตงนอก": "95000", "บุดี": "95000", "เปาะเส้ง": "95000",
+      "ลิดล": "95000", "ยะลา": "95000", "ท่าสาป": "95000", "หน้าถ้ำ": "95000",
+      "ตาเซะ": "95000", "พร่อน": "95000", "บันนังสาเรง": "95000", "ลำใหม่": "95160",
+      "ลำพะยา": "95160"
+    },
+    "ยะหา": {
+      "ยะหา": "95120", "บาโร๊ะ": "95120", "ปะแต": "95120", "กาตอง": "95120",
+      "ละแอ": "95120", "ตาชี": "95120", "บาโงยซิแน": "95120"
+    },
+    "บันนังสตา": {
+      "บันนังสตา": "95130", "บาเจาะ": "95130", "เขื่อนบางลาง": "95130",
+      "ตลิ่งชัน": "95130", "ถ้ำทะลุ": "95130", "ตาเนาะปูเต๊ะ": "95130"
+    },
+    "เบตง": {
+      "เบตง": "95110", "ยะรม": "95110", "อัยเยอร์เวง": "95110", "ตาเนาะแมเราะ": "95110",
+      "ธารน้ำทิพย์": "95110"
+    },
+    "รามัน": {
+      "กายูบอเกาะ": "95140", "โกตาบารู": "95140", "กาลูปัง": "95140", "กาลอ": "95140",
+      "บาลอ": "95140", "บาโงย": "95140", "ท่าธง": "95140", "เนินงาม": "95140",
+      "วังพญา": "95140", "ตะโละหะลอ": "95140", "อาซ่อง": "95140", "บือมัง": "95140"
+    },
+    "ธารโต": {
+      "ธารโต": "95150", "คีรีเขต": "95150", "แม่หวาด": "95150", "บ้านแหร": "95150"
+    },
+    "กรงปินัง": {
+      "กรงปินัง": "95000", "สะเอะ": "95000", "ห้วยกระทิง": "95000", "ปุโรง": "95000"
+    },
+    "กาบัง": {
+      "กาบัง": "95120", "บาละ": "95120"
+    }
+  },
+  "94": {
+    "เมืองปัตตานี": {
+      "สะบารัง": "94000", "อาโนรู": "94000", "จะบังติกอ": "94000", "บานา": "94000",
+      "รูสะมิแล": "94000", "ตะลุโบะ": "94000", "ปูยุด": "94000", "บาราโหม": "94000",
+      "กะมิยอ": "94000", "คลองมานิง": "94000", "ปะกาฮะรัง": "94000"
+    },
+    "โคกโพธิ์": {
+      "โคกโพธิ์": "94120", "นาประดู่": "94180", "ปากล่อ": "94120", "ช้างให้ตก": "94120",
+      "ทุ่งพลา": "94180"
+    },
+    "ยะรัง": {
+      "ยะรัง": "94160", "ประจัน": "94160", "ระแว้ง": "94160", "กระโด": "94160"
+    },
+    "หนองจิก": {
+      "ตุยง": "94170", "บ่อทอง": "94170", "บางเขา": "94170"
+    },
+    "สายบุรี": {
+      "ตะลุบัน": "94110", "ปะเสยะวอ": "94110"
+    },
+    "ยะหริ่ง": {
+      "ยามู": "94150", "ตะโละกาโปร์": "94150"
+    },
+    "ปะนาเระ": {
+      "ปะนาเระ": "94130"
+    },
+    "มายอ": {
+      "มายอ": "94140"
+    },
+    "ทุ่งยางแดง": {
+      "ตะโละแมะนา": "94140"
+    },
+    "ไม้แก่น": {
+      "ไทรทอง": "94220"
+    },
+    "กะพ้อ": {
+      "ปล่องหอย": "94230"
+    },
+    "แม่ลาน": {
+      "แม่ลาน": "94180"
+    }
+  },
+  "96": {
+    "เมืองนราธิวาส": {
+      "บางนาค": "96000", "ลำภู": "96000", "กะลุวอ": "96000", "กะลุวอเหนือ": "96000",
+      "มะนังตายอ": "96000", "โคกเคียน": "96000"
+    },
+    "ตากใบ": {
+      "เจ๊ะเห": "96110", "ไพรวัน": "96110", "ศาลาใหม่": "96110"
+    },
+    "บาเจาะ": {
+      "บาเจาะ": "96170", "ลุโบะสาวอ": "96170"
+    },
+    "ยี่งอ": {
+      "ยี่งอ": "96180", "ลุโบะบายะ": "96180"
+    },
+    "ระแงะ": {
+      "ตันหยงมัส": "96130", "บองอ": "96130"
+    },
+    "รือเสาะ": {
+      "รือเสาะ": "96150", "รือเสาะออก": "96150"
+    },
+    "ศรีสาคร": {
+      "ศรีสาคร": "96210"
+    },
+    "แว้ง": {
+      "แว้ง": "96160", "โละจูด": "96160"
+    },
+    "สุคิริน": {
+      "สุคิริน": "96190"
+    },
+    "สุไหงโก-ลก": {
+      "สุไหงโก-ลก": "96120", "ปาเสมัส": "96120"
+    },
+    "สุไหงปาดี": {
+      "ปะลุรู": "96140"
+    },
+    "จะแนะ": {
+      "จะแนะ": "96220"
+    },
+    "เจาะไอร้อง": {
+      "จวบ": "96130"
+    }
+  },
+  "90": {
+    "เมืองสงขลา": {
+      "บ่อยาง": "90000", "เขารูปช้าง": "90000", "พะวง": "90000", "เกาะแต้ว": "90000",
+      "ทุ่งหวัง": "90000", "เกาะยอ": "90100"
+    },
+    "หาดใหญ่": {
+      "หาดใหญ่": "90110", "คอหงส์": "90110", "ควนลัง": "90110", "บ้านพรุ": "90250",
+      "คลองแห": "90110", "พะตง": "90230"
+    },
+    "สะเดา": {
+      "สะเดา": "90120", "ปาดังเบซาร์": "90240", "สำนักขาม": "90320"
+    },
+    "จะนะ": {
+      "บ้านนา": "90130", "สะพานไม้แก่น": "90130"
+    },
+    "เทพา": {
+      "เทพา": "90150"
+    },
+    "สะบ้าย้อย": {
+      "สะบ้าย้อย": "90210"
+    },
+    "ระโนด": {
+      "ระโนด": "90140"
+    },
+    "กระแสสินธุ์": {
+      "กระแสสินธุ์": "90270"
+    },
+    "สทิงพระ": {
+      "จะทิ้งพระ": "90190"
+    },
+    "สิงหนคร": {
+      "ชิงโค": "90280", "หัวเขา": "90280"
+    },
+    "ควนเนียง": {
+      "รัตภูมิ": "90220"
+    },
+    "บางกล่ำ": {
+      "บางกล่ำ": "90110"
+    },
+    "คลองหอยโข่ง": {
+      "คลองหอยโข่ง": "90230"
+    },
+    "นาหม่อม": {
+      "นาหม่อม": "90310"
+    },
+    "รัตภูมิ": {
+      "กำแพงเพชร": "90180"
+    },
+    "กระแสสินธ์": {
+      "เชิงแส": "90270"
+    }
+  }
+};
+
+const DsdPersonForm = {
+  REQUIRED: [
+    'reg_firstname', 'reg_lastname', 'reg_citizenid',
+    'reg_birth', 'reg_telephone',
+    'reg_address_no', 'reg_address_province',
+    'reg_address_district', 'reg_address_subdistrict',
+    'reg_education', 'postcode',
+  ],
+
+  _root: null,
+  _data: null,
+
+  blank() {
+    return {
+      register_type: '', reg_title: '001', reg_title_en: 'Mr.', reg_firstname: '', reg_lastname: '',
+      reg_firstnameEng: '', reg_lastnameEng: '', reg_citizenid: '',
+      reg_birth: '', reg_telephone: '', reg_email: '',
+      reg_address_no: '', reg_address_moo: '', reg_address_street: '',
+      reg_address_soi: '', reg_address_province: '95',
+      reg_address_district: '', reg_address_subdistrict: '',
+      reg_education: '', reg_education_section: '',
+      reg_body_state: '0', reg_body_state_detail: '',
+      work_state: '0', work_section: '', work_section_gov: '', work_section_self: '',
+      work_salary: '', work_occupation: '', work_position: '',
+      work_experience: '', work_place: '', work_province: '',
+      work_telephone: '', work_fax: '', work_group: '', work_group_other: '',
+      unwork_type: '', unwork_other: '',
+      info_type: '04', info_agree: '0', info_findjob: '0',
+      info_findjob_detail: '', info_findjob_detail_industry: '',
+      sign_img: '', regist_date: '', official: '', gender: '1',
+      nationality: '099', postcode: '', info_findjob_country: '',
+      industry_desc: '00', profileImage: '',
+      info_findjob_detail_industry_desc: '00',
+    };
+  },
+
+  _mapRegisterType(type) {
+    if (type === 'test') return 'T';
+    if (type === 'training') return 'F';
+    return type || '';
+  },
+
+  mount(container, initialData, options) {
+    options = options || {};
+    this._options = options;
+    this._currentStep = 1;
+    this._root = container;
+    container.innerHTML = this._template();
+    container.classList.add('dsd-form');
+
+    this._data = { ...this.blank(), ...initialData };
+    const rt = options.registerType || this._data.register_type;
+    if (rt) this._data.register_type = this._mapRegisterType(rt);
+
+    this._wire(container);
+    this.hydrate(this._data);
+    this.updateProgress();
+    
+    if (this._options.multiStep) {
+      this.goToStep(1);
+    }
+  },
+
+  destroy() {
+    if (this._root) this._root.innerHTML = '';
+    this._root = null;
+    this._data = null;
+  },
+
+  _el(field) {
+    return this._root?.querySelector('[data-dsd-field="' + field + '"]');
+  },
+
+  _q(sel) {
+    return this._root?.querySelector(sel);
+  },
+
+  setField(key, val) {
+    if (!this._data) return;
+    this._data[key] = val;
+    this.updateProgress();
+  },
+
+  selectRadio(field, val, btn) {
+    this.setField(field, val);
+    const group = btn.closest('[data-dsd-radio]');
+    if (group) {
+      group.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+  },
+
+  toggleSection(sectionId) {
+    const body = this._q('#' + sectionId);
+    if (!body) return;
+    const hdr = body.previousElementSibling;
+    body.classList.toggle('hidden');
+    hdr?.classList.toggle('collapsed');
+  },
+
+  toggleBodyDetail(show) {
+    const row = this._q('#dsd-body-detail-row');
+    if (row) row.style.display = show ? 'flex' : 'none';
+    this.setField('reg_body_state', show ? '1' : '0');
+  },
+
+  toggleWorkFields(show) {
+    const wf = this._q('#dsd-work-fields');
+    const uf = this._q('#dsd-unwork-fields');
+    if (wf) wf.style.display = show ? 'flex' : 'none';
+    if (uf) uf.style.display = show ? 'none' : 'flex';
+  },
+
+  updateWorkSectionBoxes(val) {
+    const govBox = this._q('#dsd-work-section-gov-box');
+    const selfBox = this._q('#dsd-work-section-self-box');
+    if (govBox) govBox.style.display = val === '3' ? 'flex' : 'none';
+    if (selfBox) selfBox.style.display = val === '4' ? 'flex' : 'none';
+  },
+
+  updateWorkGroupOther(val) {
+    const row = this._q('#dsd-work-group-other-row');
+    if (row) row.style.display = val === 'อื่นๆ' ? 'flex' : 'none';
+  },
+
+  updateAddressFields(provCode, curDist = '', curSub = '') {
+    const distContainer = this._q('#dsd-district-container');
+    const subContainer = this._q('#dsd-subdistrict-container');
+    if (!distContainer || !subContainer) return;
+
+    const db = SOUTHERN_ADDRESS_DB[provCode];
+    if (db) {
+      // 1. Render District Select dropdown
+      let distHtml = `<select id="dsd_reg_address_district" style="width:100%">`;
+      distHtml += `<option value="">-- เลือกอำเภอ --</option>`;
+      Object.keys(db).forEach(d => {
+        const selected = d === curDist ? 'selected' : '';
+        distHtml += `<option value="${d}" ${selected}>${d}</option>`;
+      });
+      distHtml += `<option value="อื่นๆ" ${curDist === 'อื่นๆ' ? 'selected' : ''}>อื่นๆ (ระบุเอง)</option>`;
+      distHtml += `</select>`;
+      distContainer.innerHTML = distHtml;
+
+      // 2. Render Subdistrict Select dropdown
+      let subHtml = `<select id="dsd_reg_address_subdistrict" style="width:100%">`;
+      subHtml += `<option value="">-- เลือกตำบล --</option>`;
+      
+      const selectedDist = curDist && db[curDist] ? curDist : Object.keys(db)[0];
+      if (curDist && db[curDist]) {
+        Object.keys(db[curDist]).forEach(s => {
+          const selected = s === curSub ? 'selected' : '';
+          subHtml += `<option value="${s}" ${selected}>${s}</option>`;
+        });
+      }
+      subHtml += `<option value="อื่นๆ" ${curSub === 'อื่นๆ' ? 'selected' : ''}>อื่นๆ (ระบุเอง)</option>`;
+      subHtml += `</select>`;
+      subContainer.innerHTML = subHtml;
+
+      const distSelect = distContainer.querySelector('select');
+      const subSelect = subContainer.querySelector('select');
+
+      distSelect.addEventListener('change', e => {
+        const dVal = e.target.value;
+        this._data.reg_address_district = dVal;
+        
+        if (dVal === 'อื่นๆ') {
+          distContainer.innerHTML = `<input type="text" data-dsd-field="reg_address_district" id="dsd_reg_address_district" placeholder="ระบุอำเภอ" value="">`;
+          subContainer.innerHTML = `<input type="text" data-dsd-field="reg_address_subdistrict" id="dsd_reg_address_subdistrict" placeholder="ระบุตำบล" value="">`;
+          this._data.reg_address_subdistrict = '';
+          this._wireTextEvents();
+        } else {
+          let sHtml = `<option value="">-- เลือกตำบล --</option>`;
+          if (db[dVal]) {
+            Object.keys(db[dVal]).forEach(s => {
+              sHtml += `<option value="${s}">${s}</option>`;
+            });
+          }
+          sHtml += `<option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>`;
+          subSelect.innerHTML = sHtml;
+          this._data.reg_address_subdistrict = '';
+          this.setField('reg_address_district', dVal);
+        }
+      });
+
+      subSelect.addEventListener('change', e => {
+        const sVal = e.target.value;
+        this._data.reg_address_subdistrict = sVal;
+        
+        if (sVal === 'อื่นๆ') {
+          subContainer.innerHTML = `<input type="text" data-dsd-field="reg_address_subdistrict" id="dsd_reg_address_subdistrict" placeholder="ระบุตำบล" value="">`;
+          this._wireTextEvents();
+        } else {
+          const dVal = distSelect.value;
+          if (db[dVal] && db[dVal][sVal]) {
+            const code = db[dVal][sVal];
+            const postInput = this._el('postcode');
+            if (postInput) {
+              postInput.value = code;
+              this.setField('postcode', code);
+            }
+          }
+          this.setField('reg_address_subdistrict', sVal);
+        }
+      });
+
+    } else {
+      distContainer.innerHTML = `<input type="text" data-dsd-field="reg_address_district" id="dsd_reg_address_district" placeholder="ระบุอำเภอ" value="${curDist}">`;
+      subContainer.innerHTML = `<input type="text" data-dsd-field="reg_address_subdistrict" id="dsd_reg_address_subdistrict" placeholder="ระบุตำบล" value="${curSub}">`;
+      this._wireTextEvents();
+    }
+  },
+
+  _wireTextEvents() {
+    const dInput = this._q('#dsd_reg_address_district');
+    const sInput = this._q('#dsd_reg_address_subdistrict');
+    if (dInput) {
+      dInput.addEventListener('input', e => this.setField('reg_address_district', e.target.value));
+    }
+    if (sInput) {
+      sInput.addEventListener('input', e => this.setField('reg_address_subdistrict', e.target.value));
+    }
+  },
+
+  toggleFindjob(show) {
+    const fj = this._q('#dsd-findjob-fields');
+    if (fj) fj.style.display = show ? 'flex' : 'none';
+    this.setField('info_findjob', show ? '1' : '0');
+  },
+
+  loadAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const self = this;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const imgEl = new Image();
+      imgEl.onload = () => {
+        const max = 480;
+        let w = imgEl.width;
+        let h = imgEl.height;
+        if (w > max || h > max) {
+          const scale = max / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+        const b64 = canvas.toDataURL('image/jpeg', 0.82);
+        self.setField('profileImage', b64);
+        const img = self._q('#dsd-avatar-img');
+        const ph = self._q('#dsd-avatar-ph');
+        if (img) { img.src = b64; img.style.display = 'block'; }
+        if (ph) ph.style.display = 'none';
+      };
+      imgEl.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  },
+
+  updateProgress() {
+    if (!this._root || !this._data) return;
+    const filled = this.REQUIRED.filter(f => this._data[f] && String(this._data[f]).trim() !== '').length;
+    const pct = Math.round((filled / this.REQUIRED.length) * 100);
+    const prog = this._q('#dsd-prog');
+    const label = this._q('#dsd-prog-label');
+    const badge = this._q('#dsd-field-badge');
+    if (prog) prog.style.width = pct + '%';
+    if (label) label.textContent = 'กรอกข้อมูลหลัก ' + pct + '%';
+    if (badge) {
+      const total = Object.values(this._data).filter(v =>
+        v && String(v).trim() !== '' && v !== '0' && v !== '00' && v !== '099'
+      ).length;
+      badge.textContent = total + '/50';
+    }
+  },
+
+  hydrate(data) {
+    if (!this._root) return;
+    Object.keys(this.blank()).forEach(k => {
+      const el = this._el(k);
+      if (!el) return;
+      let v = data[k];
+      if (el.type === 'date' && v) {
+        el.value = String(v).split('T')[0];
+      } else if (el.type === 'checkbox') {
+        el.checked = v === '1';
+      } else if (el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.value = v != null ? v : '';
+      }
+    });
+
+    this._root.querySelectorAll('[data-dsd-radio]').forEach(group => {
+      const field = group.getAttribute('data-dsd-radio');
+      const val = data[field];
+      group.querySelectorAll('.radio-btn').forEach(btn => {
+        if (btn.closest('[data-dsd-radio]') !== group) return;
+        const inp = btn.querySelector('input');
+        const match = inp && inp.value === String(val);
+        btn.classList.toggle('selected', match);
+        if (inp) inp.checked = match;
+      });
+    });
+
+    this.toggleBodyDetail(data.reg_body_state === '1');
+    this.toggleWorkFields(data.work_state === '1');
+    this.updateWorkSectionBoxes(data.work_section);
+    this.updateWorkGroupOther(data.work_group);
+    this.updateAddressFields(data.reg_address_province || '95', data.reg_address_district || '', data.reg_address_subdistrict || '');
+    this.toggleFindjob(data.info_findjob === '1');
+
+    if (data.profileImage && String(data.profileImage).startsWith('data:')) {
+      const img = this._q('#dsd-avatar-img');
+      const ph = this._q('#dsd-avatar-ph');
+      if (img) { img.src = data.profileImage; img.style.display = 'block'; }
+      if (ph) ph.style.display = 'none';
+    }
+  },
+
+  collect() {
+    if (!this._root || !this._data) return null;
+    const out = { ...this._data };
+
+    this._root.querySelectorAll('[data-dsd-field]').forEach(el => {
+      const k = el.getAttribute('data-dsd-field');
+      if (el.type === 'checkbox') {
+        out[k] = el.checked ? '1' : '0';
+      } else {
+        out[k] = el.value != null ? String(el.value).trim() : '';
+      }
+    });
+
+    out.regist_date = new Date().toISOString();
+    if (out.reg_birth && !out.reg_birth.includes('T')) {
+      out.reg_birth = out.reg_birth + 'T00:00:00';
+    }
+    if (!out.gender) out.gender = '1';
+    return out;
+  },
+
+  validate() {
+    return this.validateStep(null); // null means validate all (for single step mode)
+  },
+
+  validateStep(step = null) {
+    if (!this._root || !this._data) return false;
+    
+    // update data
+    const queryScope = step ? '#dsd-step-content-' + step + ' [data-dsd-field]' : '[data-dsd-field]';
+    this._root.querySelectorAll(queryScope).forEach(el => {
+      const k = el.getAttribute('data-dsd-field');
+      if (el.type === 'checkbox') {
+        this._data[k] = el.checked ? '1' : '0';
+      } else {
+        this._data[k] = el.value != null ? String(el.value).trim() : '';
+      }
+    });
+
+    let ok = true;
+    let firstErrEl = null;
+    
+    const errScope = step ? '#dsd-step-content-' + step + ' .err' : '.err';
+    this._root.querySelectorAll(errScope).forEach(el => el.classList.remove('err'));
+
+    let fieldsToCheck = this.REQUIRED;
+    if (step === 1) fieldsToCheck = ['reg_firstname', 'reg_lastname', 'reg_citizenid', 'reg_birth', 'reg_telephone', 'reg_education'];
+    else if (step === 2) fieldsToCheck = ['reg_address_no', 'reg_address_province', 'reg_address_district', 'reg_address_subdistrict', 'postcode'];
+    else if (step === 3 || step === 4) fieldsToCheck = []; // special validations below
+
+    fieldsToCheck.forEach(f => {
+      const el = this._el(f);
+      const empty = !this._data[f] || String(this._data[f]).trim() === '';
+      if (el) el.classList.toggle('err', empty);
+      if (empty) {
+        ok = false;
+        if (!firstErrEl && el) firstErrEl = el;
+      }
+    });
+
+    if (step === null || step === 3) {
+      if (this._data.work_state === '1') {
+        const workFields = ['work_position', 'work_experience', 'work_place', 'work_province', 'work_telephone'];
+        workFields.forEach(f => {
+          const el = this._el(f);
+          const empty = !this._data[f] || String(this._data[f]).trim() === '';
+          if (el) el.classList.toggle('err', empty);
+          if (empty) {
+            ok = false;
+            if (!firstErrEl && el) firstErrEl = el;
+          }
+        });
+
+        const checkRadio = (field, containerSel) => {
+          const empty = !this._data[field] || String(this._data[field]).trim() === '';
+          const groupEl = this._q(containerSel);
+          if (groupEl) groupEl.classList.toggle('err', empty);
+          if (empty) {
+            ok = false;
+            if (!firstErrEl && groupEl) firstErrEl = groupEl;
+          }
+        };
+
+        checkRadio('work_section', '[data-dsd-radio="work_section"]');
+        checkRadio('work_salary', '[data-dsd-radio="work_salary"]');
+        checkRadio('work_group', '[data-dsd-radio="work_group"]');
+
+        if (this._data.work_section === '3') checkRadio('work_section_gov', '[data-dsd-radio="work_section_gov"]');
+        if (this._data.work_section === '4') checkRadio('work_section_self', '[data-dsd-radio="work_section_self"]');
+        
+        if (this._data.work_group === 'อื่นๆ') {
+          const el = this._el('work_group_other');
+          const empty = !this._data.work_group_other || String(this._data.work_group_other).trim() === '';
+          if (el) el.classList.toggle('err', empty);
+          if (empty) {
+            ok = false;
+            if (!firstErrEl && el) firstErrEl = el;
+          }
+        }
+      } else {
+        const empty = !this._data.unwork_type || String(this._data.unwork_type).trim() === '';
+        const groupEl = this._q('[data-dsd-radio="unwork_type"]');
+        if (groupEl) groupEl.classList.toggle('err', empty);
+        if (empty) {
+          ok = false;
+          if (!firstErrEl && groupEl) firstErrEl = groupEl;
+        }
+      }
+    }
+
+    if (step === null || step === 4) {
+      if (this._data.info_agree !== '1') {
+        const el = this._el('info_agree');
+        if (el) {
+          const c = el.closest('.p-4');
+          if (c) c.classList.add('err');
+          ok = false;
+          if (!firstErrEl && c) firstErrEl = c;
+        }
+      }
+    }
+
+    if (firstErrEl) {
+      firstErrEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof firstErrEl.focus === 'function') firstErrEl.focus({ preventScroll: true });
+    }
+
+    return ok;
+  },
+
+  nextStep() {
+    if (!this.validateStep(this._currentStep)) {
+      if (typeof Toast !== 'undefined') {
+        if (this._currentStep === 4) Toast.error('กรุณากดยอมรับเงื่อนไข (PDPA)');
+        else Toast.error('กรุณากรอกข้อมูลบังคับ (*) ให้ครบถ้วน');
+      }
+      return false;
+    }
+    if (this._currentStep < 4) {
+      this.goToStep(this._currentStep + 1);
+      return true;
+    }
+    return true; // if at step 4 and valid
+  },
+
+  prevStep() {
+    if (this._currentStep > 1) {
+      this.goToStep(this._currentStep - 1);
+    }
+  },
+
+  goToStep(step) {
+    this._currentStep = step;
+    
+    for (let i = 1; i <= 4; i++) {
+      const content = this._q('#dsd-step-content-' + i);
+      if (content) {
+        if (i === step) {
+          content.classList.remove('hidden');
+          // Add a simple fade-in animation by toggling a class
+          content.style.animation = 'none';
+          content.offsetHeight; // trigger reflow
+          content.style.animation = 'fadeIn 0.3s ease forwards';
+        } else {
+          content.classList.add('hidden');
+        }
+      }
+      
+      const nav = this._q('#dsd-step-nav-' + i);
+      if (nav) {
+        if (i <= step) nav.classList.add('step-primary');
+        else nav.classList.remove('step-primary');
+      }
+    }
+
+    // scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // emit event if callback provided
+    if (this._options && typeof this._options.onStepChange === 'function') {
+      this._options.onStepChange(step);
+    }
+  },
+
+  _wire(root) {
+    const self = this;
+
+    root.addEventListener('input', e => {
+      const el = e.target.closest('[data-dsd-field]');
+      if (!el) return;
+      let val = el.value;
+      if (el.type === 'checkbox') val = el.checked ? '1' : '0';
+      self.setField(el.getAttribute('data-dsd-field'), val);
+    });
+
+    root.addEventListener('change', e => {
+      const el = e.target.closest('[data-dsd-field]');
+      if (!el) return;
+      const fName = el.getAttribute('data-dsd-field');
+      const val = el.value;
+      self.setField(fName, val);
+      if (fName === 'reg_address_province') {
+        self.updateAddressFields(val, '', '');
+      }
+    });
+
+    root.addEventListener('click', e => {
+      const hdr = e.target.closest('.section-hdr');
+      if (hdr && root.contains(hdr)) {
+        const body = hdr.nextElementSibling;
+        if (body && body.classList.contains('section-body')) {
+          body.classList.toggle('hidden');
+          hdr.classList.toggle('collapsed');
+        }
+        return;
+      }
+
+      const btn = e.target.closest('.radio-btn');
+      if (!btn || !root.contains(btn)) return;
+      const group = btn.closest('[data-dsd-radio]');
+      if (!group) return;
+      const field = group.getAttribute('data-dsd-radio');
+      const inp = btn.querySelector('input');
+      if (!inp) return;
+      const val = inp.value;
+      self.selectRadio(field, val, btn);
+
+      if (field === 'reg_title') {
+        let engVal = 'Mr.';
+        if (val === '002') engVal = 'Mrs.';
+        else if (val === '003') engVal = 'Miss';
+        else if (val === '004') engVal = 'Other';
+        
+        const engGroup = root.querySelector('[data-dsd-radio="reg_title_en"]');
+        if (engGroup) {
+          const engBtn = Array.from(engGroup.querySelectorAll('.radio-btn')).find(b => b.querySelector('input')?.value === engVal);
+          if (engBtn) {
+            self.selectRadio('reg_title_en', engVal, engBtn);
+          }
+        }
+      }
+
+      if (field === 'reg_body_state') self.toggleBodyDetail(val === '1');
+      if (field === 'work_state') self.toggleWorkFields(val === '1');
+      if (field === 'work_section') self.updateWorkSectionBoxes(val);
+      if (field === 'work_group') self.updateWorkGroupOther(val);
+      if (field === 'info_findjob') self.toggleFindjob(val === '1');
+    });
+
+    const ring = root.querySelector('#dsd-avatar-ring');
+    const fileIn = root.querySelector('#dsd-profile-input');
+    if (ring && fileIn) {
+      ring.addEventListener('click', () => fileIn.click());
+    }
+    const avBtn = root.querySelector('#dsd-avatar-btn');
+    if (avBtn && fileIn) {
+      avBtn.addEventListener('click', e => { e.preventDefault(); fileIn.click(); });
+    }
+    if (fileIn) {
+      fileIn.addEventListener('change', function() { self.loadAvatar(this); });
+    }
+  },
+
+  _template() {
+    const isMultiStep = this._options && this._options.multiStep;
+    let stepperHtml = '';
+    
+    if (isMultiStep) {
+      stepperHtml = `
+      <div class="mb-6 px-0 pt-4">
+        <ul class="steps steps-horizontal w-full text-[11px] font-medium font-sans">
+          <li id="dsd-step-nav-1" class="step step-primary" data-content="1">ส่วนตัว</li>
+          <li id="dsd-step-nav-2" class="step" data-content="2">ติดต่อ</li>
+          <li id="dsd-step-nav-3" class="step" data-content="3">อาชีพ</li>
+          <li id="dsd-step-nav-4" class="step" data-content="4">ยืนยัน</li>
+        </ul>
+      </div>`;
+    } else {
+      stepperHtml = `
+      <div class="dsd-prog-row">
+        <div class="prog-bar"><div class="prog-fill" id="dsd-prog" style="width:0%"></div></div>
+        <div class="prog-label" id="dsd-prog-label">กรอกข้อมูลหลัก 0%</div>
+        <span class="badge badge-blue" id="dsd-field-badge">0/50</span>
+      </div>`;
+    }
+
+    return `
+<div class="dsd-wrap ${isMultiStep ? 'pb-24' : ''}">
+  ${stepperHtml}
+
+  <div id="dsd-step-content-1" class="dsd-step-content">
+    <div class="avatar-zone">
+      <div class="avatar-ring" id="dsd-avatar-ring">
+        <img id="dsd-avatar-img" src="" alt="">
+        <div class="avatar-placeholder" id="dsd-avatar-ph">
+          <i class="ti ti-user-circle" aria-hidden="true"></i>
+          <span>รูปถ่าย</span>
+        </div>
+      </div>
+      <input type="file" id="dsd-profile-input" accept="image/*" style="display:none">
+      <span class="avatar-btn" id="dsd-avatar-btn">เลือกรูป / ถ่ายรูป</span>
+    </div>
+    ${_dsdSection1()}
+  </div>
+  
+  <div id="dsd-step-content-2" class="dsd-step-content ${isMultiStep ? 'hidden' : ''}">
+    ${!isMultiStep ? '<div class="divider"></div>' : ''}
+    ${_dsdSection2()}
+  </div>
+  
+  <div id="dsd-step-content-3" class="dsd-step-content ${isMultiStep ? 'hidden' : ''}">
+    ${!isMultiStep ? '<div class="divider"></div>' : ''}
+    ${_dsdSection3()}
+  </div>
+  
+  <div id="dsd-step-content-4" class="dsd-step-content ${isMultiStep ? 'hidden' : ''}">
+    ${!isMultiStep ? '<div class="divider"></div>' : ''}
+    ${_dsdSection4()}
+    ${_dsdSection5()}
+  </div>
+</div>`;
+  },
+};
+
+function _dsdSection1() {
+  return `
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon si-blue"><i class="ti ti-id-badge" aria-hidden="true"></i></span>
+    <span class="section-title">ข้อมูลส่วนตัว</span>
+    <i class="ti ti-chevron-down" aria-hidden="true"></i>
+  </div>
+  <div class="section-body" id="dsd-s1">
+    <div class="field-row">
+      <label>คำนำหน้า <span class="req">*</span></label>
+      <div class="radio-group" data-dsd-radio="reg_title">
+        <label class="radio-btn selected"><input type="radio" name="dsd_reg_title" value="001"> นาย</label>
+        <label class="radio-btn"><input type="radio" name="dsd_reg_title" value="002"> นาง</label>
+        <label class="radio-btn"><input type="radio" name="dsd_reg_title" value="003"> นางสาว</label>
+        <label class="radio-btn"><input type="radio" name="dsd_reg_title" value="004"> อื่นๆ</label>
+      </div>
+    </div>
+    <div class="field-row">
+      <label>คำนำหน้า (อังกฤษ) / Title (ENG) <span class="req">*</span></label>
+      <div class="radio-group" data-dsd-radio="reg_title_en">
+        <label class="radio-btn selected"><input type="radio" name="dsd_reg_title_en" value="Mr."> Mr.</label>
+        <label class="radio-btn"><input type="radio" name="dsd_reg_title_en" value="Mrs."> Mrs.</label>
+        <label class="radio-btn"><input type="radio" name="dsd_reg_title_en" value="Miss"> Miss</label>
+        <label class="radio-btn"><input type="radio" name="dsd_reg_title_en" value="Other"> Other</label>
+      </div>
+    </div>
+    <div class="field-row">
+      <label>เพศ <span class="req">*</span></label>
+      <div class="radio-group" data-dsd-radio="gender">
+        <label class="radio-btn selected"><input type="radio" name="dsd_gender" value="1"> ชาย</label>
+        <label class="radio-btn"><input type="radio" name="dsd_gender" value="2"> หญิง</label>
+      </div>
+    </div>
+    <div class="field-row two">
+      <div><label>ชื่อ (ไทย) <span class="req">*</span></label>
+        <input type="text" data-dsd-field="reg_firstname" placeholder="ชื่อ"></div>
+      <div><label>นามสกุล (ไทย) <span class="req">*</span></label>
+        <input type="text" data-dsd-field="reg_lastname" placeholder="นามสกุล"></div>
+    </div>
+    <div class="field-row two">
+      <div><label>First Name (ENG)</label>
+        <input type="text" data-dsd-field="reg_firstnameEng" placeholder="First"></div>
+      <div><label>Last Name (ENG)</label>
+        <input type="text" data-dsd-field="reg_lastnameEng" placeholder="Last"></div>
+    </div>
+    <div class="field-row">
+      <label>เลขบัตรประชาชน 13 หลัก <span class="req">*</span></label>
+      <input type="tel" data-dsd-field="reg_citizenid" placeholder="XXXXXXXXXXXXX" maxlength="13"
+        oninput="this.value=this.value.replace(/\\D/g,'')">
+    </div>
+    <div class="field-row two">
+      <div><label>วันเกิด <span class="req">*</span></label>
+        <input type="date" data-dsd-field="reg_birth"></div>
+      <div><label>สัญชาติ</label>
+        <select data-dsd-field="nationality">
+          <option value="099">ไทย</option><option value="001">อเมริกัน</option>
+          <option value="050">มาเลเซีย</option><option value="000">อื่นๆ</option>
+        </select></div>
+    </div>
+    <div class="field-row two">
+      <div><label>เบอร์โทรศัพท์ <span class="req">*</span></label>
+        <input type="tel" data-dsd-field="reg_telephone" placeholder="0812345678" maxlength="10"
+          oninput="this.value=this.value.replace(/\\D/g,'')"></div>
+      <div><label>อีเมล</label>
+        <input type="email" data-dsd-field="reg_email" placeholder="email@example.com"></div>
+    </div>
+    <div class="field-row">
+      <label>ระดับการศึกษา <span class="req">*</span></label>
+      <select data-dsd-field="reg_education">
+        <option value="">-- เลือก --</option>
+        <option value="00">ต่ำกว่าประถมศึกษา</option>
+        <option value="01">ประถมศึกษา</option>
+        <option value="02">มัธยมศึกษาตอนต้น (ม.3)</option>
+        <option value="03">มัธยมศึกษาตอนปลาย (ม.6)</option>
+        <option value="04">ปวช.</option>
+        <option value="05">ปวส. / อนุปริญญา</option>
+        <option value="06">ปริญญาตรี</option>
+        <option value="07">สูงกว่าปริญญาตรี</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>สาขาวิชา / สถาบัน</label>
+      <input type="text" data-dsd-field="reg_education_section" placeholder="เช่น วิศวกรรมไฟฟ้า">
+    </div>
+    <div class="field-row">
+      <label>สภาพร่างกาย</label>
+      <div class="radio-group" data-dsd-radio="reg_body_state">
+        <label class="radio-btn selected"><input type="radio" name="dsd_body" value="0"> ปกติ</label>
+        <label class="radio-btn"><input type="radio" name="dsd_body" value="1"> พิการ</label>
+      </div>
+    </div>
+    <div class="field-row" id="dsd-body-detail-row" style="display:none">
+      <label>รายละเอียดความพิการ</label>
+      <input type="text" data-dsd-field="reg_body_state_detail" placeholder="ระบุประเภทความพิการ">
+    </div>
+  </div>
+</div>`;
+}
+
+function _dsdSection2() {
+  return `
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon si-teal"><i class="ti ti-map-pin" aria-hidden="true"></i></span>
+    <span class="section-title">ที่อยู่</span>
+    <i class="ti ti-chevron-down" aria-hidden="true"></i>
+  </div>
+  <div class="section-body" id="dsd-s2">
+    <div class="field-row two">
+      <div><label>บ้านเลขที่ <span class="req">*</span></label>
+        <input type="text" data-dsd-field="reg_address_no" placeholder="11/3"></div>
+      <div><label>หมู่ที่</label>
+        <input type="text" data-dsd-field="reg_address_moo" placeholder="3"></div>
+    </div>
+    <div class="field-row two">
+      <div><label>ถนน</label>
+        <input type="text" data-dsd-field="reg_address_street" placeholder="ชื่อถนน"></div>
+      <div><label>ซอย</label>
+        <input type="text" data-dsd-field="reg_address_soi" placeholder="ชื่อซอย"></div>
+    </div>
+    <div class="field-row">
+      <label>จังหวัด <span class="req">*</span></label>
+      <select data-dsd-field="reg_address_province">
+        <option value="">-- เลือก --</option>
+        <option value="95">ยะลา</option>
+        <option value="94">ปัตตานี</option>
+        <option value="96">นราธิวาส</option>
+        <option value="90">สงขลา</option>
+        <option value="00">อื่นๆ</option>
+      </select>
+    </div>
+    <div class="field-row two">
+      <div>
+        <label>อำเภอ <span class="req">*</span></label>
+        <div id="dsd-district-container">
+          <input type="text" data-dsd-field="reg_address_district" id="dsd_reg_address_district" placeholder="ระบุอำเภอ">
+        </div>
+      </div>
+      <div>
+        <label>ตำบล <span class="req">*</span></label>
+        <div id="dsd-subdistrict-container">
+          <input type="text" data-dsd-field="reg_address_subdistrict" id="dsd_reg_address_subdistrict" placeholder="ระบุตำบล">
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <label>รหัสไปรษณีย์ <span class="req">*</span></label>
+      <input type="tel" data-dsd-field="postcode" placeholder="95000" maxlength="5"
+        oninput="this.value=this.value.replace(/\\D/g,'')">
+    </div>
+  </div>
+</div>`;
+}
+
+function _dsdSection3() {
+  return `
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon si-amber"><i class="ti ti-briefcase" aria-hidden="true"></i></span>
+    <span class="section-title">สถานะการทำงาน</span>
+    <i class="ti ti-chevron-down" aria-hidden="true"></i>
+  </div>
+  <div class="section-body" id="dsd-s3">
+    <div class="field-row">
+      <label>สถานะปัจจุบัน <span class="req">*</span></label>
+      <div class="radio-group" data-dsd-radio="work_state">
+        <label class="radio-btn"><input type="radio" name="dsd_work" value="1"> ทำงาน</label>
+        <label class="radio-btn selected"><input type="radio" name="dsd_work" value="0"> ว่างงาน</label>
+      </div>
+    </div>
+
+    <!-- หากเลือก ทำงาน -->
+    <div id="dsd-work-fields" style="display:none;flex-direction:column;gap:12px">
+      <div class="field-row">
+        <label>ประเภทธุรกิจ/การทำงาน <span class="req">*</span></label>
+        <div class="radio-group-vertical" data-dsd-radio="work_section">
+          <label class="radio-btn"><input type="radio" name="dsd_work_section" value="1"> ภาคเอกชน</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_section" value="2"> รัฐวิสาหกิจ</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_section" value="3"> ภาครัฐ</label>
+          
+          <div class="nested-box" id="dsd-work-section-gov-box">
+            <label style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 2px;">ระบุสังกัดภาครัฐ</label>
+            <div class="radio-group-grid" data-dsd-radio="work_section_gov">
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_gov" value="civil"> ข้าราชการพลเรือน</label>
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_gov" value="police"> ข้าราชการตำรวจ</label>
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_gov" value="military"> ข้าราชการทหาร</label>
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_gov" value="teacher"> ข้าราชการครู</label>
+            </div>
+          </div>
+
+          <label class="radio-btn"><input type="radio" name="dsd_work_section" value="4"> ประกอบธุรกิจส่วนตัว/ประกอบอาชีพอิสระ</label>
+          
+          <div class="nested-box" id="dsd-work-section-self-box">
+            <label style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 2px;">ระบุรูปแบบอาชีพอิสระ</label>
+            <div class="radio-group-vertical" data-dsd-radio="work_section_self">
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_self" value="community"> วิสาหกิจชุมชน</label>
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_self" value="farmer"> เกษตรกร</label>
+              <label class="radio-btn"><input type="radio" name="dsd_work_section_self" value="freelance"> ผู้รับจ้างทั่วไปโดยไม่มีนายจ้าง (Freelance)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label>รายได้เฉลี่ยต่อเดือน <span class="req">*</span></label>
+        <div class="radio-group-grid" data-dsd-radio="work_salary">
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="1 - 5,000 บาท"> 1 - 5,000 บาท</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="5,001 - 9,000 บาท"> 5,001 - 9,000 บาท</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="9,001 - 15,000 บาท"> 9,001 - 15,000 บาท</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="15,001 - 20,000 บาท"> 15,001 - 20,000 บาท</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="20,001 - 30,000 บาท"> 20,001 - 30,000 บาท</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="30,001 - 40,000 บาท"> 30,001 - 40,000 บาท</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_salary" value="40,001 บาทขึ้นไป"> 40,001 บาทขึ้นไป</label>
+        </div>
+      </div>
+
+      <div class="field-row two">
+        <div><label>ตำแหน่ง <span class="req">*</span></label>
+          <input type="text" data-dsd-field="work_position" placeholder="ระบุตำแหน่ง"></div>
+        <div><label>อายุงาน (ปี) <span class="req">*</span></label>
+          <input type="tel" data-dsd-field="work_experience" placeholder="0" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
+      </div>
+
+      <div class="field-row">
+        <label>สถานที่ทำงาน ชื่อหน่วยงาน <span class="req">*</span></label>
+        <input type="text" data-dsd-field="work_place" placeholder="ระบุชื่อบริษัทหรือหน่วยงาน">
+      </div>
+
+      <div class="field-row two">
+        <div><label>จังหวัดที่ทำงาน <span class="req">*</span></label>
+          <select data-dsd-field="work_province">
+            <option value="">-- เลือก --</option>
+            <option value="ยะลา">ยะลา</option>
+            <option value="ปัตตานี">ปัตตานี</option>
+            <option value="นราธิวาส">นราธิวาส</option>
+            <option value="สงขลา">สงขลา</option>
+            <option value="อื่นๆ">อื่นๆ</option>
+          </select></div>
+        <div><label>โทรศัพท์ที่ทำงาน <span class="req">*</span></label>
+          <input type="tel" data-dsd-field="work_telephone" placeholder="0XXXXXXXXX" maxlength="10" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
+      </div>
+
+      <div class="field-row">
+        <label>กลุ่มอุตสาหกรรมที่ทำงาน <span class="req">*</span></label>
+        <div class="radio-group-vertical" data-dsd-radio="work_group">
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="การแปรรูปอาหาร"> การแปรรูปอาหาร</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="การเกษตรและเทคโนโลยีชีวภาพ"> การเกษตรและเทคโนโลยีชีวภาพ</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="ดิจิตอล"> ดิจิตอล</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="ท่องเที่ยวกลุ่มรายได้ดีและท่องเที่ยวเชิงสุขภาพ"> ท่องเที่ยวกลุ่มรายได้ดีและท่องเที่ยวเชิงสุขภาพ</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="ยานยนต์สมัยใหม่"> ยานยนต์สมัยใหม่</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="อิเล็กทรอนิกส์อัจฉริยะ"> อิเล็กทรอนิกส์อัจฉริยะ</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="เชื้อเพลิงชีวภาพและเคมีชีวภาพ"> เชื้อเพลิงชีวภาพและเคมีชีวภาพ</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="ขนส่งและการบิน"> ขนส่งและการบิน</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="การแพทย์ครบวงจร"> การแพทย์ครบวงจร</label>
+          <label class="radio-btn"><input type="radio" name="dsd_work_group" value="อื่นๆ"> อื่นๆ</label>
+        </div>
+      </div>
+      
+      <div class="field-row" id="dsd-work-group-other-row" style="display:none">
+        <label>ระบุกลุ่มอุตสาหกรรมเพิ่มเติม <span class="req">*</span></label>
+        <input type="text" data-dsd-field="work_group_other" placeholder="เช่น ก่อสร้าง บริการ">
+      </div>
+    </div>
+
+    <!-- หากเลือก ว่างงาน -->
+    <div class="field-row" id="dsd-unwork-fields">
+      <label>สาเหตุที่ว่างงาน <span class="req">*</span></label>
+      <div class="radio-group-vertical" data-dsd-radio="unwork_type">
+        <label class="radio-btn"><input type="radio" name="dsd_unwork_type" value="อยู่ระหว่างหางาน"> อยู่ระหว่างหางาน</label>
+        <label class="radio-btn"><input type="radio" name="dsd_unwork_type" value="นักเรียน/นักศึกษา"> นักเรียน/นักศึกษา</label>
+        <label class="radio-btn"><input type="radio" name="dsd_unwork_type" value="ผู้ประกันตนที่ถูกเลิกจ้าง"> ผู้ประกันตนที่ถูกเลิกจ้าง</label>
+        <label class="radio-btn"><input type="radio" name="dsd_unwork_type" value="ผู้ต้องขัง"> ผู้ต้องขัง</label>
+        <label class="radio-btn"><input type="radio" name="dsd_unwork_type" value="ทหารก่อนปลดประจำการ"> ทหารก่อนปลดประจำการ</label>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function _dsdSection4() {
+  return `
+<div class="section">
+  <div class="section-hdr">
+    <span class="section-icon si-purple"><i class="ti ti-clipboard-list" aria-hidden="true"></i></span>
+    <span class="section-title">ข้อมูลการสมัคร</span>
+    <i class="ti ti-chevron-down" aria-hidden="true"></i>
+  </div>
+  <div class="section-body" id="dsd-s4">
+    <div class="field-row">
+      <label>ประเภทการสมัคร</label>
+      <div class="radio-group" data-dsd-radio="register_type">
+        <label class="radio-btn"><input type="radio" name="dsd_regtype" value="T"> ทดสอบมาตรฐาน</label>
+        <label class="radio-btn"><input type="radio" name="dsd_regtype" value="F"> ฝึกอบรม</label>
+      </div>
+    </div>
+    <div class="field-row">
+      <label>แหล่งข้อมูลที่รับรู้ข่าว</label>
+      <select data-dsd-field="info_type">
+        <option value="01">เจ้าหน้าที่แนะนำ</option>
+        <option value="02">ป้ายโฆษณา</option>
+        <option value="03">อินเทอร์เน็ต / โซเชียล</option>
+        <option value="04">เพื่อน / คนรู้จัก</option>
+        <option value="05">วิทยุ / โทรทัศน์</option>
+        <option value="06">อื่นๆ</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>อุตสาหกรรม / กลุ่มอาชีพ</label>
+      <select data-dsd-field="industry_desc">
+        <option value="00">-- ยังไม่ระบุ --</option>
+        <option value="01">เกษตรกรรม</option><option value="02">ก่อสร้าง</option>
+        <option value="03">อาหารและเครื่องดื่ม</option>
+        <option value="04">ช่างไฟฟ้า / อิเล็กทรอนิกส์</option>
+        <option value="05">ยานยนต์</option>
+        <option value="06">ตัดเย็บเสื้อผ้า</option>
+        <option value="07">บริการ</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>ต้องการหางานหลังฝึกอบรมหรือไม่</label>
+      <div class="radio-group" data-dsd-radio="info_findjob">
+        <label class="radio-btn selected"><input type="radio" name="dsd_findjob" value="0"> ไม่ต้องการ</label>
+        <label class="radio-btn"><input type="radio" name="dsd_findjob" value="1"> ต้องการ</label>
+      </div>
+    </div>
+    <div id="dsd-findjob-fields" style="display:none;flex-direction:column;gap:10px">
+      <div class="field-row">
+        <label>ประเภทงานที่ต้องการ</label>
+        <input type="text" data-dsd-field="info_findjob_detail" placeholder="เช่น ช่างเชื่อม">
+      </div>
+      <div class="field-row">
+        <label>อุตสาหกรรมที่สนใจ</label>
+        <input type="text" data-dsd-field="info_findjob_detail_industry" placeholder="เช่น ยานยนต์">
+      </div>
+      <div class="field-row">
+        <label>ประเทศที่ต้องการทำงาน</label>
+        <select data-dsd-field="info_findjob_country">
+          <option value="">ในประเทศ</option>
+          <option value="MY">มาเลเซีย</option><option value="SG">สิงคโปร์</option>
+          <option value="JP">ญี่ปุ่น</option><option value="KR">เกาหลีใต้</option>
+          <option value="OT">อื่นๆ</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row mt-4">
+      <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl" style="background-color: var(--blue-50); border: 1px solid var(--blue-100); border-radius: 12px; padding: 16px; margin-top: 16px;">
+        <h4 style="font-size: 14px; font-weight: bold; color: var(--blue-800); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          ความยินยอมให้ใช้ข้อมูลส่วนบุคคล (PDPA)
+        </h4>
+        <p style="font-size: 11.5px; color: var(--blue-700); opacity: 0.85; line-height: 1.6; margin-bottom: 16px; text-align: justify;">
+          ข้าพเจ้ายินยอมให้กรมพัฒนาฝีมือแรงงาน เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า (รวมถึงข้อมูลประวัติ การศึกษา และรูปถ่าย) เพื่อประโยชน์ในการดำเนินงานตามภารกิจของกรมฯ การจัดทำทะเบียนประวัติ การเชื่อมโยงและบูรณาการข้อมูลร่วมกับหน่วยงานภาครัฐ ตลอดจนเพื่อการส่งเสริมการมีงานทำและการประกอบอาชีพ ทั้งนี้ เป็นไปตามที่ระบุไว้ใน <a href="#" style="font-weight: 600; text-decoration: underline;">นโยบายการคุ้มครองข้อมูลส่วนบุคคล</a> ของกรมพัฒนาฝีมือแรงงาน
+        </p>
+        <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 12px; background: white; border-radius: 8px; border: 1px solid var(--blue-200);">
+          <input type="checkbox" data-dsd-field="info_agree" style="width: 18px; height: 18px; margin-top: 2px;">
+          <span style="font-size: 14px; font-weight: 500; color: var(--gray-700);">
+            ข้าพเจ้าได้อ่านและยอมรับเงื่อนไข <span style="color: var(--red-500);">*</span>
+          </span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function _dsdSection5() {
+  return '';
+}
+</script>
+
+<style>
+.dsd-form {
+  --color-text-primary: var(--gray-900, #111827);
+  --color-text-secondary: var(--gray-500, #6B7280);
+  --color-text-tertiary: var(--gray-400, #9CA3AF);
+  --color-text-info: var(--blue-600, #2563EB);
+  --color-background-primary: var(--white, #fff);
+  --color-background-secondary: var(--gray-50, #F9FAFB);
+  --color-border-tertiary: var(--gray-200, #E5E7EB);
+  --color-border-secondary: var(--gray-300, #D1D5DB);
+  --border-radius-md: var(--radius-sm, 8px);
+  --font-sans: 'Prompt', sans-serif;
+}
+.dsd-form .dsd-wrap { padding: 0 0 8px; }
+.dsd-form .dsd-prog-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 0 4px 12px;
+}
+.dsd-form .dsd-prog-row .prog-bar { flex: 1; min-width: 120px; }
+.dsd-form .prog-bar { height: 3px; background: var(--color-border-tertiary); border-radius: 2px; }
+.dsd-form .prog-fill { height: 100%; background: #185FA5; border-radius: 2px; transition: width .3s; }
+.dsd-form .prog-label { font-size: 13px; color: var(--color-text-secondary); flex: 1; }
+.dsd-form .avatar-zone {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 0 16px; gap: 10px;
+}
+.dsd-form .avatar-ring {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2px dashed var(--color-border-secondary);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; overflow: hidden; background: var(--color-background-secondary);
+}
+.dsd-form .avatar-ring img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.dsd-form .avatar-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; color: var(--color-text-tertiary);
+}
+.dsd-form .avatar-placeholder i { font-size: 28px; }
+.dsd-form .avatar-placeholder span { font-size: 13px; }
+.dsd-form .avatar-btn { font-size: 14px; color: var(--color-text-info); cursor: pointer; text-decoration: underline; }
+.dsd-form .section { margin: 0 0 4px; }
+.dsd-form .section-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 4px 8px; cursor: pointer; user-select: none;
+}
+.dsd-form .section-hdr i.ti-chevron-down {
+  font-size: 16px; color: var(--color-text-secondary);
+  transition: transform .2s; margin-left: auto;
+}
+.dsd-form .section-hdr.collapsed i.ti-chevron-down { transform: rotate(-90deg); }
+.dsd-form .section-icon {
+  width: 30px; height: 30px; border-radius: var(--border-radius-md);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.dsd-form .si-blue { background: #E6F1FB; color: #185FA5; }
+.dsd-form .si-teal { background: #E1F5EE; color: #0F6E56; }
+.dsd-form .si-amber { background: #FAEEDA; color: #854F0B; }
+.dsd-form .si-purple { background: #EEEDFE; color: #534AB7; }
+.dsd-form .si-coral { background: #FAECE7; color: #993C1D; }
+.dsd-form .section-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+.dsd-form .section-body { padding: 0 4px 8px; display: flex; flex-direction: column; gap: 10px; }
+.dsd-form .section-body.hidden { display: none; }
+.dsd-form .field-row { display: flex; flex-direction: column; gap: 4px; }
+.dsd-form .field-row.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dsd-form label { font-size: 14px; color: var(--color-text-secondary); font-weight: 500; }
+.dsd-form label .req { color: #A32D2D; }
+.dsd-form input[type=text], .dsd-form input[type=tel], .dsd-form input[type=email],
+.dsd-form input[type=date], .dsd-form select {
+  width: 100%; font-size: 16px; padding: 9px 11px;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary); font-family: var(--font-sans);
+}
+.dsd-form input:focus, .dsd-form select:focus {
+  outline: none; border-color: #185FA5;
+  box-shadow: 0 0 0 2px rgba(24,95,165,.12);
+}
+.dsd-form input.err, .dsd-form select.err { border-color: #A32D2D; }
+.dsd-form .hint { font-size: 13px; color: var(--color-text-tertiary); }
+.dsd-form .radio-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.dsd-form .radio-group-vertical { display: flex; flex-direction: column; gap: 6px; }
+.dsd-form .radio-group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
+.dsd-form .nested-box { margin-left: 20px; padding: 10px 14px; border-left: 2px solid #185FA5; display: none; flex-direction: column; gap: 8px; background: #F3F4F6; border-radius: var(--border-radius-md); }
+.dsd-form .radio-group.err, .dsd-form .radio-group-vertical.err, .dsd-form .radio-group-grid.err { border: 1.5px solid #A32D2D; border-radius: var(--border-radius-md); padding: 4px; }
+.dsd-form .radio-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md); cursor: pointer; font-size: 15px;
+  background: var(--color-background-primary); transition: all .15s;
+}
+.dsd-form .radio-btn input { display: none; }
+.dsd-form .radio-btn.selected { border-color: #185FA5; background: #E6F1FB; color: #185FA5; font-weight: 500; }
+.dsd-form .sign-zone {
+  border: 0.5px dashed var(--color-border-secondary);
+  border-radius: var(--border-radius-md); height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 4px; color: var(--color-text-secondary); font-size: 14px;
+}
+.dsd-form .divider { height: 0.5px; background: var(--color-border-tertiary); margin: 4px 0; }
+.dsd-form .badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: 99px; font-size: 13px; font-weight: 500;
+}
+.dsd-form .badge-blue { background: #E6F1FB; color: #0C447C; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>

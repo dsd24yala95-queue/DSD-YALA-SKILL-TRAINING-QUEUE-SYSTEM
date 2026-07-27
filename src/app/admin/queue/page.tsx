@@ -1,0 +1,916 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { QueueBooking, User } from "@prisma/client";
+import { parseProfileJson } from "@/lib/jsonEngine";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+
+interface QueueRow {
+    id: string;
+    userId: string;
+    memberName: string;
+    memberPhone: string;
+    type: "test" | "training";
+    itemId: string;
+    itemName: string;
+    status: string;
+    appointedDate: string;
+    queueNumber?: number;
+    level?: number;
+    isAcknowledged?: boolean;
+    createdAt: any;
+    profileJson?: string;
+}
+
+const STATUS_LABELS: { [key: string]: { label: string; cls: string } } = {
+    pending: { label: "รอดำเนินการ", cls: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    approved: { label: "ยืนยันนัดหมาย", cls: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+    confirmed: { label: "ยืนยันนัดหมาย", cls: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+    appointed: { label: "นัดหมายแล้ว", cls: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20" },
+    checked_in: { label: "รอทดสอบหน้างาน", cls: "bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/20" },
+    training: { label: "กำลังอบรม", cls: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20" },
+    testing: { label: "กำลังทดสอบ", cls: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20" },
+    completed: { label: "ผ่านการประเมิน", cls: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    passed: { label: "ผ่านการประเมิน", cls: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    failed: { label: "ไม่ผ่าน", cls: "bg-red-500/10 text-red-500 border-red-500/20" },
+    cancelled: { label: "ยกเลิกแล้ว", cls: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+};
+
+export default function AdminQueuePage() {
+    const [queues, setQueues] = useState<QueueRow[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const [searchText, setSearchText] = useState("");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterType, setFilterType] = useState("all");
+
+    // Modal state for appointment scheduling
+    const [modalQueue, setModalQueue] = useState<QueueRow | null>(null);
+    const [appointedDate, setAppointedDate] = useState("");
+    const [appointedLocation, setAppointedLocation] = useState("สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา");
+    const [modalLoading, setModalLoading] = useState(false);
+
+    // Confirm delete state
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+    // Bulk select state
+    const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+
+    // Export Modal state
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportFileName, setExportFileName] = useState("export");
+    const [exportBatch, setExportBatch] = useState("1");
+    const [exportSelectedRows, setExportSelectedRows] = useState<Set<string>>(new Set());
+
+    // Call queue in-progress tracker {[queueId]: true}
+    const [callingQueue, setCallingQueue] = useState<{ [id: string]: boolean }>({});
+
+    const handleOpenExportModal = () => {
+        if (selectedRows.size === 0) {
+            toast.error("กรุณาเลือกรายการที่ต้องการ Export อย่างน้อย 1 รายการ");
+            return;
+        }
+        
+        // Auto-fill filename based on the first selected item's name if available
+        const firstSelected = queues.find(q => selectedRows.has(q.id));
+        if (firstSelected) {
+            setExportFileName(firstSelected.itemName.replace(/[\/\\]/g, "_"));
+        } else {
+            setExportFileName("export");
+        }
+        
+        setExportBatch("1");
+        setExportSelectedRows(new Set(selectedRows));
+        setShowExportModal(true);
+    };
+
+    const handleConfirmExport = () => {
+        if (exportSelectedRows.size === 0) {
+            toast.error("ไม่มีรายการสำหรับส่งออก");
+            return;
+        }
+        
+        const dataToExport = queues.filter(q => exportSelectedRows.has(q.id));
+        
+        // Extract raw profileJson using jsonEngine to ensure 100% compliant schema
+        const rawJsonArray = dataToExport.map(q => {
+            if (q.profileJson) {
+                try {
+                    return parseProfileJson(q.profileJson, { createdAt: q.createdAt });
+                } catch(e) {
+                    return null;
+                }
+            }
+            return null;
+        }).filter(item => item !== null);
+
+        const jsonString = JSON.stringify(rawJsonArray); // Minified to match standard JSON file
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        
+        const finalFilename = exportBatch ? `${exportFileName}_รุ่นที่_${exportBatch}` : exportFileName;
+        a.download = `${finalFilename}.json`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Export JSON สำเร็จ");
+        setShowExportModal(false);
+    };
+
+    const loadQueues = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/queues");
+            if (!res.ok) throw new Error("Failed to load queues");
+            const data = await res.json();
+            setQueues(data);
+        } catch (e) {
+            console.error(e);
+            toast.error("ไม่สามารถโหลดข้อมูลคิวได้");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadQueues();
+    }, [loadQueues]);
+
+    // ── Status update helpers ───────────────────────────────────────
+    const updateStatus = async (queueId: string, newStatus: string, extraData?: object) => {
+        try {
+            await fetch("/api/bookings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: queueId, status: newStatus, ...extraData })
+            });
+
+            // Create notification for member
+            const q = queues.find(x => x.id === queueId);
+            if (q) {
+                const aptDate = (extraData as any)?.appointedDate;
+                const aptLocation = (extraData as any)?.appointedLocation || "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา";
+
+                const aptDateFormatted = aptDate
+                    ? new Date(aptDate).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
+                    : "";
+
+                const msgMap: { [k: string]: string } = {
+                    approved: `ระบบยืนยันนัดหมายของท่านสำหรับ "${q.itemName}" เรียบร้อยแล้ว วันที่ ${aptDateFormatted} ณ ${aptLocation} — กรุณากด "รับนัดหมาย" เพื่อบันทึกเข้า Google Calendar`,
+                    testing: "ถึงคิวของท่านแล้ว! กรุณาแสดงตัวที่จุดทดสอบ",
+                    training: "ถึงคิวของท่านแล้ว! กรุณาเข้าร่วมจุดฝึกอบรม",
+                    completed: "ขอแสดงความยินดี! ท่านผ่านการประเมินเรียบร้อยแล้ว",
+                    failed: "ผลการประเมินของท่านไม่ผ่าน กรุณาติดต่อเจ้าหน้าที่เพื่อนัดหมายใหม่",
+                    cancelled: "คิวของท่านถูกยกเลิกแล้ว หากมีข้อสงสัยกรุณาติดต่อสำนักงาน",
+                };
+
+                const notifTypeMap: { [k: string]: string } = {
+                    approved: "appointment",
+                    testing: "queue_call",
+                    training: "queue_call",
+                    completed: "result",
+                    failed: "result",
+                    cancelled: "general",
+                };
+
+                const msg = msgMap[newStatus];
+                if (msg) {
+                    await fetch("/api/notifications", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userId: q.userId,
+                            title: newStatus === "approved"
+                                ? "📅 ยืนยันนัดหมายแล้ว — กรุณารับนัดหมาย"
+                                : "อัปเดตสถานะคิว",
+                            message: msg,
+                            type: notifTypeMap[newStatus] || "general",
+                            metadata: newStatus === "approved"
+                                ? JSON.stringify({
+                                    appointedDate: aptDate,
+                                    itemName: q.itemName,
+                                    bookingType: q.type,
+                                    location: aptLocation,
+                                })
+                                : null
+                        })
+                    });
+
+                    // Trigger LINE Notification
+                    fetch("/api/notify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            memberId: q.userId,
+                            messageType: newStatus,
+                            data: {
+                                itemName: q.itemName,
+                                appointedDate: aptDate,
+                                location: aptLocation,
+                            }
+                        })
+                    }).catch(err => console.error("Failed to notify via LINE:", err));
+                }
+            }
+            toast.success("อัปเดตสถานะคิวสำเร็จ!");
+            await loadQueues();
+        } catch (e) {
+            console.error(e);
+            toast.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
+        }
+    };
+
+    // ── Call Queue — fires Full Screen Alert on Member's device ────────
+    const callQueue = async (q: QueueRow) => {
+        setCallingQueue(prev => ({ ...prev, [q.id]: true }));
+        try {
+            const res = await fetch("/api/admin/queues/call", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    queueId: q.id,
+                    userId: q.userId,
+                    queueNumber: q.queueNumber ?? "",
+                    itemName: q.itemName
+                })
+            });
+            const data = await res.json();
+            if (data.callCount > 1) {
+                toast.info(`เรียกคิวซ้ำครั้งที่ ${data.callCount} — ${q.memberName}`);
+            } else {
+                toast.success(`เรียกคิว ${q.memberName} เรียบร้อยแล้ว!`);
+            }
+        } catch (e) {
+            toast.error("เกิดข้อผิดพลาดในการเรียกคิว");
+        } finally {
+            setCallingQueue(prev => ({ ...prev, [q.id]: false }));
+        }
+    };
+
+    const handleApproveSubmit = async () => {
+        if (!modalQueue || !appointedDate) {
+            toast.error("กรุณาเลือกวันและเวลานัดหมาย");
+            return;
+        }
+        setModalLoading(true);
+        try {
+            const res = await fetch("/api/admin/queues/appoint", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    queueId: modalQueue.id,
+                    appointedDate,
+                    appointedLocation
+                })
+            });
+            if (!res.ok) throw new Error("Failed to set appointment");
+            setModalQueue(null);
+            setAppointedDate("");
+            setAppointedLocation("อาคารฝึกอบรม ชั้น 2");
+            await loadQueues();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        try {
+            await fetch(`/api/bookings?id=${id}`, { method: "DELETE" });
+            toast.success("ลบคิวสำเร็จ");
+            setDeleteTarget(null);
+            await loadQueues();
+        } catch (e) {
+            toast.error("ไม่สามารถลบรายการได้");
+        }
+    };
+
+    // ── Filter logic ────────────────────────────────────────────────
+    const filtered = queues.filter(q => {
+        const matchSearch =
+            !searchText ||
+            q.memberName.includes(searchText) ||
+            q.memberPhone.includes(searchText) ||
+            q.itemName.includes(searchText) ||
+            q.id.includes(searchText);
+        const matchStatus = filterStatus === "all" || q.status === filterStatus;
+        const matchType = filterType === "all" || q.type === filterType;
+        return matchSearch && matchStatus && matchType;
+    });
+
+    const pendingCount = queues.filter(q => q.status === "pending").length;
+    const approvedCount = queues.filter(q => q.status === "approved" || q.status === "confirmed").length;
+    const checkedInCount = queues.filter(q => q.status === "checked_in").length;
+
+    return (
+        <div className="p-6 bg-[#f8fafc] min-h-screen font-sans">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                    <i className="fa-solid fa-list-check text-indigo-600"></i>
+                    จัดการคิวจองและสมัครอบรม
+                </h1>
+                <p className="text-xs text-slate-400 mt-1">อนุมัติคิว กำหนดวันนัดหมาย อัปเดตสถานะ และจัดการรายการจองทั้งหมดของ สพร.24 ยะลา</p>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                {[
+                    { label: "รายการทั้งหมด", value: queues.length, icon: "fa-database", color: "from-slate-500 to-slate-600" },
+                    { label: "รอดำเนินการ", value: pendingCount, icon: "fa-hourglass-half", color: "from-amber-400 to-orange-500" },
+                    { label: "ยืนยันนัดหมายแล้ว", value: approvedCount, icon: "fa-calendar-check", color: "from-blue-500 to-indigo-600" },
+                    { label: "รายงานตัวแล้ว", value: checkedInCount, icon: "fa-person-walking-arrow-right", color: "from-fuchsia-500 to-pink-600" },
+                    { label: "เสร็จสิ้น", value: queues.filter(q => q.status === "completed" || q.status === "passed").length, icon: "fa-check-double", color: "from-emerald-400 to-teal-600" },
+                ].map((c, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-md shrink-0`}>
+                            <i className={`fa-solid ${c.icon} text-white text-sm`}></i>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-black text-slate-800">{c.value}</p>
+                            <p className="text-[11px] font-semibold text-slate-400">{c.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Live Queue Check-in Section */}
+            <div className="bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 className="text-lg font-bold text-indigo-700 flex items-center gap-2">
+                        <i className="fa-solid fa-id-card text-indigo-500"></i>
+                        ระบบรับรายงานตัวหน้างาน (Live Queue Check-in)
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">ใช้เลขบัตรประชาชนของประชาชนที่เดินทางมาถึง เพื่อกดยืนยันการรายงานตัวเข้าคิวของวันนี้</p>
+                </div>
+                <div className="flex w-full md:w-auto gap-2">
+                    <input
+                        type="text"
+                        id="checkinInput"
+                        placeholder="กรอกเลขบัตรประชาชน 13 หลัก"
+                        className="flex-1 md:w-64 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                    />
+                    <button
+                        onClick={async () => {
+                            const input = document.getElementById("checkinInput") as HTMLInputElement;
+                            const idCard = input.value.trim();
+                            if (!idCard) { toast.error("กรุณากรอกเลขบัตรประชาชน"); return; }
+                            const tId = toast.loading("กำลังค้นหาข้อมูล...");
+                            try {
+                                const res = await fetch("/api/admin/checkin", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ idCard })
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.error || "Check-in failed");
+                                toast.success(`รายงานตัวสำเร็จ: ${data.user?.fullName || idCard}`, { id: tId });
+                                input.value = "";
+                                loadQueues();
+                            } catch (e: any) {
+                                toast.error(e.message, { id: tId });
+                            }
+                        }}
+                        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-indigo-500/20 shrink-0"
+                    >
+                        รับรายงานตัว
+                    </button>
+                    <button
+                        onClick={async () => {
+                            const newTime = window.prompt("ตั้งค่าเวลารอเฉลี่ยต่อ 1 คิว (นาที):", "15");
+                            if (newTime && !isNaN(Number(newTime))) {
+                                const tId = toast.loading("กำลังบันทึก...");
+                                try {
+                                    const res = await fetch("/api/admin/settings", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ key: "liveWaitTime", value: newTime })
+                                    });
+                                    if (!res.ok) throw new Error("Failed to save");
+                                    toast.success("บันทึกการตั้งค่าสำเร็จ", { id: tId });
+                                } catch (e) {
+                                    toast.error("เกิดข้อผิดพลาด", { id: tId });
+                                }
+                            }
+                        }}
+                        className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all shrink-0"
+                        title="ตั้งค่าเวลารอเฉลี่ย"
+                    >
+                        <i className="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+
+                        {/* Type Filter Tabs */}
+            <div className="flex items-center gap-2 mb-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 w-fit overflow-x-auto max-w-full">
+                <button 
+                    onClick={() => setFilterType('all')}
+                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${filterType === 'all' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <i className="fa-solid fa-layer-group mr-2"></i> ทุกประเภท
+                </button>
+                <button 
+                    onClick={() => setFilterType('training')}
+                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${filterType === 'training' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <i className="fa-solid fa-chalkboard-user mr-2"></i> หลักสูตรการฝึกอบรม
+                </button>
+                <button 
+                    onClick={() => setFilterType('test')}
+                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${filterType === 'test' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <i className="fa-solid fa-clipboard-check mr-2"></i> สาขาการทดสอบมาตรฐาน
+                </button>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm mb-6 flex flex-wrap gap-3 items-center">
+                <button
+                    onClick={handleOpenExportModal}
+                    className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2"
+                >
+                    <i className="fa-solid fa-download"></i>
+                    Export JSON {selectedRows.size > 0 && `(${selectedRows.size})`}
+                </button>
+                <div className="relative flex-1 min-w-[200px]">
+                    <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input
+                        type="text"
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        placeholder="ค้นหาชื่อ, เบอร์โทร, บริการ..."
+                        className="w-full pl-8 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-400 bg-slate-50"
+                    />
+                </div>
+                <select
+                    value={filterStatus}
+                    onChange={e => setFilterStatus(e.target.value)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:border-indigo-400 min-w-[160px]"
+                >
+                    <option value="all">ทุกสถานะ</option>
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="approved">ยืนยันนัดหมาย</option>
+                    <option value="checked_in">รอทดสอบหน้างาน</option>
+                    <option value="testing">กำลังทดสอบ</option>
+                    <option value="training">กำลังอบรม</option>
+                    <option value="completed">ผ่านการประเมิน</option>
+                    <option value="failed">ไม่ผ่าน</option>
+                    <option value="cancelled">ยกเลิก</option>
+                </select>
+
+                <button
+                    onClick={loadQueues}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2 shrink-0"
+                >
+                    <i className="fa-solid fa-rotate-right"></i>
+                    รีเฟรช
+                </button>
+            </div>
+
+            {/* Queue Table */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                {loading ? (
+                    <div className="py-20 flex flex-col items-center justify-center gap-3">
+                        <span className="loading loading-spinner loading-lg text-indigo-500"></span>
+                        <p className="text-sm text-slate-400 font-medium">กำลังดึงข้อมูลคิว...</p>
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="py-20 text-center text-slate-400">
+                        <i className="fa-solid fa-folder-open text-4xl mb-3 block"></i>
+                        <p className="font-semibold text-sm">ไม่พบรายการคิวที่ตรงกับเงื่อนไขที่ค้นหา</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-4 py-3.5 text-left w-10">
+                                        <input 
+                                            type="checkbox" 
+                                            className="checkbox checkbox-xs"
+                                            checked={filtered.length > 0 && selectedRows.size === filtered.length}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedRows(new Set(filtered.map(q => q.id)));
+                                                } else {
+                                                    setSelectedRows(new Set());
+                                                }
+                                            }}
+                                        />
+                                    </th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase">หมายเลขคิว</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase">ผู้จอง</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase hidden md:table-cell">ประเภท / บริการ</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase hidden xl:table-cell">ระดับ</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase hidden lg:table-cell">วันนัดหมาย</th>
+                                    <th className="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase">สถานะ</th>
+                                    <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-500 uppercase">ดำเนินการ</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {filtered.map((q, i) => {
+                                    const statusInfo = STATUS_LABELS[q.status] || { label: q.status, cls: "bg-slate-100 text-slate-500 border-slate-200" };
+                                    return (
+                                        <motion.tr
+                                            key={q.id}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: i * 0.02 }}
+                                            className="hover:bg-slate-50/50 transition-colors"
+                                        >
+                                            <td className="px-4 py-3.5">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="checkbox checkbox-xs"
+                                                    checked={selectedRows.has(q.id)}
+                                                    onChange={(e) => {
+                                                        const newSet = new Set(selectedRows);
+                                                        if (e.target.checked) newSet.add(q.id);
+                                                        else newSet.delete(q.id);
+                                                        setSelectedRows(newSet);
+                                                    }}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <span className="font-mono text-[11px] text-slate-400">{q.id.slice(0, 8).toUpperCase()}</span>
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <p className="font-bold text-slate-800 text-sm leading-tight">{q.memberName}</p>
+                                                <p className="text-[11px] text-slate-400 mt-0.5">{q.memberPhone}</p>
+                                            </td>
+                                            <td className="px-4 py-3.5 hidden md:table-cell">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${q.type === "test"
+                                                    ? "bg-blue-50 text-blue-600 border-blue-100"
+                                                    : "bg-purple-50 text-purple-600 border-purple-100"
+                                                    }`}>
+                                                    {q.type === "test" ? "ทดสอบ" : "อบรม"}
+                                                </span>
+                                                <p className="text-xs text-slate-700 mt-1 font-medium">{q.itemName}</p>
+                                            </td>
+                                            <td className="px-4 py-3.5 hidden xl:table-cell">
+                                                {q.level ? (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 border border-violet-100">
+                                                        <i className="fa-solid fa-layer-group text-[9px]"></i>
+                                                        ระดับ {q.level}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] text-slate-300">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3.5 hidden lg:table-cell">
+                                                {q.appointedDate ? (
+                                                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5">
+                                                        <i className="fa-regular fa-calendar-check text-emerald-400"></i>
+                                                        {mounted ? new Date(q.appointedDate).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] text-slate-300">ยังไม่กำหนด</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusInfo.cls}`}>
+                                                        {statusInfo.label}
+                                                    </span>
+                                                    {q.isAcknowledged && (
+                                                        <span className="text-[10px] font-semibold text-teal-500 flex items-center gap-1">
+                                                            <i className="fa-solid fa-circle-check text-[9px]"></i> รับทราบแล้ว
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5 text-right">
+                                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                                    {/* Approve & Schedule — pending only */}
+                                                    {q.status === "pending" && (
+                                                        <button
+                                                            onClick={() => { setModalQueue(q); setAppointedDate(""); }}
+                                                            className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition-all flex items-center gap-1"
+                                                        >
+                                                            <i className="fa-solid fa-calendar-plus"></i>
+                                                            อนุมัติ &amp; นัดหมาย
+                                                        </button>
+                                                    )}
+
+                                                    {/* ── เรียกคิว — always visible for active queues ── */}
+                                                    {q.status !== "cancelled" && q.status !== "completed" && q.status !== "passed" && q.status !== "pending" && (
+                                                        <button
+                                                            onClick={() => callQueue(q)}
+                                                            disabled={callingQueue[q.id]}
+                                                            className="relative px-3 py-1.5 rounded-lg text-white text-[11px] font-extrabold transition-all flex items-center gap-1.5 shadow-md shadow-red-500/20 disabled:opacity-70 overflow-hidden"
+                                                            style={{ background: "linear-gradient(135deg,#ef4444,#dc2626)" }}
+                                                        >
+                                                            {callingQueue[q.id] ? (
+                                                                <span className="loading loading-spinner loading-xs"></span>
+                                                            ) : (
+                                                                <i className="fa-solid fa-bell animate-bounce"></i>
+                                                            )}
+                                                            เรียกคิว
+                                                        </button>
+                                                    )}
+
+                                                    {/* Pass / Fail — active statuses */}
+                                                    {(q.status === "checked_in" || q.status === "testing" || q.status === "training") && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => updateStatus(q.id, "completed")}
+                                                                className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-all flex items-center gap-1"
+                                                            >
+                                                                <i className="fa-solid fa-check"></i>
+                                                                ผ่าน
+                                                            </button>
+                                                            <button
+                                                                onClick={() => updateStatus(q.id, "failed")}
+                                                                className="px-2.5 py-1 rounded-lg bg-red-500 text-white text-[11px] font-bold hover:bg-red-600 transition-all flex items-center gap-1"
+                                                            >
+                                                                <i className="fa-solid fa-xmark"></i>
+                                                                ไม่ผ่าน
+                                                            </button>
+                                                        </>
+                                                    )}
+
+                                                    {/* Delete — not for terminal statuses */}
+                                                    {q.status !== "cancelled" && q.status !== "completed" && q.status !== "passed" && (
+                                                        <button
+                                                            onClick={() => setDeleteTarget(q.id)}
+                                                            className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold hover:bg-red-50 hover:text-red-500 transition-all flex items-center gap-1"
+                                                        >
+                                                            <i className="fa-solid fa-trash-can"></i>
+                                                            ลบ
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Appointment Modal ──────────────────────────────────────────── */}
+            <AnimatePresence>
+                {modalQueue && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={e => { if (e.target === e.currentTarget) setModalQueue(null); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                            className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md"
+                        >
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <i className="fa-solid fa-calendar-check text-white text-2xl"></i>
+                            </div>
+                            <h3 className="font-black text-slate-800 text-xl text-center mb-1">อนุมัติและกำหนดนัดหมาย</h3>
+                            <p className="text-center text-slate-400 text-xs mb-6">ระบบจะส่งแจ้งเตือนพร้อมลิงก์บันทึก Google Calendar ไปยัง member</p>
+
+                            <div className="bg-slate-50 rounded-2xl p-4 mb-5 space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">ผู้จอง</span>
+                                    <span className="font-bold text-slate-800">{modalQueue.memberName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">บริการ</span>
+                                    <span className="font-bold text-slate-800">{modalQueue.itemName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">ประเภท</span>
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${modalQueue.type === "test" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                                        {modalQueue.type === "test" ? "ทดสอบมาตรฐาน" : "ฝึกอบรม"}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="text-sm font-bold text-slate-700 block mb-2">
+                                    <i className="fa-regular fa-calendar text-indigo-500 mr-2"></i>
+                                    วันและเวลานัดหมาย *
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={appointedDate}
+                                    onChange={e => setAppointedDate(e.target.value)}
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                                />
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="text-sm font-bold text-slate-700 block mb-2">
+                                    <i className="fa-solid fa-location-dot text-red-400 mr-2"></i>
+                                    สถานที่นัดหมาย
+                                </label>
+                                <input
+                                    type="text"
+                                    value={appointedLocation}
+                                    onChange={e => setAppointedLocation(e.target.value)}
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                                    placeholder="สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา"
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setModalQueue(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={handleApproveSubmit}
+                                    disabled={modalLoading || !appointedDate}
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {modalLoading ? (
+                                        <span className="loading loading-spinner loading-xs"></span>
+                                    ) : (
+                                        <i className="fa-solid fa-paper-plane"></i>
+                                    )}
+                                    ยืนยัน &amp; ส่งแจ้งเตือน
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Delete Confirm Modal ─────────────────────────────────────── */}
+            <AnimatePresence>
+                {deleteTarget && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.92 }}
+                            className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center"
+                        >
+                            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                                <i className="fa-solid fa-trash text-red-500 text-2xl"></i>
+                            </div>
+                            <h3 className="font-black text-slate-800 text-lg mb-2">ยืนยันการลบรายการ</h3>
+                            <p className="text-sm text-slate-400 mb-6">การลบนี้จะลบข้อมูลคิวออกจากฐานข้อมูลถาวร ไม่สามารถกู้คืนได้</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteTarget(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(deleteTarget)}
+                                    className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-all"
+                                >
+                                    ลบออกจากระบบ
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Export Config Modal ──────────────────────────────────────────── */}
+            <AnimatePresence>
+                {showExportModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={e => { if (e.target === e.currentTarget) setShowExportModal(false); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                            className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-2xl flex flex-col max-h-[90vh]"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
+                                    <i className="fa-solid fa-file-export text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-slate-800 text-xl">ตั้งค่าส่งออกไฟล์ JSON</h3>
+                                    <p className="text-slate-500 text-xs mt-1">ตรวจสอบรายชื่อและตั้งชื่อไฟล์ก่อนส่งออกสำหรับระบบกรมพัฒนาฝีมือแรงงาน</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 shrink-0">
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 block mb-2">ชื่อหลักสูตร / หัวข้อไฟล์</label>
+                                    <input 
+                                        type="text" 
+                                        value={exportFileName}
+                                        onChange={e => setExportFileName(e.target.value)}
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 block mb-2">รุ่นที่</label>
+                                    <input 
+                                        type="text" 
+                                        value={exportBatch}
+                                        onChange={e => setExportBatch(e.target.value)}
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 bg-slate-50"
+                                        placeholder="เช่น 1 หรือ 1/2567"
+                                    />
+                                </div>
+                                <div className="md:col-span-2 bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex flex-wrap items-center gap-2">
+                                    <i className="fa-regular fa-file-code text-indigo-500 shrink-0"></i>
+                                    <span className="text-sm text-indigo-700 font-medium break-all">ชื่อไฟล์ที่จะได้: <strong>{exportBatch ? `${exportFileName}_รุ่นที่_${exportBatch}` : exportFileName}.json</strong></span>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-hidden flex flex-col mb-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white shrink-0">
+                                    <span className="font-bold text-slate-700 text-sm">รายชื่อที่เลือกส่งออก ({exportSelectedRows.size} คน)</span>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => setExportSelectedRows(new Set(queues.filter(q => selectedRows.has(q.id)).map(q => q.id)))}
+                                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                                        >
+                                            เลือกทั้งหมด
+                                        </button>
+                                        <button 
+                                            onClick={() => setExportSelectedRows(new Set())}
+                                            className="text-[11px] font-bold text-slate-500 hover:text-slate-600 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 transition-colors"
+                                        >
+                                            เอาออกทั้งหมด
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-y-auto p-2" style={{ maxHeight: "300px" }}>
+                                    {queues.filter(q => selectedRows.has(q.id)).map(q => (
+                                        <label key={q.id} className="flex items-center gap-3 p-3 hover:bg-white rounded-xl cursor-pointer transition-colors border border-transparent hover:border-slate-200 group">
+                                            <input 
+                                                type="checkbox" 
+                                                className="checkbox checkbox-sm checkbox-primary shrink-0"
+                                                checked={exportSelectedRows.has(q.id)}
+                                                onChange={(e) => {
+                                                    const newSet = new Set(exportSelectedRows);
+                                                    if (e.target.checked) newSet.add(q.id);
+                                                    else newSet.delete(q.id);
+                                                    setExportSelectedRows(newSet);
+                                                }}
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-slate-800 text-sm truncate">{q.memberName}</p>
+                                                <p className="text-xs text-slate-400 truncate mt-0.5">{q.memberPhone} • {q.itemName}</p>
+                                            </div>
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <i className={`fa-solid fa-check text-emerald-500 ${exportSelectedRows.has(q.id) ? 'block' : 'hidden'}`}></i>
+                                            </div>
+                                        </label>
+                                    ))}
+                                    {exportSelectedRows.size === 0 && (
+                                        <div className="py-10 text-center text-slate-400">
+                                            <i className="fa-solid fa-users-slash text-2xl mb-2"></i>
+                                            <p className="text-sm font-medium">ไม่ได้เลือกรายชื่อใดๆ</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 shrink-0">
+                                <button
+                                    onClick={() => setShowExportModal(false)}
+                                    className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={handleConfirmExport}
+                                    disabled={exportSelectedRows.size === 0}
+                                    className="flex-1 py-3 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-slate-800/20"
+                                >
+                                    <i className="fa-solid fa-download"></i>
+                                    ยืนยันส่งออก JSON
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+

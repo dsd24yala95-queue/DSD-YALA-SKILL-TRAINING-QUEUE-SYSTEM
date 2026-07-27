@@ -1,0 +1,121 @@
+<!-- Google Fonts (Prompt) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+
+<!-- AOS Animation -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+<!-- Tailwind & DaisyUI -->
+<link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.0/dist/full.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Tailwind Custom Configuration -->
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          prompt: ['Prompt', 'sans-serif'],
+        },
+        colors: {
+          primary: '#003366',
+          secondary: '#2563EB',
+          accent: '#6366F1',
+          gold: '#FFD700',
+          background: '#F8FAFC',
+        },
+        borderRadius: {
+          '4xl': '24px',
+        },
+        boxShadow: {
+          'soft': '0 4px 20px rgba(0,0,0,0.05)',
+          'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Custom CSS for Glassmorphism & SPA -->
+<style>
+  /* Glassmorphism utility */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .dark .glass-panel {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* SPA Routing */
+  .spa-view {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+  .spa-view.active {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Utilities */
+  body {
+    font-family: 'Prompt', sans-serif;
+  }
+
+  .rounded-apple {
+    border-radius: 24px;
+  }
+  
+  /* SweetAlert2 Glassmorphism Override */
+  .swal2-popup {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
+  }
+  .dark .swal2-popup {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+  }
+  .dark .swal2-title, .dark .swal2-html-container {
+    color: #fff !important;
+  }
+  .swal2-backdrop-show {
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+  .swal2-confirm {
+    border-radius: 12px !important;
+  }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+</style>

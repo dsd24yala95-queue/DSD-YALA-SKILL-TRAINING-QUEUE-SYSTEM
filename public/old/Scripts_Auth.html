@@ -1,0 +1,206 @@
+<script>
+// ============================================================
+//  Scripts_Auth.html — Authentication & Registration
+// ============================================================// ── MEMBER AUTH VIEW ──────────────────────────────────────────
+function renderViewAuthMember(params) {
+  setTimeout(() => { var el=document.getElementById('inp-phone'); if(el) el.focus(); }, 300);
+}
+
+// ── AUTH FUNCTIONS ────────────────────────────────────────────
+async function authMemberLogin() {
+  const phoneEl = document.getElementById('inp-phone');
+  const errEl   = document.getElementById('err-phone');
+  const btn     = document.getElementById('btn-login');
+  const phone   = phoneEl.value.trim();
+
+  errEl.textContent = '';
+  if (!/^0[689]\d{8}$/.test(phone)) {
+    errEl.textContent = 'กรุณากรอกเบอร์โทรให้ถูกต้อง เช่น 0812345678';
+    phoneEl.focus(); return;
+  }
+
+  _setLoading(btn, true, 'กำลังตรวจสอบ...');
+  const res = await callAPI('memberLogin', { phone });
+  _setLoading(btn, false);
+
+  if (!res.success) {
+    errEl.textContent = res.error;
+    return;
+  }
+
+  if (res.data.isNewMember) {
+    // ไปหน้าลงทะเบียน
+    AppState.set('pendingPhone', phone);
+    Toast.info('ไม่พบข้อมูลสมาชิก กรุณากรอกประวัติเพื่อลงทะเบียนใหม่');
+    Router.go('register');
+  } else {
+    // เข้าระบบสำเร็จ
+    SessionMgr.setSession(res.data.token, res.data.expiry, 'member', {
+      memberId:           res.data.memberId,
+      fullName:           res.data.fullName,
+      phone:              res.data.phone,
+      calendarAuthorized: res.data.calendarAuthorized,
+    });
+    _buildBottomNav();
+    Toast.success(`ยินดีต้อนรับ ${res.data.fullName}`);
+
+    // ถ้ามี pendingAction ค้างอยู่
+    if (AppState.pendingAction) {
+      const { view, params } = AppState.pendingAction;
+      AppState.set('pendingAction', null);
+      if (view.startsWith('admin-') || Router._protectedAdmin.includes(view)) {
+        Router.go('dashboard'); // ไม่ให้ member เข้าถึง view ของ admin
+      } else {
+        Router.go(view, params);
+      }
+    } else {
+      Router.go('dashboard');
+    }
+    await NotificationMgr.fetchAndShow();
+  }
+}
+
+// ── LIFF AUTH LINK VIEW ──────────────────────────────────────────
+function renderViewAuthLiffLink(params) {
+  const app = document.getElementById('app-content');
+  const profile = params || {};
+  const pictureUrl = profile.pictureUrl || 'https://via.placeholder.com/150';
+  
+  // Safe HTML escape for displayName
+  const dNameRaw = String(profile.displayName || 'LINE User');
+  const displayName = dNameRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  app.innerHTML = `
+    <div class="page-header">
+      <button class="back-btn" onclick="Router.go('home')">${_icon('arrow-left')}</button>
+      <h1>ผูกบัญชี LINE ครั้งแรก</h1>
+    </div>
+    <div class="page-content">
+
+      <div style="text-align:center;padding:24px 0 20px">
+        <img src="${pictureUrl}" alt="LINE Profile" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;border:3px solid #10b981;box-shadow:0 4px 10px rgba(16,185,129,0.2);">
+        <h3 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:4px;">${displayName}</h3>
+        <p class="text-sm text-muted">กรุณายืนยันตัวตนเพื่อผูกบัญชี LINE ของคุณกับระบบ</p>
+      </div>
+
+      <div class="card card-body">
+        <div class="form-group">
+          <label class="form-label">เลขบัตรประชาชน 13 หลัก <span class="required">*</span></label>
+          <input id="liff-inp-idcard" type="tel" class="form-control" placeholder="1XXXXXXXXXXXX" maxlength="13"
+            oninput="this.value=this.value.replace(/\\D/g,'')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">เบอร์โทรศัพท์ <span class="required">*</span></label>
+          <input id="liff-inp-phone" type="tel" class="form-control" placeholder="08XXXXXXXX" maxlength="10"
+            oninput="this.value=this.value.replace(/\\D/g,'')"
+            onkeydown="if(event.key==='Enter')linkLineUserSubmit()">
+        </div>
+        
+        <div class="form-error" id="err-liff-link" style="margin-bottom:12px;text-align:center;"></div>
+        
+        <button class="btn btn-primary btn-block" id="btn-liff-link" onclick="linkLineUserSubmit()" style="background:#00B900;border-color:#00B900;">
+          ผูกบัญชี LINE และเข้าสู่ระบบ
+        </button>
+        <p class="text-xs text-muted text-center mt-12">เมื่อผูกบัญชีสำเร็จ ครั้งต่อไปคุณจะเข้าสู่ระบบอัตโนมัติ</p>
+      </div>
+
+    </div>`;
+
+  setTimeout(() => { var el=document.getElementById('liff-inp-idcard'); if(el) el.focus(); }, 300);
+}
+
+async function linkLineUserSubmit() {
+  const idCardEl = document.getElementById('liff-inp-idcard');
+  const phoneEl  = document.getElementById('liff-inp-phone');
+  const errEl    = document.getElementById('err-liff-link');
+  const btn      = document.getElementById('btn-liff-link');
+  
+  const idCard = idCardEl.value.trim();
+  const phone  = phoneEl.value.trim();
+
+  errEl.textContent = '';
+  if (idCard.length !== 13) {
+    errEl.textContent = 'กรุณากรอกเลขบัตรประชาชนให้ครบ 13 หลัก';
+    idCardEl.focus(); return;
+  }
+  if (!/^0[689]\d{8}$/.test(phone)) {
+    errEl.textContent = 'กรุณากรอกเบอร์โทรให้ถูกต้อง เช่น 0812345678';
+    phoneEl.focus(); return;
+  }
+
+  _setLoading(btn, true, 'กำลังตรวจสอบ...');
+  const res = await callAPI('linkLineAccount', { 
+    lineUid: AppState.lineUserId, 
+    idCard: idCard,
+    phone: phone 
+  });
+  _setLoading(btn, false);
+
+  if (!res.success) {
+    errEl.textContent = res.error;
+    return;
+  }
+
+  // เข้าระบบสำเร็จ
+  SessionMgr.setSession(res.data.token, res.data.expiry, 'member', {
+    memberId:           res.data.memberId,
+    fullName:           res.data.fullName,
+    phone:              res.data.phone,
+    calendarAuthorized: res.data.calendarAuthorized,
+  });
+  _buildBottomNav();
+  Toast.success(`ผูกบัญชีสำเร็จ ยินดีต้อนรับ ${res.data.fullName}`);
+
+  Router.go('dashboard');
+  await NotificationMgr.fetchAndShow();
+}
+
+// ── ADMIN AUTH VIEW ───────────────────────────────────────────
+function renderViewAuthAdmin(params) {
+  setTimeout(() => { var el=document.getElementById('admin-pwd'); if(el) el.focus(); }, 300);
+}
+
+function togglePwd() {
+  const el = document.getElementById('admin-pwd');
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+async function adminLogin() {
+  const pwdEl = document.getElementById('admin-pwd');
+  const errEl = document.getElementById('err-admin-pwd');
+  const btn   = document.getElementById('btn-admin-login');
+  const pwd   = pwdEl ? pwdEl.value : '';
+
+  errEl.textContent = '';
+  if (!pwd) { errEl.textContent = 'กรุณากรอกรหัสผ่าน'; return; }
+
+  const cleanPwd = pwd.trim();
+
+  _setLoading(btn, true, 'กำลังตรวจสอบ...');
+  const res = await callAPI('adminLogin', { password: cleanPwd });
+  _setLoading(btn, false);
+
+  if (!res.success) {
+    errEl.textContent = res.error;
+    pwdEl.value = '';
+    pwdEl.focus();
+    return;
+  }
+
+  SessionMgr.setSession(res.data.token, res.data.expiry, 'admin', { role: 'admin' });
+  _buildBottomNav();
+  Toast.success('เข้าสู่ระบบ Admin สำเร็จ');
+
+  if (AppState.pendingAction) {
+    const { view, params } = AppState.pendingAction;
+    AppState.set('pendingAction', null);
+    if (!Router._protectedAdmin.includes(view) && !view.startsWith('admin-')) {
+      Router.go('admin-dashboard'); // ไม่ให้ admin ถูกเด้งกลับไปหน้า member
+    } else {
+      Router.go(view, params);
+    }
+  } else {
+    Router.go('admin-dashboard');
+  }
+}
+</script>

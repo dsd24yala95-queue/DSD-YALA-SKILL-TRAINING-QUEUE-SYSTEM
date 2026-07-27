@@ -1,0 +1,4 @@
+branchId,branchName,levels,maxQueue,currentQueue,isOpen,docTemplateId,Date,LocationName,LocationGPS
+BRN-26054177,ช่างไฟฟ้าภายในอาคาร,1,20,4,TRUE,,31/5/2026,https://maps.app.goo.gl/671SyoQRKnKXafJA8,"6.568262117382464, 101.46312112149694"
+BRN-26057777,ช่างเชื่อมไฟฟ้า,1,20,1,TRUE,,2026-06-08,https://maps.app.goo.gl/eFJ42CNFpqsxG5p2A,
+BRN-26059038,การประกอบอาหารไทย,2,20,2,TRUE,,2026-06-15,https://maps.app.goo.gl/AugisEArPGURR5zD7,

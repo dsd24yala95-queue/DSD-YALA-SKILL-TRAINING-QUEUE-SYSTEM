@@ -1,0 +1,477 @@
+<script>
+// ============================================================
+//  View_Admin_Manage.html v3.0 — Sidebar Edition
+// ============================================================
+
+let _adminQueueState = {
+  type: 'test', status: '', search: '', page: 1, pageSize: 20, total: 0, rows: [],
+};
+
+async function renderViewAdminQueue(params = {}) {
+  const app = document.getElementById('app-content');
+  const bottomNav = document.getElementById('bottom-nav');
+  if (bottomNav) bottomNav.style.display = 'none';
+
+  _adminQueueState.type   = params.type   || 'test';
+  _adminQueueState.status = params.status || '';
+  _adminQueueState.search = params.search || '';
+  _adminQueueState.page   = 1;
+
+  const isTest = _adminQueueState.type === 'test';
+
+  const contentHTML = `
+    <style>
+      /* Tab Bar */
+      .adm-tab-bar { display:flex; background:white; border-radius:14px; padding:4px; border:1px solid #e2e8f0; margin-bottom:16px; gap:4px; }
+      .adm-tab-btn { flex:1; padding:9px 16px; border-radius:10px; border:none; background:transparent; font-size: 15px; font-weight:500; color:#94a3b8; cursor:pointer; transition:all .2s; }
+      .adm-tab-btn.active { background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; font-weight:600; box-shadow:0 2px 8px rgba(99,102,241,.3); }
+      .adm-tab-btn:hover:not(.active) { background:#f8fafc; color:#475569; }
+
+      /* Filter Chips */
+      .adm-filter-bar { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px; scrollbar-width:none; }
+      .adm-filter-bar::-webkit-scrollbar { display:none; }
+      .adm-chip { padding:6px 14px; border-radius:999px; border:1.5px solid #e2e8f0; background:white; color:#64748b; font-size: 14px; font-weight:500; cursor:pointer; white-space:nowrap; transition:all .15s; flex-shrink:0; }
+      .adm-chip:hover { border-color:#c7d2fe; color:#4f46e5; }
+      .adm-chip.active { background:#6366f1; border-color:#6366f1; color:white; font-weight:600; }
+
+      /* Toolbar */
+      .adm-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+      .adm-count-text { font-size: 14px; color:#64748b; }
+      .adm-export-btn { display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px; background:#6366f1; color:white; font-size: 14px; font-weight:600; border:none; cursor:pointer; transition:all .2s; }
+      .adm-export-btn:hover { background:#4f46e5; }
+
+      /* Queue Cards */
+      .adm-queue-card { background:white; border-radius:14px; padding:16px; border:1px solid #f1f5f9; box-shadow:0 1px 3px rgba(0,0,0,.04); margin-bottom:10px; transition:all .2s; }
+      .adm-queue-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.07); }
+      .adm-queue-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+      .adm-queue-person { display:flex; align-items:flex-start; gap:10px; }
+      .adm-queue-check { width:18px; height:18px; cursor:pointer; margin-top:2px; flex-shrink:0; accent-color:#6366f1; }
+      .adm-person-name { font-size: 16px; font-weight:700; color:#0f172a; }
+      .adm-person-meta { font-size: 13px; color:#94a3b8; margin-top:2px; }
+      .adm-queue-ref   { font-size: 14px; color:#374151; font-weight:500; margin-bottom:3px; }
+      .adm-queue-date  { font-size: 13px; color:#94a3b8; margin-bottom:10px; }
+      .adm-queue-actions { display:flex; gap:6px; flex-wrap:wrap; }
+      .adm-q-btn { padding:6px 12px; border-radius:8px; font-size: 13px; font-weight:600; border:none; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:4px; }
+      .adm-q-btn.status  { background:#f1f5f9; color:#374151; }
+      .adm-q-btn.status:hover  { background:#e2e8f0; }
+      .adm-q-btn.call    { background:#dbeafe; color:#1d4ed8; }
+      .adm-q-btn.call:hover    { background:#bfdbfe; }
+      .adm-q-btn.appt    { background:#d1fae5; color:#065f46; }
+      .adm-q-btn.appt:hover    { background:#a7f3d0; }
+      .adm-q-btn.pdf     { background:#f3e8ff; color:#6d28d9; }
+      .adm-q-btn.pdf:hover     { background:#ede9fe; }
+
+      /* Status badges */
+      .adm-status { font-size: 12px; font-weight:700; padding:3px 10px; border-radius:999px; }
+      .adm-status.pending   { background:#fef3c7; color:#92400e; }
+      .adm-status.confirmed { background:#dbeafe; color:#1e40af; }
+      .adm-status.testing   { background:#ede9fe; color:#5b21b6; }
+      .adm-status.passed    { background:#d1fae5; color:#065f46; }
+      .adm-status.failed    { background:#fee2e2; color:#991b1b; }
+      .adm-status.cancelled { background:#f1f5f9; color:#6b7280; }
+      .adm-status.approved  { background:#dbeafe; color:#1e40af; }
+      .adm-status.training  { background:#ede9fe; color:#5b21b6; }
+      .adm-status.completed { background:#d1fae5; color:#065f46; }
+
+      .adm-empty { text-align:center; padding:48px 20px; color:#94a3b8; font-size: 15px; background:white; border-radius:14px; }
+      .adm-empty-icon { font-size: 41px; margin-bottom:8px; }
+    </style>
+
+    ${AdminLayout.buildTopbar(`จัดการคิว${isTest ? 'ทดสอบ' : 'อบรม'}`, 'รายชื่อผู้สมัครและสถานะ', `
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="position:relative">
+          <input id="adm-search-input" type="text" placeholder="ค้นหาชื่อ / เบอร์ / เลขบัตร..." value="${_adminQueueState.search}"
+            style="height:36px;padding:0 36px 0 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;width:220px;outline:none;font-family:'Sarabun',sans-serif;background:#f8fafc;"
+            onkeydown="if(event.key==='Enter'){searchAdminQueue(this.value)}"
+            onfocus="this.style.borderColor='#6366f1';this.style.background='#fff'"
+            onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
+          <button onclick="searchAdminQueue(document.getElementById('adm-search-input').value)"
+            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#94a3b8;padding:0;display:flex">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </button>
+        </div>
+        <button class="adm-export-btn" onclick="exportSelectedQueueToJson()" style="white-space:nowrap">
+          📤 JSON
+        </button>
+      </div>
+    `)}
+
+    <!-- BODY -->
+    <div class="adm-body">
+
+      <!-- TAB BAR -->
+      <div class="adm-tab-bar">
+        <button class="adm-tab-btn ${_adminQueueState.type === 'test' ? 'active' : ''}" onclick="switchAdminQueueType('test')">
+          📋 คิวทดสอบ
+        </button>
+        <button class="adm-tab-btn ${_adminQueueState.type === 'training' ? 'active' : ''}" onclick="switchAdminQueueType('training')">
+          📚 คิวอบรม
+        </button>
+      </div>
+
+      <!-- FILTER CHIPS -->
+      <div class="adm-filter-bar" id="adm-filter-bar">
+        ${_buildFilterChips()}
+      </div>
+      <div id="search-banner-area"></div>
+
+      <!-- LIST -->
+      <div id="queue-list-area">
+        <div class="adm-empty"><div class="adm-empty-icon">⏳</div><p>กำลังโหลด...</p></div>
+      </div>
+
+    </div>
+  `;
+
+  app.innerHTML = AdminLayout.build(contentHTML, 'admin-queue');
+  await _loadAdminQueueList();
+}
+
+async function _loadAdminQueueList() {
+  const searchArea = document.getElementById('search-banner-area');
+  if (searchArea) searchArea.innerHTML = _renderSearchBanner();
+
+  const area = document.getElementById('queue-list-area');
+  if (!area) return;
+  area.innerHTML = `<div class="adm-empty"><div class="adm-empty-icon">⏳</div><p>กำลังโหลด...</p></div>`;
+
+  const res = await callAPI('getQueueList', {
+    token: AppState.sessionToken,
+    type:  _adminQueueState.type,
+    status: _adminQueueState.status,
+    search: _adminQueueState.search,
+    page:  _adminQueueState.page,
+    pageSize: _adminQueueState.pageSize,
+  });
+
+  if (!res.success) {
+    area.innerHTML = `<div class="adm-empty"><div class="adm-empty-icon">⚠️</div><p>${res.error}</p></div>`;
+    return;
+  }
+
+  _adminQueueState.rows  = res.data.rows  || [];
+  _adminQueueState.total = res.data.total || 0;
+
+  if (_adminQueueState.rows.length === 0) {
+    area.innerHTML = `<div class="adm-empty"><div class="adm-empty-icon">📭</div><p>ไม่มีรายการในหมวดนี้</p></div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="adm-toolbar">
+      <span class="adm-count-text">แสดง ${_adminQueueState.rows.length} / ${_adminQueueState.total} รายการ</span>
+    </div>
+    ${_adminQueueState.rows.map((r, i) => _renderQueueCard(r, i)).join('')}
+    ${_adminQueueState.total > _adminQueueState.pageSize
+      ? `<button class="btn btn-secondary btn-block mt-12" onclick="loadMoreAdminQueue()">โหลดเพิ่ม</button>`
+      : ''}`;
+}
+
+function _renderQueueCard(r, index = -1) {
+  const isTest = _adminQueueState.type === 'test';
+  const statusClass = r.status || 'pending';
+  const idxHtml = index >= 0 ? `<div style="font-size:14px;font-weight:700;color:#94a3b8;width:22px;text-align:right;margin-right:2px;flex-shrink:0">${index + 1}.</div>` : '';
+  // Highlight search term in name
+  let displayName = r.fullName;
+  if (_adminQueueState.search) {
+    const s = _adminQueueState.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    displayName = r.fullName.replace(new RegExp(s, 'gi'), m => `<mark style="background:#fef08a;border-radius:2px;padding:0 1px">${m}</mark>`);
+  }
+  return `
+    <div class="adm-queue-card" id="qrow-${r.id}">
+      <div class="adm-queue-top">
+        <div class="adm-queue-person">
+          ${idxHtml}
+          <input type="checkbox" class="queue-checkbox adm-queue-check" value="${r.id}">
+          <div style="flex:1;min-width:0">
+            <div class="adm-person-name">${displayName}</div>
+            <div class="adm-person-meta">${r.phone} &nbsp;·&nbsp; <span style="font-family:monospace">${r.id}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="adm-status ${statusClass}">${_statusLabel(r.status)}</span>
+          ${r.memberAcknowledged ? '<span style="font-size:11px;color:#16a34a;font-weight:600">✓ รับนัด</span>' : ''}
+        </div>
+      </div>
+      <div class="adm-queue-ref" style="display:flex;align-items:center;gap:6px">
+        <span>${r.refName}${isTest ? ` · ระดับ ${r.level}` : ''}</span>
+      </div>
+      <div class="adm-queue-date">
+        สมัคร ${_formatDate(r.appliedAt)}
+        ${r.appointedDate ? ` &nbsp;·&nbsp; 📅 นัด ${_formatDate(r.appointedDate)}` : ''}
+      </div>
+      <div class="adm-queue-actions">
+        <button class="adm-q-btn status" onclick="showStatusModal('${r.id}','${r.status}')">🔄 สถานะ</button>
+        ${isTest ? `<button class="adm-q-btn call" id="btn-call-${r.id}" onclick="adminCallQueue('${r.id}')">📢 เรียกคิว</button>` : ''}
+        <button class="adm-q-btn appt" onclick="showApptModal('${r.id}','${r.appointedDate || ''}')">📅 นัดหมาย</button>
+        ${isTest ? `<button class="adm-q-btn pdf" onclick="adminPrintPDF('${r.id}','${r.pdfUrl || ''}')">🖨️ PDF</button>` : ''}
+        ${r.memberId ? `<button class="adm-q-btn" style="background:#f0f9ff;color:#0369a1" onclick="adminViewMemberProfile('${r.memberId}','${r.fullName}')">👤 ประวัติ</button>` : ''}
+        <button class="adm-q-btn del" onclick="adminDeleteQueue('${r.id}','${r.fullName}')" style="color:var(--red-600);">🗑️</button>
+      </div>
+    </div>`;
+}
+
+async function adminViewMemberProfile(memberId, name) {
+  Toast.info('กำลังโหลดประวัติ...');
+  const res = await callAPI('getAdminMembersList', { token: AppState.sessionToken, search: memberId, page: 1, pageSize: 1 });
+  if (!res.success || !res.data?.members?.length) {
+    Toast.error('ไม่พบข้อมูลสมาชิก');
+    return;
+  }
+  const m = res.data.members[0];
+  let profile = {};
+  try { profile = JSON.parse(m.profileJson || '{}'); } catch(e) {}
+
+  const fieldRow = (label, val) => val ? `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="min-width:100px;font-size:13px;color:#94a3b8">${label}</span><span style="font-size:14px;color:#0f172a;font-weight:500">${val}</span></div>` : '';
+
+  Modal.show(`
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700;flex-shrink:0">${(profile.reg_firstname||name||'?')[0]}</div>
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#0f172a">${profile.reg_title === '001' ? 'นาย' : profile.reg_title === '002' ? 'นาง' : 'นางสาว'} ${profile.reg_firstname || ''} ${profile.reg_lastname || ''}</div>
+        <div style="font-size:13px;color:#64748b">${m.phone || ''} · ${m.memberId || ''}</div>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border-radius:10px;padding:0 12px;margin-bottom:16px">
+      ${fieldRow('เลขบัตร', profile.reg_citizenid)}
+      ${fieldRow('วันเกิด', profile.reg_birth ? _formatDate(profile.reg_birth) : '')}
+      ${fieldRow('การศึกษา', profile.reg_education === '06' ? 'ป.ตรี' : profile.reg_education === '05' ? 'ปวส.' : profile.reg_education || '')}
+      ${fieldRow('ที่อยู่', [profile.reg_address_no, profile.reg_address_district, profile.reg_address_subdistrict].filter(Boolean).join(' '))}
+      ${fieldRow('จังหวัด', profile.reg_address_province === '95' ? 'ยะลา' : profile.reg_address_province === '94' ? 'ปัตตานี' : profile.reg_address_province || '')}
+      ${fieldRow('อาชีพ', profile.work_state === '1' ? (profile.work_occupation || 'มีงานทำ') : 'ไม่มีงานทำ')}
+      ${fieldRow('อีเมล', profile.reg_email)}
+    </div>
+    <button class="btn btn-secondary btn-block" onclick="Modal.close()">ปิด</button>
+  `);
+}
+
+async function filterAdminQueue(status) {
+  _adminQueueState.status = status;
+  _adminQueueState.page   = 1;
+  const bar = document.getElementById('adm-filter-bar');
+  if (bar) bar.innerHTML = _buildFilterChips();
+  await _loadAdminQueueList();
+}
+
+async function searchAdminQueue(term) {
+  _adminQueueState.search = (term || '').trim();
+  _adminQueueState.page   = 1;
+  await _loadAdminQueueList();
+  // update input if cleared
+  const inp = document.getElementById('adm-search-input');
+  if (inp) inp.value = _adminQueueState.search;
+}
+
+async function switchAdminQueueType(type) {
+  _adminQueueState.type   = type;
+  _adminQueueState.status = '';
+  _adminQueueState.search = '';
+  _adminQueueState.page   = 1;
+  Router.go('admin-queue', { type });
+}
+
+async function loadMoreAdminQueue() {
+  _adminQueueState.page++;
+  const res = await callAPI('getQueueList', {
+    token: AppState.sessionToken,
+    type:  _adminQueueState.type,
+    status: _adminQueueState.status,
+    search: _adminQueueState.search,
+    page:  _adminQueueState.page,
+    pageSize: _adminQueueState.pageSize,
+  });
+  if (!res.success) return;
+  const area = document.getElementById('queue-list-area');
+  const btn = area.querySelector('[onclick="loadMoreAdminQueue()"]');
+  if (btn) btn.remove();
+  (res.data.rows || []).forEach(r => {
+    const idx = _adminQueueState.rows.length;
+    _adminQueueState.rows.push(r);
+    area.insertAdjacentHTML('beforeend', _renderQueueCard(r, idx));
+  });
+  if (res.data.total > _adminQueueState.page * _adminQueueState.pageSize) {
+    area.insertAdjacentHTML('beforeend', `<button class="btn btn-secondary btn-block mt-12" onclick="loadMoreAdminQueue()">โหลดเพิ่ม</button>`);
+  }
+}
+
+async function adminDeleteQueue(id, name) {
+  Modal.confirm(
+    '⚠️ ยืนยันการลบคิว',
+    `ต้องการลบคิวของ <b>${name}</b> ใช่หรือไม่?<br><span style="color:var(--red-500);font-size: 15px;margin-top:8px;display:block">*ลบแล้วไม่สามารถกู้คืนได้ และจะไม่แจ้งเตือนผู้ใช้งาน (ระบบจะลบข้อมูลออกจากฐานข้อมูลเงียบๆ)</span>`,
+    async () => {
+      Toast.info('กำลังลบ...');
+      const res = await callAPI('deleteAdminQueue', {
+        token: AppState.sessionToken,
+        type: _adminQueueState.type,
+        queueId: id
+      });
+      if (res.success) {
+        Toast.success('ลบคิวเรียบร้อย');
+        // ลบ element ออกจาก DOM ทันที
+        const row = document.getElementById('qrow-' + id);
+        if (row) row.remove();
+        // อัปเดตตัวเลข
+        _adminQueueState.total = Math.max(0, _adminQueueState.total - 1);
+        const countText = document.querySelector('.adm-count-text');
+        if (countText) countText.textContent = `แสดง ${_adminQueueState.rows.length - 1} / ${_adminQueueState.total} รายการ`;
+      } else {
+        Toast.error(res.error || 'ลบไม่สำเร็จ');
+      }
+    }
+  );
+}
+
+// ============== MODALS ==============
+
+function exportSelectedQueueToJson() {
+  const checkboxes = document.querySelectorAll('.queue-checkbox:checked');
+  if (checkboxes.length === 0) { Toast.error('กรุณาติ๊กเลือกรายชื่อก่อน'); return; }
+  const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+  const selectedRows = _adminQueueState.rows.filter(r => selectedIds.includes(r.id));
+  let payload = [];
+  selectedRows.forEach(r => {
+    if (r.profileJson) {
+      try {
+        let p = JSON.parse(r.profileJson);
+        p.register_type = p.register_type || '';
+        p.regist_date   = p.regist_date   || r.appliedAt || new Date().toISOString().split('.')[0];
+        payload.push(p);
+      } catch(e) { console.warn('JSON parse error', r.id); }
+    }
+  });
+  if (payload.length === 0) { Toast.error('ไม่พบข้อมูล Profile ของผู้สมัครที่เลือก'); return; }
+  const rawName    = selectedRows[0].refName || 'Export';
+  const cleanName  = rawName.replace(/[/\\?%*:|"<>]/g, '_').trim();
+  const ts         = new Date().getTime().toString().slice(-4);
+  const fileName   = `${cleanName}_Export_${ts}.json`;
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  Toast.success(`ดาวน์โหลด "${fileName}" เรียบร้อย (${payload.length} คน)`);
+}
+
+function showStatusModal(queueId, currentStatus) {
+  const isTest = _adminQueueState.type === 'test';
+  const statuses = isTest
+    ? ['pending','confirmed','testing','passed','failed','cancelled']
+    : ['pending','approved','training','completed','cancelled'];
+  Modal.show(`
+    <div class="sheet-handle"></div>
+    <h3 class="fw-600" style="margin-bottom:16px">เปลี่ยนสถานะ</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${statuses.map(s => `
+        <button onclick="applyStatusChange('${queueId}','${s}')"
+          style="padding:11px 16px;border-radius:10px;border:1.5px solid ${s===currentStatus?'#6366f1':'#e2e8f0'};
+          background:${s===currentStatus?'#ede9fe':'white'};color:#374151;font-size: 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px">
+          <span class="adm-status ${s}" style="pointer-events:none">${_statusLabel(s)}</span>
+          ${s===currentStatus?'<span style="margin-left:auto;font-size: 13px;color:#6366f1;font-weight:600">● ปัจจุบัน</span>':''}
+        </button>`).join('')}
+    </div>
+    <button class="btn btn-secondary btn-block mt-12" onclick="Modal.close()">ยกเลิก</button>
+  `);
+}
+
+async function applyStatusChange(queueId, status) {
+  Modal.close();
+  const res = await callAPI('updateQueueStatus', { token: AppState.sessionToken, type: _adminQueueState.type, queueId, status });
+  if (!res.success) { Toast.error(res.error); return; }
+  Toast.success('อัปเดตสถานะแล้ว');
+  await _loadAdminQueueList();
+}
+
+function showApptModal(queueId, currentDate) {
+  const today = new Date().toISOString().split('T')[0];
+  Modal.show(`
+    <div class="sheet-handle"></div>
+    <h3 class="fw-600" style="margin-bottom:16px">กำหนดวันนัดหมาย</h3>
+    <div class="form-group">
+      <label class="form-label">วันที่นัดหมาย <span class="required">*</span></label>
+      <input type="datetime-local" id="appt-date-input" class="form-control" min="${today}T07:00" value="${currentDate ? currentDate.replace('Z','').slice(0,16) : ''}">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-secondary" style="flex:1" onclick="Modal.close()">ยกเลิก</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitApptDate('${queueId}')">บันทึก</button>
+    </div>
+  `);
+}
+
+async function submitApptDate(queueId) {
+  const val = document.getElementById('appt-date-input')?.value;
+  if (!val) { Toast.error('กรุณาเลือกวันที่'); return; }
+  const btn = document.querySelector('[onclick*="submitApptDate"]');
+  if (btn) _setLoading(btn, true, 'กำลังบันทึก...');
+  const res = await callAPI('setAppointment', { token: AppState.sessionToken, type: _adminQueueState.type, queueId, appointedDate: new Date(val).toISOString() });
+  if (btn) _setLoading(btn, false);
+  Modal.close();
+  if (!res.success) { Toast.error(res.error); return; }
+  Toast.success('บันทึกวันนัดหมายแล้ว');
+  await _loadAdminQueueList();
+}
+
+async function adminPrintPDF(queueId, existingUrl) {
+  if (existingUrl) { window.open(existingUrl, '_blank'); return; }
+  Toast.info('กำลังสร้าง PDF...');
+  const res = await callAPI('generatePDF', { token: AppState.sessionToken, role: 'admin', queueId, type: _adminQueueState.type });
+  if (!res.success) { Toast.error(res.error); return; }
+  Toast.success('สร้าง PDF แล้ว');
+  window.open(res.data.pdfUrl, '_blank');
+  await _loadAdminQueueList();
+}
+
+async function adminCallQueue(queueId) {
+  Modal.confirm('📢 ยืนยันการเรียกคิว',
+    `ต้องการเรียกตัวผู้สมัครรหัส <b>${queueId}</b> ให้ไปที่ห้องทดสอบใช่หรือไม่?<br><span style="color:#64748b;font-size: 14px">(ระบบจะส่งแจ้งเตือนไปมือถือผู้สมัครทันที)</span>`,
+    async () => {
+      const btn = document.getElementById(`btn-call-${queueId}`);
+      if (btn) _setLoading(btn, true, 'กำลังเรียก...');
+      const res = await callAPI('updateQueueStatus', {
+        token: AppState.sessionToken, type: 'test', queueId,
+        status: 'testing', triggerNotification: true,
+        notifyMessage: '📢 ถึงคิวของคุณแล้ว! กรุณาไปที่ห้องทดสอบมาตรฐานฯ ด่วนครับ'
+      });
+      if (btn) _setLoading(btn, false, '📢 เรียกคิว');
+      if (res.success) { Toast.success('📢 สั่งการสำเร็จ!'); await _loadAdminQueueList(); }
+      else Toast.error('เกิดข้อผิดพลาด: ' + res.error);
+    },
+    'ใช่, เรียกคิวเลย!'
+  );
+}
+
+function _buildFilterChips() {
+  const isTest = _adminQueueState.type === 'test';
+  const st = _adminQueueState.status;
+  const chip = (val, label) => `<button class="adm-chip ${st === val ? 'active' : ''}" onclick="filterAdminQueue('${val}')">${label}</button>`;
+  
+  if (isTest) {
+    return chip('', 'ทั้งหมด') +
+           chip('pending', 'รอตรวจสอบ') +
+           chip('approved', 'อนุมัติ/รอทดสอบ') +
+           chip('passed', 'ผ่าน/รอชำระเงิน') +
+           chip('paid', 'ชำระเงินแล้ว') +
+           chip('completed', 'เสร็จสมบูรณ์') +
+           chip('rejected', 'ไม่อนุมัติ');
+  } else {
+    return chip('', 'ทั้งหมด') +
+           chip('enrolled', 'สมัครแล้ว') +
+           chip('training', 'กำลังอบรม') +
+           chip('finished', 'ผ่านการอบรม') +
+           chip('rejected', 'ไม่อนุมัติ');
+  }
+}
+
+
+function _renderSearchBanner() {
+  if (!_adminQueueState.search) return '';
+  return `
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:10px 16px; border-radius:10px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:14px; font-weight:600;">🔍 ผลการค้นหาสำหรับ: "${_adminQueueState.search}"</span>
+      <button onclick="clearAdminQueueSearch()" style="background:none; border:none; color:#166534; font-size:18px; cursor:pointer; padding:0; display:flex; align-items:center;">&times;</button>
+    </div>
+  `;
+}
+
+</script>

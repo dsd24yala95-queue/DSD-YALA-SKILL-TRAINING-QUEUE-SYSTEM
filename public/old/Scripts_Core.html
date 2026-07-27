@@ -1,0 +1,898 @@
+<script>
+// ============================================================
+//  Scripts_Core.html — State Manager + Router + API Caller
+//  DSD Yala Skill & Training Queue System v2.0
+// ============================================================
+
+// ── STATE MANAGER ─────────────────────────────────────────────
+const AppState = {
+  currentUser:        null,   // { memberId, fullName, phone, calendarAuthorized }
+  userRole:           'guest',// 'guest' | 'member' | 'admin'
+  sessionToken:       null,
+  sessionExpiry:      null,
+  currentView:        'home',
+  prevView:           null,
+  viewParams:         {},
+  isLoading:          false,
+  notifications:      [],
+  unreadCount:        0,
+  pendingAction:      null,   // เก็บ action ที่ค้างไว้ก่อน login
+  masterBranches:     [],
+  masterCourses:      [],
+  _listeners:         [],
+
+  set(key, value) {
+    this[key] = value;
+    this._emit(key, value);
+  },
+
+  _emit(key, value) {
+    this._listeners.forEach(fn => {
+      try { fn(key, value); } catch(e) {}
+    });
+  },
+
+  subscribe(fn) {
+    this._listeners.push(fn);
+    return () => { this._listeners = this._listeners.filter(f => f !== fn); };
+  },
+
+  // บันทึก session ลง sessionStorage (กัน page reload)
+  saveSession() {
+    if (!this.sessionToken) return;
+    try {
+      sessionStorage.setItem('dsd_session', JSON.stringify({
+        token:   this.sessionToken,
+        expiry:  this.sessionExpiry,
+        role:    this.userRole,
+        user:    this.currentUser,
+      }));
+    } catch(e) {}
+  },
+
+  loadSession() {
+    try {
+      const raw = sessionStorage.getItem('dsd_session');
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (!s.token || Date.now() > s.expiry) {
+        sessionStorage.removeItem('dsd_session');
+        return false;
+      }
+      this.sessionToken  = s.token;
+      this.sessionExpiry = s.expiry;
+      this.userRole      = s.role;
+      this.currentUser   = s.user;
+      return true;
+    } catch(e) { return false; }
+  },
+
+  clearSession() {
+    this.sessionToken  = null;
+    this.sessionExpiry = null;
+    this.userRole      = 'guest';
+    this.currentUser   = null;
+    this.notifications = [];
+    this.unreadCount   = 0;
+    try { sessionStorage.removeItem('dsd_session'); } catch(e) {}
+  },
+};
+
+// ── ROUTER ────────────────────────────────────────────────────
+const Router = {
+  // view ที่ต้อง login ก่อน
+  _protectedMember: ['dashboard', 'profile', 'notifications'],
+  _protectedAdmin:  ['admin-dashboard', 'admin-queue', 'admin-master', 'admin-report',
+                     'admin-register', 'admin-members'],
+
+  go(view, params = {}) {
+    // Auth Guard
+    if (this._protectedMember.includes(view) && AppState.userRole !== 'member') {
+      AppState.set('pendingAction', { view, params });
+      return Router.go('auth-member');
+    }
+    if (this._protectedAdmin.includes(view) && AppState.userRole !== 'admin') {
+      AppState.set('pendingAction', { view, params });
+      return Router.go('auth-admin');
+    }
+
+    AppState.set('prevView',    AppState.currentView);
+    AppState.set('viewParams',  params);
+    AppState.set('currentView', view);
+    
+    // Hide or show Navbar and Footer based on view type
+    const navbar = document.querySelector('.navbar');
+    const footer = document.querySelector('.footer');
+    
+    // Special handling for dynamic admin views that replace app.innerHTML
+    if (view.startsWith('admin-')) {
+      if (navbar) navbar.style.display = 'none';
+      if (footer) footer.style.display = 'none';
+      
+      const fnName = 'renderView' + view.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+      if (typeof window[fnName] === 'function') {
+        window[fnName](params);
+        if(typeof updateNavActiveState === 'function') updateNavActiveState(view);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        return;
+      }
+    } else {
+      // Restore Navbar and Footer for non-admin views
+      if (navbar) navbar.style.display = 'flex';
+      if (footer) footer.style.display = ''; // Let it revert to its default (grid or block)
+    }
+    
+    _renderView(view, params);
+    if(typeof updateNavActiveState === 'function') updateNavActiveState(view);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  },
+
+  back() {
+    const prev = AppState.prevView || 'home';
+    this.go(prev);
+  },
+};
+
+// ── ADMIN LAYOUT COMPONENT ──────────────────────────────────────
+const AdminLayout = {
+  build(contentHTML, activeMenu = 'admin-dashboard') {
+    const userName = AppState.currentUser?.fullName || 'ผู้ดูแลระบบ';
+    const isActive = (menu) => activeMenu === menu ? 'active' : '';
+    
+    return `
+      \x3Cstyle>
+        #app-content { padding: 0 !important; }
+        .adm-shell { display: flex; min-height: 100vh; font-family: 'Sarabun', sans-serif; background: #f1f5f9; }
+        
+        /* ── SIDEBAR ── */
+        .adm-sidebar {
+          width: 230px; flex-shrink: 0; background: #0f172a; display: flex; flex-direction: column;
+          position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; overflow-y: auto;
+        }
+        .adm-logo { padding: 18px 14px 14px; border-bottom: 1px solid #1e293b; display: flex; align-items: center; gap: 10px; }
+        .adm-logo-icon {
+          width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+          background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+        .adm-logo-title { color: #f1f5f9; font-size: 13px; font-weight: 700; line-height: 1.2; }
+        .adm-logo-sub   { color: #475569; font-size: 10px; }
+        
+        .adm-nav-section { padding: 14px 8px 2px; }
+        .adm-nav-label {
+          color: #475569; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+          padding: 0 8px; margin-bottom: 4px;
+        }
+        .adm-nav-item {
+          display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px;
+          cursor: pointer; transition: all .15s; color: #94a3b8; font-size: 13px; font-weight: 500;
+          margin-bottom: 2px; border: none; background: transparent; width: 100%; text-align: left;
+        }
+        .adm-nav-item:hover { background: #1e293b; color: #e2e8f0; }
+        .adm-nav-item.active { background: linear-gradient(135deg,#6366f1,#4f46e5); color: white; }
+        .adm-nav-item svg { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; opacity: .8; }
+        .adm-nav-item.active svg { opacity: 1; }
+        .adm-nav-badge {
+          margin-left: auto; background: #ef4444; color: white;
+          font-size: 9px; font-weight: 700; padding: 1px 5px;
+          border-radius: 999px; min-width: 16px; text-align: center;
+        }
+        .adm-nav-badge.green { background: #10b981; }
+        
+        .adm-sidebar-bottom { margin-top: auto; padding: 10px 8px; border-top: 1px solid #1e293b; }
+        .adm-user-row {
+          display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 10px; cursor: pointer; transition: background .15s;
+        }
+        .adm-user-row:hover { background: #1e293b; }
+        .adm-user-avatar {
+          width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+          background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center;
+          font-size: 12px; font-weight: 700; color: white;
+        }
+        .adm-user-name { color: #e2e8f0; font-size: 12px; font-weight: 600; }
+        .adm-user-role { color: #64748b; font-size: 10px; }
+        
+        /* ── MAIN ── */
+        .adm-main { margin-left: 230px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* ── TOPBAR ── */
+        .adm-topbar {
+          background: white; border-bottom: 1px solid #e2e8f0; padding: 0 20px; height: 56px;
+          display: flex; align-items: center; justify-content: space-between;
+          position: sticky; top: 0; z-index: 40;
+        }
+        .adm-page-title  { font-size: 15px; font-weight: 700; color: #0f172a; }
+        .adm-breadcrumb  { font-size: 10.5px; color: #94a3b8; }
+        .adm-topbar-right { display: flex; align-items: center; gap: 10px; }
+        .adm-time-chip {
+          background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px; padding: 5px 12px;
+          font-size: 12.5px; font-weight: 600; color: #475569;
+        }
+        .adm-icon-btn {
+          width: 34px; height: 34px; border-radius: 9px; background: #f8fafc; border: 1px solid #e2e8f0;
+          display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: background .15s; position: relative;
+        }
+        .adm-icon-btn:hover { background: #f1f5f9; }
+        .adm-notif-dot {
+          position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #ef4444; border: 1.5px solid white;
+        }
+        .adm-user-chip {
+          display: flex; align-items: center; gap: 7px; background: #f8fafc; border: 1px solid #e2e8f0;
+          border-radius: 10px; padding: 5px 12px; cursor: pointer; transition: background .15s;
+        }
+        .adm-user-chip:hover { background: #f1f5f9; }
+        .adm-chip-av {
+          width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
+          display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white;
+        }
+        .adm-chip-name { font-size: 12px; font-weight: 600; color: #0f172a; }
+        .adm-chip-out  { font-size: 10px; color: #94a3b8; }
+      \x3C/style>
+
+      <div class="adm-shell">
+        <!-- ═══ SIDEBAR ═══ -->
+        <aside class="adm-sidebar">
+          <div class="adm-logo">
+            <div class="adm-logo-icon">✨</div>
+            <div>
+              <div class="adm-logo-title">DSD YALA SKILL</div>
+              <div class="adm-logo-sub">ระบบจัดการหลังบ้าน</div>
+            </div>
+          </div>
+          
+          <div class="adm-nav-section">
+            <div class="adm-nav-label">ภาพรวม</div>
+            <button class="adm-nav-item ${isActive('admin-dashboard')}" onclick="Router.go('admin-dashboard')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              แดชบอร์ด
+            </button>
+          </div>
+          
+          <div class="adm-nav-section">
+            <div class="adm-nav-label">จัดการคิวสมัคร</div>
+            <button class="adm-nav-item ${isActive('admin-queue-test')}" onclick="Router.go('admin-queue',{type:'test'})">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              คิวทดสอบ
+              <span class="adm-nav-badge" id="sidebar-test-badge">-</span>
+            </button>
+            <button class="adm-nav-item ${isActive('admin-queue-train')}" onclick="Router.go('admin-queue',{type:'training'})">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              คิวอบรม
+              <span class="adm-nav-badge green" id="sidebar-train-badge">-</span>
+            </button>
+          </div>
+          
+          <div class="adm-nav-section">
+            <div class="adm-nav-label">จัดการข้อมูล</div>
+            <button class="adm-nav-item ${isActive('admin-master')}" onclick="Router.go('admin-master')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              จัดการหลักสูตร
+            </button>
+            <button class="adm-nav-item ${isActive('admin-members')}" onclick="Router.go('admin-members')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              จัดการผู้ใช้งาน
+            </button>
+            <button class="adm-nav-item ${isActive('admin-register')}" onclick="Router.go('admin-register')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+              เพิ่มข้อมูลผู้สมัคร
+            </button>
+          </div>
+          
+          <div class="adm-nav-section">
+            <div class="adm-nav-label">รายงาน</div>
+            <button class="adm-nav-item ${isActive('admin-report')}" onclick="Router.go('admin-report')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              รายงานสรุป
+            </button>
+          </div>
+          
+          <div class="adm-sidebar-bottom">
+            <div class="adm-user-row" onclick="SessionMgr.logout()">
+              <div class="adm-user-avatar">${userName.charAt(0)}</div>
+              <div>
+                <div class="adm-user-name">${userName}</div>
+                <div class="adm-user-role">ออกจากระบบ →</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+        
+        <!-- ═══ MAIN ═══ -->
+        <main class="adm-main">
+          ${contentHTML}
+        </main>
+      </div><!-- /shell -->
+    `;
+  },
+  
+  buildTopbar(title, breadcrumb = 'ภาพรวมระบบและสถิติ', clockId = 'adm-clock') {
+    const userName = AppState.currentUser?.fullName || 'ผู้ดูแลระบบ';
+    return `
+      <!-- TOPBAR -->
+      <div class="adm-topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="adm-icon-btn d-md-none" onclick="document.querySelector('.adm-sidebar').classList.toggle('open')" style="display:none">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <div>
+            <div class="adm-page-title">${title}</div>
+            <div class="adm-breadcrumb">${breadcrumb}</div>
+          </div>
+        </div>
+        <div class="adm-topbar-right">
+          <div class="adm-time-chip" id="${clockId}">⏰ --:--:--</div>
+          <div class="adm-icon-btn">🔔<div class="adm-notif-dot"></div></div>
+          <div class="adm-user-chip" onclick="SessionMgr.logout()">
+            <div class="adm-chip-av">${userName.charAt(0)}</div>
+            <div>
+              <div class="adm-chip-name">${userName}</div>
+              <div class="adm-chip-out">ออกจากระบบ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+  
+  startClock(clockId = 'adm-clock') {
+    if (window._admClockTimer) clearInterval(window._admClockTimer);
+    
+    const updateTime = () => {
+      const el = document.getElementById(clockId);
+      if (!el) { clearInterval(window._admClockTimer); return; }
+      el.textContent = '⏰ ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+    
+    updateTime();
+    window._admClockTimer = setInterval(updateTime, 1000);
+  }
+};
+
+// ── VIEW RENDERER ─────────────────────────────────────────────
+function _renderView(view, params) {
+  // Hide all views
+  document.querySelectorAll('.spa-view').forEach(el => {
+    el.classList.remove('active');
+  });
+  
+  // Show target view
+  const target = document.getElementById(`view-${view}`);
+  if (target) {
+    target.classList.add('active');
+  }
+
+  // Call Specific Data Loaders based on view
+  requestAnimationFrame(() => {
+    try {
+      if (view === 'profile' && typeof loadProfileData === 'function') {
+        loadProfileData();
+      } else if (view === 'admin-dashboard' && typeof loadAdminDashboard === 'function') {
+        loadAdminDashboard();
+      }
+    } catch(e) {
+      console.error('renderView error:', e);
+    }
+  });
+}
+
+function _updateBottomNav(view) {
+  const header = document.getElementById('app-header');
+  if (header) {
+    if (view.startsWith('admin-')) {
+      header.style.display = 'none';
+    } else {
+      header.style.display = 'flex';
+    }
+  }
+
+  document.querySelectorAll('.btm-nav button').forEach(el => {
+    el.classList.remove('active', 'text-primary');
+  });
+  const map = {
+    'home':            'nav-home',
+    'catalog':         'nav-catalog',
+    'testing_list':    'nav-catalog',
+    'training_list':   'nav-catalog',
+    'dashboard':       'nav-home',
+    'admin-dashboard': 'nav-home',
+    'admin-queue':     'nav-catalog',
+    'admin-master':    'nav-master',
+    'admin-register':  'nav-register',
+    'admin-report':    'nav-report',
+    'profile':         'nav-profile',
+    'notifications':   'nav-notif',
+    'auth-member':     'nav-register',
+    'auth-admin':      'nav-master',
+  };
+  const id = map[view];
+  if (id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active', 'text-primary');
+  }
+}
+
+// ── API CALLER ────────────────────────────────────────────────
+async function callAPI(action, payload = {}) {
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Request timeout')), 30000);
+      google.script.run
+        .withSuccessHandler(res => { clearTimeout(timeout); resolve(res); })
+        .withFailureHandler(err => { clearTimeout(timeout); reject(err); })
+        .callAPI(action, payload);
+    });
+
+    if (typeof result === 'string') {
+      const parsed = JSON.parse(result);
+      return parsed;
+    }
+    return result;
+  } catch (e) {
+    console.error('callAPI failed:', action, e);
+    return { success: false, error: e.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่' };
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+const Toast = {
+  show(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const icons = {
+      success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M20 6L9 17l-5-5"/></svg>`,
+      error:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+      info:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    };
+
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
+    container.appendChild(el);
+
+    setTimeout(() => {
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 300);
+    }, duration);
+  },
+  success(msg, d) { this.show(msg, 'success', d); },
+  error(msg, d)   { this.show(msg, 'error',   d || 4000); },
+  info(msg, d)    { this.show(msg, 'info',    d); },
+};
+
+// ── MODAL / BOTTOM SHEET ──────────────────────────────────────
+function _destroyDsdPersonFormIfOpen() {
+  if (document.getElementById('dsd-person-mount') && typeof DsdPersonForm !== 'undefined') {
+    DsdPersonForm.destroy();
+  }
+}
+
+const Modal = {
+  show(contentHTML, onClose) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'modal-overlay';
+    overlay.innerHTML = `<div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div id="modal-content">${contentHTML}</div>
+    </div>`;
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) this.close();
+    });
+
+    document.body.appendChild(overlay);
+    this._onClose = onClose;
+  },
+
+  close() {
+    _destroyDsdPersonFormIfOpen();
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.remove();
+    var bs = document.querySelector('.bottom-sheet'); if(bs) bs.classList.remove('bottom-sheet-full');
+    if (this._onClose) { this._onClose(); this._onClose = null; }
+  },
+
+  confirm(title, message, onConfirm, confirmText = 'ยืนยัน', danger = false) {
+    this.show(`
+      <h3 class="fw-600" style="font-size:16px;margin-bottom:8px">${title}</h3>
+      <p class="text-sm text-muted" style="margin-bottom:20px">${message}</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" style="flex:1" onclick="Modal.close()">ยกเลิก</button>
+        <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" style="flex:1" id="modal-confirm-btn">${confirmText}</button>
+      </div>
+    `);
+    document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+      Modal.close();
+      onConfirm();
+    });
+  },
+};
+
+// ── SESSION MANAGER ───────────────────────────────────────────
+const SessionMgr = {
+  _timer: null,
+
+  async init() {
+    const loaded = AppState.loadSession();
+    if (loaded) {
+      const res = await callAPI('checkSession', {
+        token: AppState.sessionToken,
+        role:  AppState.userRole,
+      });
+      if (res.success && res.data.valid) {
+        AppState.set('sessionExpiry', res.data.expiry);
+        if (res.data.memberId) {
+          AppState.set('currentUser', {
+            ...AppState.currentUser,
+            memberId:           res.data.memberId,
+            fullName:           res.data.fullName,
+            calendarAuthorized: res.data.calendarAuthorized,
+          });
+        }
+        AppState.saveSession();
+        this._startTimer();
+
+        if (AppState.userRole === 'member') {
+          await NotificationMgr.fetchAndShow();
+          NotificationMgr.startAutoRefresh();
+        }
+        return true;
+      } else {
+        AppState.clearSession();
+      }
+    }
+    return false;
+  },
+
+  setSession(token, expiry, role, user) {
+    AppState.set('sessionToken', token);
+    AppState.set('sessionExpiry', expiry);
+    AppState.set('userRole', role);
+    AppState.set('currentUser', user);
+    AppState.saveSession();
+    this._startTimer();
+  },
+
+  _startTimer() {
+    clearInterval(this._timer);
+    // เช็คทุก 5 นาที
+    this._timer = setInterval(async () => {
+      if (!AppState.sessionToken) return;
+      const res = await callAPI('checkSession', {
+        token: AppState.sessionToken,
+        role:  AppState.userRole,
+      });
+      if (!res.success || !res.data.valid) {
+        clearInterval(this._timer);
+        AppState.clearSession();
+        Toast.info('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+        Router.go('home');
+      }
+    }, 5 * 60 * 1000);
+  },
+
+  async logout() {
+    clearInterval(this._timer);
+    if (AppState.sessionToken) {
+      await callAPI('logout', {
+        token: AppState.sessionToken,
+        role:  AppState.userRole,
+      });
+    }
+    AppState.clearSession();
+    Toast.success('ออกจากระบบแล้ว');
+    setTimeout(() => { location.reload(); }, 500);
+  },
+};
+
+// ── NOTIFICATION MANAGER ──────────────────────────────────────
+const NotificationMgr = {
+  async fetchAndShow() {
+    if (AppState.userRole !== 'member' || !AppState.sessionToken) return;
+    
+    // ส่ง _ts (Timestamp) ป้องกันแคช
+    const res = await callAPI('getNotifications', { 
+      token: AppState.sessionToken,
+      _ts: new Date().getTime() 
+    });
+    
+    if (res.success) {
+      const newNotifications = res.data.notifications || [];
+      const newUnreadCount = newNotifications.filter(n => !n.read).length;
+      
+      const oldUnreadCount = AppState.unreadCount || 0;
+
+      // อัปเดตข้อมูลลง State
+      AppState.set('notifications', newNotifications);
+      AppState.set('unreadCount', newUnreadCount);
+      _updateNotifBadge();
+
+      // ถ้ามีการแจ้งเตือนใหม่เพิ่มเข้ามา
+      if (newUnreadCount > oldUnreadCount) {
+        const hasCallNotification = newNotifications.some(n => !n.read && n.message.includes("ถึงคิว"));
+        
+        if (hasCallNotification) {
+          if (typeof AudioModule !== "undefined") AudioModule.play();
+          
+          Swal.fire({
+            title: "📢 ถึงคิวของคุณแล้ว!",
+            html: "<div style='font-size:18px; margin-top:10px;'>กรุณาไปที่จุดรายงานตัวด่วนครับ/ค่ะ</div>",
+            icon: "info",
+            iconColor: "#3b82f6",
+            background: "#eff6ff",
+            confirmButtonText: "รับทราบ",
+            confirmButtonColor: "#2563eb",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            customClass: { popup: "animate__animated animate__tada" }
+          }).then(() => {
+            if (Router.currentRoute === "home") Router.go("notifications");
+          });
+        } else {
+          Toast.info("🔔 มีการแจ้งเตือนใหม่ครับ");
+        }
+      }
+    }
+  },
+  
+  // ระบบ Short Polling ทุกๆ 5 วินาที
+  startAutoRefresh() {
+    if (this._timer) clearInterval(this._timer);
+    
+    this._timer = setInterval(() => {
+      if (AppState.userRole === 'member') {
+        this.fetchAndShow();
+      } else {
+        clearInterval(this._timer); 
+      }
+    }, 5000); 
+  }
+};
+
+function _updateNotifBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  const count = AppState.unreadCount;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'block' : 'none';
+}
+
+// ── BOTTOM NAV BUILDER ────────────────────────────────────────
+function _buildBottomNav() {
+  // Disabled in Hybrid 2026 - handled by BottomNav.html and updateNavActiveState
+}
+
+function _updateNavForRole(role) {
+  AppState.set('userRole', role);
+}
+
+// ── SVG ICON HELPER ───────────────────────────────────────────
+function _icon(name) {
+  const icons = {
+    'home':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    'book-open':  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>`,
+    'bell':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>`,
+    'user':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    'shield':     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    'grid':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+    'list':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+    'settings':   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+    'bar-chart':  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>`,
+    'log-out':    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+    'arrow-left': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+    'plus':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    'calendar':   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    'printer':    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>`,
+    'x':          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    'check':      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>`,
+    'edit':       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  };
+  let svgStr = icons[name] || '';
+  if (svgStr && !svgStr.includes('width=')) {
+    svgStr = svgStr.replace('<svg ', '<svg width="24" height="24" ');
+  }
+  return svgStr;
+}
+
+// ── UTILITY HELPERS ───────────────────────────────────────────
+function _statusLabel(status) {
+  const map = {
+    appointed: 'นัดหมายแล้ว', pending:   'รอตรวจสอบ',   confirmed: 'ยืนยันแล้ว',
+    testing:   'กำลังทดสอบ',  passed:    'ผ่านการทดสอบ',
+    failed:    'ไม่ผ่าน',     cancelled: 'ยกเลิก',
+    approved:  'อนุมัติแล้ว', training:  'กำลังอบรม',
+    completed: 'จบอบรมแล้ว',
+  };
+  return map[status] || status;
+}
+
+function _formatDate(isoStr) {
+  if (!isoStr) return '-';
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return String(isoStr);
+  
+  if (d.getFullYear() > 2400) {
+    d.setFullYear(d.getFullYear() - 543);
+  }
+  
+  return d.toLocaleDateString('th-TH', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    timeZone: 'Asia/Bangkok',
+  });
+}
+
+function _formatDateTime(isoStr) {
+  if (!isoStr) return '-';
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return String(isoStr);
+  
+  if (d.getFullYear() > 2400) {
+    d.setFullYear(d.getFullYear() - 543);
+  }
+  
+  return d.toLocaleString('th-TH', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Bangkok',
+  });
+}
+
+function _setLoading(btnEl, loading, text) {
+  if (!btnEl) return;
+  btnEl.disabled = loading;
+  if (loading) {
+    btnEl.dataset.origText = btnEl.textContent;
+    btnEl.innerHTML = `<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite"></span>${text || ''}`;
+  } else {
+    btnEl.innerHTML = btnEl.dataset.origText || text || '';
+  }
+}
+
+// spinner keyframe (inject once)
+(function() {
+  if (!document.getElementById('spin-style')) {
+    const s = document.createElement('style');
+    s.id = 'spin-style';
+    s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  }
+})();
+
+
+// ── APP INIT ──────────────────────────────────────────────────
+async function initApp() {
+  _buildBottomNav();
+  _initPWA();           // ✅ เริ่ม PWA system
+  const hasSession = await SessionMgr.init();
+  if (hasSession) {
+    _buildBottomNav();
+    if (AppState.userRole === 'admin') {
+      Router.go('admin-dashboard');
+    } else {
+      Router.go('dashboard');
+    }
+  } else {
+    Router.go('home');
+  }
+}
+
+// ── ✅ PWA SYSTEM: Offline Detection + Cache + Install Button ──
+
+const PWA = {
+  // ── Offline Banner ─────────────────────────────────────────
+  _bannerEl: null,
+
+  showOfflineBanner() {
+    if (this._bannerEl) return;
+    const banner = document.createElement('div');
+    banner.id = 'pwa-offline-banner';
+    banner.innerHTML = [
+      '<div style="background:#b45309;color:white;text-align:center;padding:8px 16px;',
+      'font-size:13px;position:fixed;top:76px;left:0;right:0;z-index:9999;',
+      'display:flex;align-items:center;justify-content:center;gap:8px;',
+      'box-shadow:0 2px 8px rgba(0,0,0,.2);">',
+      '<i class="fa-solid fa-wifi-slash"></i>',
+      '<span>⚠️ ขณะนี้ไม่มีอินเทอร์เน็ต — แสดงข้อมูลที่บันทึกไว้ล่าสุด</span>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(banner);
+    this._bannerEl = banner;
+  },
+
+  hideOfflineBanner() {
+    if (this._bannerEl) {
+      this._bannerEl.remove();
+      this._bannerEl = null;
+    }
+  },
+
+  // ── LocalStorage Cache ──────────────────────────────────────
+  CACHE_PREFIX: 'dsd_pwa_',
+  CACHE_TTL_MS: 4 * 60 * 60 * 1000, // 4 ชั่วโมง
+
+  saveCache(key, data) {
+    try {
+      localStorage.setItem(this.CACHE_PREFIX + key, JSON.stringify({
+        data, ts: Date.now()
+      }));
+    } catch(e) {}
+  },
+
+  loadCache(key, maxAge) {
+    try {
+      const raw = localStorage.getItem(this.CACHE_PREFIX + key);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      const ttl = maxAge || this.CACHE_TTL_MS;
+      if (Date.now() - obj.ts > ttl) return null;
+      return obj.data;
+    } catch(e) { return null; }
+  },
+
+  clearAllCache() {
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith(this.CACHE_PREFIX)) localStorage.removeItem(k);
+      });
+    } catch(e) {}
+  },
+
+  // ── Expose ──────────────────────────────────────────────────
+  isOnline() { return navigator.onLine; },
+};
+
+// Hook เข้า API Caller เพื่อ cache ข้อมูลสำคัญ
+const _origCallAPI = window.callAPI ? window.callAPI : null;
+
+function _initPWA() {
+  // 1. Offline/Online events
+  window.addEventListener('offline', () => {
+    PWA.showOfflineBanner();
+    console.warn('📴 PWA: Network offline');
+  });
+
+  window.addEventListener('online', () => {
+    PWA.hideOfflineBanner();
+    console.log('📶 PWA: Network restored');
+    // Toast แจ้งเตือน
+    if (window.Toast) Toast.show('เชื่อมต่ออินเทอร์เน็ตแล้ว', 'success');
+  });
+
+  // ตรวจสอบสถานะตอนเริ่ม
+  if (!navigator.onLine) {
+    PWA.showOfflineBanner();
+  }
+
+  // 2. ปุ่มติดตั้งแอป (โผล่เมื่อ beforeinstallprompt พร้อม)
+  window.addEventListener('pwa-installable', () => {
+    // แสดงปุ่มใน dropdown mobile
+    const menuItem = document.getElementById('pwa-install-menu-item');
+    if (menuItem) menuItem.classList.remove('hidden');
+    console.log('✅ PWA install button shown');
+  });
+
+  window.addEventListener('pwa-installed', () => {
+    const menuItem = document.getElementById('pwa-install-menu-item');
+    if (menuItem) menuItem.classList.add('hidden');
+    if (window.Toast) Toast.show('ติดตั้งแอปสำเร็จแล้ว! 🎉', 'success', 4000);
+  });
+
+  console.log('✅ PWA System initialized');
+}
+
+// ── ✅ API Wrapper: บันทึก cache ทุกครั้งที่ดึงข้อมูลสำเร็จ ──
+const _origAPI = window.API || {};
+
+// Intercept getMasterData เพื่อ cache
+const _origGetMasterData = window.getMasterData;
+function getMasterDataWithCache(payload, cb) {
+  const cacheKey = 'master_' + (payload.type || 'branch');
+  if (!PWA.isOnline()) {
+    const cached = PWA.loadCache(cacheKey);
+    if (cached && cb) { cb(cached); return; }
+  }
+  // เรียก original API ผ่าน google.script.run
+  // (ส่วนนี้ถูก handle โดย Scripts_Core ที่มีอยู่แล้ว)
+}
+
+</script>
