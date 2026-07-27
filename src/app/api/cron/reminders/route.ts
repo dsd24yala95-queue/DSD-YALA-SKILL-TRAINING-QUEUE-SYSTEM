@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { pushMessage } from "@/lib/services/line-service";
 
-// Security: Vercel sends an Authorization header with the CRON_SECRET
-// For local testing, we can bypass or pass the secret in the header.
+// Security: Vercel / Cloud Provider sends an Authorization header with the CRON_SECRET
 export async function GET(req: Request) {
     try {
         const authHeader = req.headers.get("authorization");
@@ -16,10 +16,10 @@ export async function GET(req: Request) {
         const now = new Date();
         now.setHours(0, 0, 0, 0); // Start of today
 
-        // Fetch all confirmed bookings that have an appointed date
+        // Fetch all confirmed/approved bookings that have an appointed date
         const bookings = await prisma.queueBooking.findMany({
             where: {
-                status: "confirmed",
+                status: { in: ["approved", "confirmed"] },
                 appointedDate: { not: null }
             },
             include: { user: true }
@@ -27,6 +27,7 @@ export async function GET(req: Request) {
 
         const results = {
             d3_reminders_sent: 0,
+            d1_reminders_sent: 0,
             d0_reminders_sent: 0,
             errors: [] as string[]
         };
@@ -48,26 +49,38 @@ export async function GET(req: Request) {
             });
 
             if (diffDays === 3) {
-                // Check if D-3 reminder was already sent
+                // D-3 Reminder
                 const exists = await checkNotificationSent(booking.userId, booking.id, "reminder_d3");
                 if (!exists) {
                     await sendReminder(
                         booking, 
                         "reminder_d3", 
-                        "แจ้งเตือน: ใกล้ถึงวันนัดหมายของท่าน", 
-                        `อีก 3 วันจะถึงกำหนดนัดหมาย ${booking.itemName} ของท่าน ในวันที่ ${formattedDate} กรุณาเตรียมตัวให้พร้อม`
+                        "📅 แจ้งเตือน: อีก 3 วันจะถึงวันนัดหมาย", 
+                        `อีก 3 วันจะถึงกำหนดนัดหมาย ${booking.itemName} ในวันที่ ${formattedDate}`
                     );
                     results.d3_reminders_sent++;
                 }
+            } else if (diffDays === 1) {
+                // D-1 Reminder (1 day before)
+                const exists = await checkNotificationSent(booking.userId, booking.id, "reminder_d1");
+                if (!exists) {
+                    await sendReminder(
+                        booking, 
+                        "reminder_d1", 
+                        "🚨 แจ้งเตือน: พรุ่งนี้มีนัดหมาย", 
+                        `พรุ่งนี้ท่านมีกำหนดนัดหมาย ${booking.itemName} ในวันที่ ${formattedDate}`
+                    );
+                    results.d1_reminders_sent++;
+                }
             } else if (diffDays === 0) {
-                // Check if D-0 reminder was already sent
+                // D-0 Reminder (Today)
                 const exists = await checkNotificationSent(booking.userId, booking.id, "reminder_d0");
                 if (!exists) {
                     await sendReminder(
                         booking, 
                         "reminder_d0", 
-                        "แจ้งเตือน: วันนี้ท่านมีนัดหมาย", 
-                        `วันนี้ท่านมีกำหนดนัดหมาย ${booking.itemName} เวลา ${formattedDate} กรุณามาติดต่อเจ้าหน้าที่ ณ สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา`
+                        "🔔 แจ้งเตือน: วันนี้ท่านมีนัดหมาย", 
+                        `วันนี้ท่านมีกำหนดนัดหมาย ${booking.itemName} เวลา ${formattedDate} ณ สพร.24 ยะลา`
                     );
                     results.d0_reminders_sent++;
                 }
@@ -87,13 +100,13 @@ async function checkNotificationSent(userId: string, queueId: string, type: stri
         where: {
             userId: userId,
             type: type,
-            metadata: { contains: queueId } // A simple text match for the queueId in the JSON metadata
+            metadata: { contains: queueId }
         }
     });
     return !!existing;
 }
 
-// Helper to create in-app notification and push to LINE
+// Helper to create in-app notification and push LINE Flex Card
 async function sendReminder(booking: any, type: string, title: string, textMessage: string) {
     // 1. In-App Notification
     await prisma.notification.create({
@@ -106,21 +119,24 @@ async function sendReminder(booking: any, type: string, title: string, textMessa
         }
     });
 
-    // 2. LINE Push Message
-    if (booking.user?.lineUserId && process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    // 2. LINE Push Flex Card
+    const lineUserId = booking.user?.lineUserId;
+    if (lineUserId) {
         try {
-            const url = "https://api.line.me/v2/bot/message/push";
-            const headers = {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
-            };
-            const body = {
-                to: booking.user.lineUserId,
-                messages: [{ type: "text", text: `[${title}]\n\n${textMessage}` }]
-            };
-            await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+            const formattedDate = booking.appointedDate
+                ? new Date(booking.appointedDate).toLocaleDateString("th-TH", {
+                    year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+                })
+                : "ตามนัดหมาย";
+
+            await pushMessage(lineUserId, "appointment", {
+                itemName: booking.itemName,
+                appointedDate: formattedDate,
+                location: "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา",
+                message: textMessage
+            });
         } catch (e) {
-            console.error("Failed to send LINE reminder", e);
+            console.error("Failed to push LINE Flex reminder:", e);
         }
     }
 }

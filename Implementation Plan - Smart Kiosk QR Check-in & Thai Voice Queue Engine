@@ -1,0 +1,53 @@
+# Implementation Plan - Smart Kiosk QR Check-in & Thai Voice Queue Engine
+
+แผนการพัฒนาระบบคิวดิจิทัลอัจฉริยะ **โหมดสแกนเช็คอิน QR Code หน้าสถาบันฯ (`/kiosk`)** ร่วมกับ **ระบบขานเรียกคิวด้วยเสียงภาษาไทยอัตโนมัติ (Thai Voice Queue Synthesizer)**
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> - หน้าจอ Kiosk เช็คอินเปิดให้ใช้งานที่ URL: `/kiosk` (รองรับการเปิดบนหน้าจอแท็บเล็ต/ไอแพด/คอมพิวเตอร์หน้าสถาบันฯ)
+> - ระบบขานเสียงเรียกคิวใช้ **Web Speech API (ภาษาไทย `th-TH`)** โดยไม่ต้องเสียค่าบริการภายนอกเพิ่ม สามารถขับเสียงออกลำโพงประจำสถาบันฯ ได้ทันที
+
+---
+
+## Proposed Changes
+
+### Component 1: Voice Queue Calling Engine (`src/lib/services/voice-service.ts`)
+
+#### [NEW] [voice-service.ts](file:///d:/G_WebApps/cli-g-web/src/lib/services/voice-service.ts)
+- สร้างโมดูลแปลงหมายเลขคิวเป็นเสียงขานสังเคราะห์ภาษาไทยอัตโนมัติ
+- ปรับแต่งการอ่านรหัสคิว เช่น `"T-005"` ➔ `"ที 005"` เพื่อสำเนียงการอ่านที่ชัดเจนและเป็นธรรมชาติ
+- รองรับการปรับเปลี่ยนช่องบริการ (Counter No.)
+
+---
+
+### Component 2: QR Code Kiosk Check-in Page (`src/app/kiosk/page.tsx`)
+
+#### [NEW] [kiosk/page.tsx](file:///d:/G_WebApps/cli-g-web/src/app/kiosk/page.tsx)
+- สร้างหน้าจอ Kiosk Mode เต็มจอ (Full Screen Modern UI)
+- ติดตั้งกล้องสแกน QR Code (HTML5 Scanner) อ่านบัตรคิว E-Ticket ของประชาชน
+- เชื่อมต่อ API เปลี่ยนสถานะคิวเป็น `checked_in` พร้อมเสียงเอฟเฟกต์ยืนยัน
+
+---
+
+### Component 3: Admin Queue Calling & Voice Integration
+
+#### [MODIFY] [admin/queue/page.tsx](file:///d:/G_WebApps/cli-g-web/src/app/admin/queue/page.tsx)
+- เพิ่มปุ่ม **"🔊 เรียกคิวออกเสียง"** ในหน้าแอดมินจัดการคิว
+- เมื่อกดปุ่มเรียกคิว จะทำการยิง LINE Flex Card เตือนผู้รับบริการ + สั่งให้ระบบขานเสียงภาษาไทยออกลำโพงทันที
+
+---
+
+## Verification Plan
+
+### Automated Verification
+- ตรวจสอบ Type safety:
+  `npx tsc --noEmit`
+- ทดสอบ Production Build:
+  `npm run build`
+
+### Manual Verification
+- เปิดหน้า `/kiosk` ทดสอบสแกน QR Code บัตรคิว
+- กดปุ่ม "เรียกคิวออกเสียง" บน Admin Dashboard และทดสอบเสียงขานออกลำโพง
