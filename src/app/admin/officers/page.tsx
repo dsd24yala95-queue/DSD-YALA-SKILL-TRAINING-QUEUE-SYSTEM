@@ -470,7 +470,7 @@ export default function AdminOfficersPage() {
                                                         return (
                                                             <span
                                                                 key={key}
-                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold ${rInfo.badgeCls}`}
+                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${rInfo.badgeCls}`}
                                                             >
                                                                 <i className={`fa-solid ${rInfo.icon}`}></i>
                                                                 {rInfo.label}

@@ -142,17 +142,17 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-bold text-xs truncate leading-snug">{item.title}</p>
                                                     <span
-                                                        className={`text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 ${
+                                                        className={`text-xs px-2 py-0.5 rounded font-semibold shrink-0 ${
                                                             isSelected
                                                                 ? "bg-white/20 text-white"
-                                                                : "bg-slate-800 text-slate-400 border border-slate-700"
+                                                                : "bg-slate-800 text-slate-300 border border-slate-700"
                                                         }`}
                                                     >
                                                         {item.category}
                                                     </span>
                                                 </div>
                                                 <p
-                                                    className={`text-[11px] truncate mt-0.5 ${
+                                                    className={`text-xs truncate mt-0.5 ${
                                                         isSelected ? "text-indigo-100" : "text-slate-400"
                                                     }`}
                                                 >
@@ -173,13 +173,13 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
                     </div>
 
                     {/* Footer Tip */}
-                    <div className="px-4 py-2.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="px-4 py-2.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                         <span className="flex items-center gap-2">
-                            <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-300">
+                            <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-xs text-slate-300">
                                 ↑↓
                             </kbd>{" "}
                             เพื่อเลือก
-                            <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-slate-300 ml-1">
+                            <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-xs text-slate-300 ml-1">
                                 ↵
                             </kbd>{" "}
                             เพื่อไปยังหน้า

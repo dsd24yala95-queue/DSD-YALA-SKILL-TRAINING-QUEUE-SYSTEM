@@ -727,49 +727,49 @@ export default function AdminQueuePage() {
                                                 />
                                             </td>
                                             <td className="px-4 py-3.5">
-                                                <span className="font-mono text-[11px] text-slate-400">{q.id.slice(0, 8).toUpperCase()}</span>
+                                                <span className="font-mono text-xs font-semibold text-slate-500">{q.id.slice(0, 8).toUpperCase()}</span>
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 <p className="font-bold text-slate-800 text-sm leading-tight">{q.memberName}</p>
-                                                <p className="text-[11px] text-slate-400 mt-0.5">{q.memberPhone}</p>
+                                                <p className="text-xs text-slate-500 mt-0.5 font-medium">{q.memberPhone}</p>
                                             </td>
                                             <td className="px-4 py-3.5 hidden md:table-cell">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${q.type === "test"
-                                                    ? "bg-blue-50 text-blue-600 border-blue-100"
-                                                    : "bg-purple-50 text-purple-600 border-purple-100"
+                                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${q.type === "test"
+                                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                    : "bg-purple-50 text-purple-700 border-purple-200"
                                                     }`}>
                                                     {q.type === "test" ? "ทดสอบ" : "อบรม"}
                                                 </span>
-                                                <p className="text-xs text-slate-700 mt-1 font-medium">{q.itemName}</p>
+                                                <p className="text-xs text-slate-700 mt-1 font-semibold">{q.itemName}</p>
                                             </td>
                                             <td className="px-4 py-3.5 hidden xl:table-cell">
                                                 {q.level ? (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 border border-violet-100">
-                                                        <i className="fa-solid fa-layer-group text-[9px]"></i>
+                                                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                                                        <i className="fa-solid fa-layer-group text-xs"></i>
                                                         ระดับ {q.level}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[11px] text-slate-300">-</span>
+                                                    <span className="text-xs text-slate-400">—</span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3.5 hidden lg:table-cell">
                                                 {q.appointedDate ? (
-                                                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5">
-                                                        <i className="fa-regular fa-calendar-check text-emerald-400"></i>
+                                                    <span className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                                                        <i className="fa-regular fa-calendar-check text-emerald-500"></i>
                                                         {mounted ? new Date(q.appointedDate).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[11px] text-slate-300">ยังไม่กำหนด</span>
+                                                    <span className="text-xs text-slate-400 font-medium">ยังไม่กำหนด</span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 <div className="flex flex-col gap-1">
-                                                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusInfo.cls}`}>
+                                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${statusInfo.cls}`}>
                                                         {statusInfo.label}
                                                     </span>
                                                     {q.isAcknowledged && (
-                                                        <span className="text-[10px] font-semibold text-teal-500 flex items-center gap-1">
-                                                            <i className="fa-solid fa-circle-check text-[9px]"></i> รับทราบแล้ว
+                                                        <span className="text-xs font-bold text-teal-600 flex items-center gap-1">
+                                                            <i className="fa-solid fa-circle-check text-xs"></i> รับทราบแล้ว
                                                         </span>
                                                     )}
                                                 </div>
@@ -780,7 +780,7 @@ export default function AdminQueuePage() {
                                                     {q.status === "pending" && (
                                                         <button
                                                             onClick={() => { setModalQueue(q); setAppointedDate(""); }}
-                                                            className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition-all flex items-center gap-1"
+                                                            className="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-1 shadow-sm"
                                                         >
                                                             <i className="fa-solid fa-calendar-plus"></i>
                                                             อนุมัติ &amp; นัดหมาย
@@ -792,7 +792,7 @@ export default function AdminQueuePage() {
                                                         <button
                                                             onClick={() => callQueue(q)}
                                                             disabled={callingQueue[q.id]}
-                                                            className="relative px-3 py-1.5 rounded-lg text-white text-[11px] font-extrabold transition-all flex items-center gap-1.5 shadow-md shadow-red-500/20 disabled:opacity-70 overflow-hidden"
+                                                            className="relative px-3 py-1.5 rounded-xl text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md shadow-red-500/20 disabled:opacity-70 overflow-hidden"
                                                             style={{ background: "linear-gradient(135deg,#ef4444,#dc2626)" }}
                                                         >
                                                             {callingQueue[q.id] ? (
@@ -809,14 +809,14 @@ export default function AdminQueuePage() {
                                                         <>
                                                             <button
                                                                 onClick={() => updateStatus(q.id, "completed")}
-                                                                className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-all flex items-center gap-1"
+                                                                className="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-1 shadow-sm"
                                                             >
                                                                 <i className="fa-solid fa-check"></i>
                                                                 ผ่าน
                                                             </button>
                                                             <button
                                                                 onClick={() => updateStatus(q.id, "failed")}
-                                                                className="px-2.5 py-1 rounded-lg bg-red-500 text-white text-[11px] font-bold hover:bg-red-600 transition-all flex items-center gap-1"
+                                                                className="px-2.5 py-1.5 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-all flex items-center gap-1 shadow-sm"
                                                             >
                                                                 <i className="fa-solid fa-xmark"></i>
                                                                 ไม่ผ่าน
@@ -827,7 +827,7 @@ export default function AdminQueuePage() {
                                                     {/* Delete — available for ALL queue statuses */}
                                                     <button
                                                         onClick={() => setDeleteTarget(q.id)}
-                                                        className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold hover:bg-red-50 hover:text-red-500 transition-all flex items-center gap-1 border border-slate-200/60"
+                                                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-red-50 hover:text-red-600 transition-all flex items-center gap-1 border border-slate-200/80"
                                                         title="ลบรายการคิวนี้"
                                                     >
                                                         <i className="fa-solid fa-trash-can"></i>
