@@ -326,7 +326,28 @@ export default function AdminQueuePage() {
         }
     };
 
-    // ── Call Queue — fires Full Screen Alert on Member's device ────────
+    // 🔊 Audio Speech Announcement Engine (Web Speech Synthesis in Thai)
+    const [audioCallEnabled, setAudioCallEnabled] = useState(true);
+
+    const speakQueueCall = (q: QueueRow) => {
+        if (!audioCallEnabled) return;
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            try {
+                window.speechSynthesis.cancel();
+                const ticketText = q.queueNumber ? `คิวหมายเลข ${q.queueNumber}` : "คิวของคุณ";
+                const text = `ขอเชิญ${ticketText} คุณ ${q.memberName} เข้ารับบริการค่ะ`;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "th-TH";
+                utterance.rate = 0.92;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } catch (err) {
+                console.error("Speech Synthesis error:", err);
+            }
+        }
+    };
+
+    // ── Call Queue — fires Full Screen Alert on Member's device & Audio Speech ────────
     const callQueue = async (q: QueueRow) => {
         setCallingQueue(prev => ({ ...prev, [q.id]: true }));
         try {
@@ -341,10 +362,14 @@ export default function AdminQueuePage() {
                 })
             });
             const data = await res.json();
+            
+            // Trigger Thai Audio Announcement
+            speakQueueCall(q);
+
             if (data.callCount > 1) {
-                toast.info(`เรียกคิวซ้ำครั้งที่ ${data.callCount} — ${q.memberName}`);
+                toast.info(`🔊 เรียกคิวซ้ำครั้งที่ ${data.callCount} — ${q.memberName}`);
             } else {
-                toast.success(`เรียกคิว ${q.memberName} เรียบร้อยแล้ว!`);
+                toast.success(`🔊 เรียกคิว ${q.memberName} เรียบร้อยแล้ว!`);
             }
         } catch (e) {
             toast.error("เกิดข้อผิดพลาดในการเรียกคิว");
@@ -420,12 +445,30 @@ export default function AdminQueuePage() {
                     </h1>
                     <p className="text-xs text-slate-400 mt-1">อนุมัติคิว กำหนดวันนัดหมาย อัปเดตสถานะ และจัดการรายการจองทั้งหมดของ สพร.24 ยะลา</p>
                 </div>
-                <button
-                    onClick={openWalkInModal}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/20 transition-all active:scale-95 shrink-0"
-                >
-                    <i className="fa-solid fa-ticket-simple"></i> ลงทะเบียน & ออกคิว Walk-in
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            setAudioCallEnabled((prev) => !prev);
+                            toast.info(audioCallEnabled ? "🔇 ปิดเสียงประกาศขานคิว" : "🔊 เปิดเสียงประกาศขานคิวเรียบร้อย");
+                        }}
+                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all active:scale-95 shrink-0 ${
+                            audioCallEnabled
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
+                        }`}
+                        title={audioCallEnabled ? "ปิดเสียงขานคิวภาษาไทย" : "เปิดเสียงขานคิวภาษาไทย"}
+                    >
+                        <i className={`fa-solid ${audioCallEnabled ? "fa-volume-high text-emerald-600" : "fa-volume-xmark text-slate-400"}`}></i>
+                        <span>{audioCallEnabled ? "เสียงเรียกคิว ON" : "เสียงเรียกคิว OFF"}</span>
+                    </button>
+
+                    <button
+                        onClick={openWalkInModal}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/20 transition-all active:scale-95 shrink-0"
+                    >
+                        <i className="fa-solid fa-ticket-simple"></i> ลงทะเบียน & ออกคิว Walk-in
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}

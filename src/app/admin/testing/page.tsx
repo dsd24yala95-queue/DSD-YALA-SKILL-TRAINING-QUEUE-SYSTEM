@@ -291,6 +291,16 @@ export default function AdminTestingPage() {
                                 </div>
 
                                 <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50">
+                                    <a
+                                        href={`/api/admin/export-json?courseId=${b.id}&courseName=${encodeURIComponent(b.branchName)}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="py-2 px-3 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-all flex items-center gap-1 border border-indigo-200/60"
+                                        title="ดาวน์โหลดรายชื่อผู้สมัครเป็น JSON/ใบเซ็นชื่อ"
+                                    >
+                                        <i className="fa-solid fa-file-export text-indigo-600"></i>
+                                        <span>ใบเซ็นชื่อ</span>
+                                    </a>
                                     <button onClick={() => openEdit(b)} className="flex-1 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                                         <i className="fa-solid fa-pen mr-1"></i> แก้ไข
                                     </button>

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import CommandPaletteModal from "@/components/CommandPaletteModal";
 
 const menuItems = [
     { href: "/admin", icon: "fa-chart-pie", label: "แดชบอร์ด", category: "main" },
@@ -24,8 +25,21 @@ export default function AdminSidebar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+
+    // Global Ctrl+K / Cmd+K listener to open Command Palette
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                setCommandPaletteOpen((prev) => !prev);
+            }
+        };
+        window.addEventListener("keydown", handleGlobalKeyDown);
+        return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    }, []);
 
     // Restore collapsed preference from localStorage
     useEffect(() => {
@@ -216,23 +230,22 @@ export default function AdminSidebar() {
                     </button>
                 </div>
 
-                {/* 2. Quick Search Input (DataPulse Search Bar) */}
+                {/* 2. Quick Search Input (DataPulse Search Bar + Ctrl+K Command Palette Trigger) */}
                 <div className="mb-4 relative">
                     <div
-                        onClick={() => isCollapsed && setIsCollapsed(false)}
-                        className={`flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300 transition-all ${
-                            isCollapsed ? "justify-center cursor-pointer hover:bg-white/10" : ""
+                        onClick={() => setCommandPaletteOpen(true)}
+                        className={`flex items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300 transition-all cursor-pointer hover:bg-white/10 hover:border-indigo-500/40 group ${
+                            isCollapsed ? "justify-center" : ""
                         }`}
                     >
-                        <i className="fa-solid fa-magnifying-glass text-gray-400 shrink-0"></i>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <i className="fa-solid fa-magnifying-glass text-indigo-400 shrink-0 group-hover:scale-110 transition-transform"></i>
+                            {!isCollapsed && <span className="text-gray-400 text-xs truncate">ค้นหาด่วน...</span>}
+                        </div>
                         {!isCollapsed && (
-                            <input
-                                type="text"
-                                placeholder="ค้นหาเมนู..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-transparent text-white text-xs placeholder-gray-500 focus:outline-none"
-                            />
+                            <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-[9px] font-mono text-indigo-300 font-bold shrink-0">
+                                ⌘K
+                            </kbd>
                         )}
                     </div>
                 </div>
@@ -369,6 +382,12 @@ export default function AdminSidebar() {
                     </AnimatePresence>
                 </div>
             </aside>
+
+            {/* Command Palette Modal (Ctrl+K) */}
+            <CommandPaletteModal
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+            />
         </>
     );
 }
