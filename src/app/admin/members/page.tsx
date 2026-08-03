@@ -172,7 +172,7 @@ export default function AdminMembersPage() {
     };
 
     return (
-        <div className="p-6 bg-[#f8fafc] min-h-screen font-sans">
+        <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                 <div>

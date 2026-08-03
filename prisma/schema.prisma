@@ -47,6 +47,8 @@ model MasterBranch {
   maxQueue      Int
   LocationName  String?
   LocationGPS   String?
+  Date          String?
+  DateEnd       String?
   status        String    @default("active") // "active" or "inactive"
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

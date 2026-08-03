@@ -310,7 +310,7 @@ export default function AdminQueuePage() {
     const checkedInCount = queues.filter(q => q.status === "checked_in").length;
 
     return (
-        <div className="p-6 bg-[#f8fafc] min-h-screen font-sans">
+        <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">

@@ -112,7 +112,7 @@ export default function AdminDashboard() {
     const workSectionLabels = statsData?.workSectionCounts || {};
 
     return (
-        <div className="p-6 bg-[#f8fafc] min-h-screen font-sans">
+        <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
             {/* Topbar */}
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                 <div>
