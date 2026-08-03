@@ -67,6 +67,106 @@ export default function AdminQueuePage() {
     // Call queue in-progress tracker {[queueId]: true}
     const [callingQueue, setCallingQueue] = useState<{ [id: string]: boolean }>({});
 
+    // Walk-in Queue Booking States
+    const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+    const [walkInTicketData, setWalkInTicketData] = useState<any>(null);
+    const [walkInMode, setWalkInMode] = useState<"existing" | "new">("existing");
+    const [walkInSaving, setWalkInSaving] = useState(false);
+    const [coursesList, setCoursesList] = useState<any[]>([]);
+    const [branchesList, setBranchesList] = useState<any[]>([]);
+    const [memberList, setMemberList] = useState<any[]>([]);
+    const [walkInForm, setWalkInForm] = useState({
+        existingUserId: "",
+        title: "001",
+        fullName: "",
+        phoneNumber: "",
+        citizenId: "",
+        email: "",
+        education: "ปริญญาตรี",
+        type: "training" as "training" | "test",
+        itemId: "",
+        itemName: "",
+        appointedDate: new Date().toISOString().split("T")[0],
+    });
+
+    const openWalkInModal = async () => {
+        setWalkInModalOpen(true);
+        // Load Courses, Branches, and Members if not loaded
+        try {
+            const [cRes, bRes, mRes] = await Promise.all([
+                fetch("/api/master/courses"),
+                fetch("/api/master/branches"),
+                fetch("/api/users"),
+            ]);
+            if (cRes.ok) setCoursesList(await cRes.json());
+            if (bRes.ok) setBranchesList(await bRes.json());
+            if (mRes.ok) setMemberList(await mRes.json());
+        } catch (e) {
+            console.error("Failed to load options for walk-in", e);
+        }
+    };
+
+    const handleWalkInQueueSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (walkInMode === "existing" && !walkInForm.existingUserId) {
+            toast.error("กรุณาเลือกสมาชิกจากระบบ");
+            return;
+        }
+
+        if (walkInMode === "new" && (!walkInForm.fullName || !walkInForm.phoneNumber)) {
+            toast.error("กรุณากรอกชื่อ-นามสกุล และเบอร์โทรศัพท์");
+            return;
+        }
+
+        if (!walkInForm.itemId || !walkInForm.itemName) {
+            toast.error("กรุณาเลือกหลักสูตรหรือสาขาทดสอบ");
+            return;
+        }
+
+        setWalkInSaving(true);
+        try {
+            const res = await fetch("/api/admin/walkin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    existingUserId: walkInMode === "existing" ? walkInForm.existingUserId : undefined,
+                    title: walkInForm.title,
+                    fullName: walkInForm.fullName,
+                    phoneNumber: walkInForm.phoneNumber,
+                    citizenId: walkInForm.citizenId,
+                    email: walkInForm.email,
+                    education: walkInForm.education,
+                    type: walkInForm.type,
+                    itemId: walkInForm.itemId,
+                    itemName: walkInForm.itemName,
+                    appointedDate: walkInForm.appointedDate,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to register walk-in queue");
+
+            toast.success(`ออกคิว Walk-in เรียบร้อยแล้ว (${data.ticketCode})`);
+            setWalkInModalOpen(false);
+            setWalkInTicketData({
+                ticketCode: data.ticketCode,
+                fullName: data.user.fullName,
+                memberId: data.user.memberId,
+                itemName: walkInForm.itemName,
+                type: walkInForm.type === "training" ? "การฝึกอบรม" : "การทดสอบมาตรฐาน",
+                queueNumber: data.booking.queueNumber,
+                appointedDate: walkInForm.appointedDate,
+            });
+
+            loadQueues();
+        } catch (err: any) {
+            toast.error(err.message || "เกิดข้อผิดพลาดในการลงทะเบียน Walk-in");
+        } finally {
+            setWalkInSaving(false);
+        }
+    };
+
     const handleOpenExportModal = () => {
         if (selectedRows.size === 0) {
             toast.error("กรุณาเลือกรายการที่ต้องการ Export อย่างน้อย 1 รายการ");
@@ -312,12 +412,20 @@ export default function AdminQueuePage() {
     return (
         <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                    <i className="fa-solid fa-list-check text-indigo-600"></i>
-                    จัดการคิวจองและสมัครอบรม
-                </h1>
-                <p className="text-xs text-slate-400 mt-1">อนุมัติคิว กำหนดวันนัดหมาย อัปเดตสถานะ และจัดการรายการจองทั้งหมดของ สพร.24 ยะลา</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                        <i className="fa-solid fa-list-check text-indigo-600"></i>
+                        จัดการคิวจองและสมัครอบรม
+                    </h1>
+                    <p className="text-xs text-slate-400 mt-1">อนุมัติคิว กำหนดวันนัดหมาย อัปเดตสถานะ และจัดการรายการจองทั้งหมดของ สพร.24 ยะลา</p>
+                </div>
+                <button
+                    onClick={openWalkInModal}
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/20 transition-all active:scale-95 shrink-0"
+                >
+                    <i className="fa-solid fa-ticket-simple"></i> ลงทะเบียน & ออกคิว Walk-in
+                </button>
             </div>
 
             {/* Summary Cards */}
@@ -903,6 +1011,238 @@ export default function AdminQueuePage() {
                                 >
                                     <i className="fa-solid fa-download"></i>
                                     ยืนยันส่งออก JSON
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* 🎟️ Walk-in Queue Booking Modal */}
+                {walkInModalOpen && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
+                        <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 sm:p-7 max-h-[90vh] overflow-y-auto my-8">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                <h2 className="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+                                    <i className="fa-solid fa-ticket-simple text-indigo-600"></i>
+                                    ลงทะเบียน & ออกคิว Walk-in หน้างาน
+                                </h2>
+                                <button onClick={() => setWalkInModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                                    <i className="fa-solid fa-xmark text-lg"></i>
+                                </button>
+                            </div>
+
+                            {/* Mode Switcher */}
+                            <div className="flex bg-slate-100 p-1 rounded-2xl mb-4 text-xs font-bold">
+                                <button
+                                    type="button"
+                                    onClick={() => setWalkInMode("existing")}
+                                    className={`flex-1 py-2 rounded-xl transition-all ${walkInMode === "existing" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                                >
+                                    <i className="fa-solid fa-users mr-1"></i> เลือกสมาชิกที่มีอยู่แล้ว
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setWalkInMode("new")}
+                                    className={`flex-1 py-2 rounded-xl transition-all ${walkInMode === "new" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                                >
+                                    <i className="fa-solid fa-user-plus mr-1"></i> สร้างสมาชิกใหม่ Walk-in
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleWalkInQueueSubmit} className="space-y-3.5 text-xs">
+                                {walkInMode === "existing" ? (
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">เลือกผู้สมัคร / สมาชิกในระบบ <span className="text-rose-500">*</span></label>
+                                        <select
+                                            value={walkInForm.existingUserId}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, existingUserId: e.target.value })}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 text-sm"
+                                        >
+                                            <option value="">-- ค้นหา/เลือกสมาชิก --</option>
+                                            {memberList.map((m: any) => (
+                                                <option key={m.id} value={m.id}>
+                                                    {m.fullName || `${m.reg_firstname || ''} ${m.reg_lastname || ''}`} ({m.phoneNumber || m.reg_telephone || m.reg_citizenid || 'ไม่ระบุเบอร์'})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <label className="font-bold text-slate-600 block mb-1">คำนำหน้า</label>
+                                                <select
+                                                    value={walkInForm.title}
+                                                    onChange={(e) => setWalkInForm({ ...walkInForm, title: e.target.value })}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                                >
+                                                    <option value="001">นาย</option>
+                                                    <option value="002">นาง</option>
+                                                    <option value="003">นางสาว</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="font-bold text-slate-600 block mb-1">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="เช่น สมชาย ใจดี"
+                                                    value={walkInForm.fullName}
+                                                    onChange={(e) => setWalkInForm({ ...walkInForm, fullName: e.target.value })}
+                                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="font-bold text-slate-600 block mb-1">เบอร์โทรศัพท์ <span className="text-rose-500">*</span></label>
+                                                <input
+                                                    type="tel"
+                                                    placeholder="08XXXXXXXX"
+                                                    value={walkInForm.phoneNumber}
+                                                    onChange={(e) => setWalkInForm({ ...walkInForm, phoneNumber: e.target.value })}
+                                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="font-bold text-slate-600 block mb-1">เลขบัตรประชาชน</label>
+                                                <input
+                                                    type="text"
+                                                    maxLength={13}
+                                                    placeholder="1950100XXXXXX"
+                                                    value={walkInForm.citizenId}
+                                                    onChange={(e) => setWalkInForm({ ...walkInForm, citizenId: e.target.value })}
+                                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-mono text-xs"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Queue Type & Item Selection */}
+                                <div className="border-t border-slate-100 pt-3">
+                                    <label className="font-bold text-slate-600 block mb-1.5">ประเภทคิวที่ต้องการสมัคร <span className="text-rose-500">*</span></label>
+                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setWalkInForm({ ...walkInForm, type: "training", itemId: "", itemName: "" })}
+                                            className={`py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 ${walkInForm.type === "training" ? "bg-indigo-50 border-indigo-400 text-indigo-700" : "border-slate-200 text-slate-600"}`}
+                                        >
+                                            <i className="fa-solid fa-graduation-cap"></i> การฝึกอบรม
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setWalkInForm({ ...walkInForm, type: "test", itemId: "", itemName: "" })}
+                                            className={`py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 ${walkInForm.type === "test" ? "bg-indigo-50 border-indigo-400 text-indigo-700" : "border-slate-200 text-slate-600"}`}
+                                        >
+                                            <i className="fa-solid fa-clipboard-check"></i> การทดสอบมาตรฐาน
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">
+                                            {walkInForm.type === "training" ? "เลือกหลักสูตรฝึกอบรม" : "เลือกสาขาทดสอบมาตรฐาน"} <span className="text-rose-500">*</span>
+                                        </label>
+                                        <select
+                                            value={walkInForm.itemId}
+                                            onChange={(e) => {
+                                                const selectedId = e.target.value;
+                                                const list = walkInForm.type === "training" ? coursesList : branchesList;
+                                                const found = list.find((x: any) => x.id === selectedId);
+                                                setWalkInForm({
+                                                    ...walkInForm,
+                                                    itemId: selectedId,
+                                                    itemName: found ? (found.courseName || found.branchName) : "",
+                                                });
+                                            }}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 text-sm"
+                                        >
+                                            <option value="">-- เลือกรายการสมัคร --</option>
+                                            {(walkInForm.type === "training" ? coursesList : branchesList).map((item: any) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.courseName || item.branchName}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="font-bold text-slate-600 block mb-1">วันที่นัดหมาย (YYYY-MM-DD)</label>
+                                    <input
+                                        type="date"
+                                        value={walkInForm.appointedDate}
+                                        onChange={(e) => setWalkInForm({ ...walkInForm, appointedDate: e.target.value })}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-sans"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-3 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setWalkInModalOpen(false)}
+                                        className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={walkInSaving}
+                                        className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] text-white text-xs font-bold transition-all disabled:opacity-50 shadow-md shadow-indigo-500/20 active:scale-95"
+                                    >
+                                        {walkInSaving ? "กำลังออกคิว..." : "🎟️ ลงทะเบียน & ออกคิว Walk-in"}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* 🎟️ Walk-in Queue Ticket Slip Modal */}
+                {walkInTicketData && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center relative border border-indigo-100">
+                            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
+                                <i className="fa-solid fa-circle-check"></i>
+                            </div>
+
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ออกคิว Walk-in สำเร็จแล้ว</p>
+                            <h3 className="text-3xl font-black text-indigo-600 tracking-tight my-1 font-mono">{walkInTicketData.ticketCode}</h3>
+                            <span className="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-600 font-bold text-[11px] rounded-full mb-4">
+                                🟢 รายงานตัวเรียบร้อย (Walk-in)
+                            </span>
+
+                            <div className="bg-slate-50 rounded-2xl p-4 text-left text-xs space-y-2 mb-5 border border-slate-100">
+                                <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+                                    <span className="text-slate-400 font-medium">ผู้สมัคร:</span>
+                                    <span className="font-bold text-slate-800">{walkInTicketData.fullName}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+                                    <span className="text-slate-400 font-medium">ประเภท:</span>
+                                    <span className="font-semibold text-slate-700">{walkInTicketData.type}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-slate-200/60 pb-1.5">
+                                    <span className="text-slate-400 font-medium">รายการ:</span>
+                                    <span className="font-bold text-slate-800 text-right truncate max-w-[180px]">{walkInTicketData.itemName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400 font-medium">วันที่นัดหมาย:</span>
+                                    <span className="font-semibold text-indigo-600">{walkInTicketData.appointedDate}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5"
+                                >
+                                    <i className="fa-solid fa-print"></i> พิมพ์บัตรคิว
+                                </button>
+                                <button
+                                    onClick={() => setWalkInTicketData(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm"
+                                >
+                                    ปิดหน้านี้
                                 </button>
                             </div>
                         </motion.div>
