@@ -363,8 +363,10 @@ export default function AdminDashboard() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {[
                                     { icon: "fa-user-plus", label: "จัดการคิว / นัดหมาย", color: "blue", href: "/admin/queue" },
-                                    { icon: "fa-book", label: "จัดการสาขา/หลักสูตร", color: "purple", href: "/admin/master" },
+                                    { icon: "fa-graduation-cap", label: "จัดการการฝึกอบรม", color: "purple", href: "/admin/training" },
+                                    { icon: "fa-clipboard-check", label: "จัดการการทดสอบมาตรฐาน", color: "purple", href: "/admin/testing" },
                                     { icon: "fa-users-gear", label: "จัดการทะเบียนสมาชิก", color: "green", href: "/admin/members" },
+                                    { icon: "fa-user-shield", label: "จัดการเจ้าหน้าที่", color: "blue", href: "/admin/officers" },
                                     { icon: "fa-file-chart-column", label: "ออกรายงาน Excel 5 Sheets", color: "orange", href: "/admin/report" },
                                 ].map((action, i) => (
                                     <Link

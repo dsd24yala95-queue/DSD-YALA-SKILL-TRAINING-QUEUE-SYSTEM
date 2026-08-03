@@ -10,7 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const menuItems = [
     { href: "/admin", icon: "fa-chart-pie", label: "แดชบอร์ด", category: "main" },
     { href: "/admin/queue", icon: "fa-list-check", label: "จัดการคิว", category: "main" },
-    { href: "/admin/master", icon: "fa-book", label: "หลักสูตร/สาขา", category: "main" },
+    { href: "/admin/training", icon: "fa-graduation-cap", label: "การฝึกอบรม", category: "main" },
+    { href: "/admin/testing", icon: "fa-clipboard-check", label: "การทดสอบมาตรฐาน", category: "main" },
     { href: "/admin/members", icon: "fa-users", label: "สมาชิก", category: "main" },
     { href: "/admin/officers", icon: "fa-user-shield", label: "จัดการเจ้าหน้าที่", category: "main" },
     { href: "/admin/report", icon: "fa-file-chart-column", label: "รายงาน", category: "main" },
