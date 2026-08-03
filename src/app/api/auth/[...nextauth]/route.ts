@@ -40,7 +40,8 @@ export const authOptions: AuthOptions = {
                     email: user.email,
                     name: user.fullName,
                     role: user.role,
-                    memberId: user.memberId || undefined
+                    memberId: user.memberId || undefined,
+                    mustChangePassword: user.mustChangePassword ?? false
                 };
             }
         })
@@ -52,6 +53,16 @@ export const authOptions: AuthOptions = {
                 token.role = user.role;
                 token.phoneNumber = user.phoneNumber;
                 token.memberId = user.memberId;
+                token.mustChangePassword = (user as any).mustChangePassword;
+            } else if (token.id) {
+                // Fetch fresh mustChangePassword flag from DB
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: { mustChangePassword: true }
+                });
+                if (dbUser) {
+                    token.mustChangePassword = dbUser.mustChangePassword;
+                }
             }
             return token;
         },
@@ -61,6 +72,7 @@ export const authOptions: AuthOptions = {
                 session.user.role = token.role as string;
                 session.user.phoneNumber = token.phoneNumber as string;
                 session.user.memberId = token.memberId as string | undefined;
+                (session.user as any).mustChangePassword = Boolean(token.mustChangePassword);
             }
             return session;
         }

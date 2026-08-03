@@ -23,6 +23,7 @@ export async function GET() {
                 role: true,
                 department: true,
                 status: true,
+                mustChangePassword: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -91,6 +92,7 @@ export async function POST(req: Request) {
                 role: assignedRole,
                 department: department ? String(department).trim() : "ฝ่ายฝึกอบรมพัฒนาทักษะ",
                 status: "active",
+                mustChangePassword: true, // Force password change on first login
             },
             select: {
                 id: true,
@@ -100,6 +102,7 @@ export async function POST(req: Request) {
                 role: true,
                 department: true,
                 status: true,
+                mustChangePassword: true,
                 createdAt: true,
             },
         });
@@ -118,7 +121,7 @@ export async function PUT(req: Request) {
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
-        const { id, fullName, phoneNumber, email, role, department, status, password } = body;
+        const { id, fullName, phoneNumber, email, role, department, status, password, resetDefaultPassword, mustChangePassword } = body;
 
         if (!id || typeof id !== "string") {
             return NextResponse.json({ error: "Missing or invalid officer ID" }, { status: 400 });
@@ -142,12 +145,18 @@ export async function PUT(req: Request) {
         }
         if (department !== undefined) updateData.department = String(department).trim();
         if (status !== undefined) updateData.status = status === "inactive" ? "inactive" : "active";
+        if (mustChangePassword !== undefined) updateData.mustChangePassword = Boolean(mustChangePassword);
 
-        if (password) {
+        // Reset to default password "1234567890" or custom password
+        if (resetDefaultPassword) {
+            updateData.passwordHash = await bcrypt.hash("1234567890", 10);
+            updateData.mustChangePassword = true; // Force password change on login
+        } else if (password) {
             if (typeof password !== "string" || password.length < 6) {
                 return NextResponse.json({ error: "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร" }, { status: 400 });
             }
             updateData.passwordHash = await bcrypt.hash(password, 10);
+            updateData.mustChangePassword = true; // Force password change on login
         }
 
         const updated = await prisma.user.update({
@@ -161,6 +170,7 @@ export async function PUT(req: Request) {
                 role: true,
                 department: true,
                 status: true,
+                mustChangePassword: true,
                 updatedAt: true,
             },
         });

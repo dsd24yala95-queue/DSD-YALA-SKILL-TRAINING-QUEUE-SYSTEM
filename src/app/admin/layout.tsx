@@ -1,4 +1,5 @@
 import AdminSidebar from "@/components/AdminSidebar";
+import ForceChangePasswordModal from "@/components/ForceChangePasswordModal";
 
 export default function AdminLayout({
     children,
@@ -12,6 +13,7 @@ export default function AdminLayout({
                 {/* Topbar will be included in each page */}
                 {children}
             </main>
+            <ForceChangePasswordModal />
         </div>
     );
 }

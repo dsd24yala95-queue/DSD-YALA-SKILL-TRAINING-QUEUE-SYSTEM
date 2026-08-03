@@ -12,6 +12,7 @@ interface Officer {
     role: string;
     department: string | null;
     status: string;
+    mustChangePassword?: boolean;
     createdAt: string;
 }
 
@@ -163,6 +164,25 @@ export default function AdminOfficersPage() {
         }
     };
 
+    const handleQuickResetDefault = async (officer: Officer) => {
+        if (!confirm(`คุณต้องการรีเซ็ตรหัสผ่านของ ${officer.fullName} เป็น "1234567890" และบังคับเปลี่ยนรหัสเมื่อเข้าสู่ระบบครั้งแรกใช่หรือไม่?`)) return;
+
+        const tId = toast.loading("กำลังรีเซ็ตรหัสผ่านเป็น 1234567890...");
+        try {
+            const res = await fetch("/api/admin/officers", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: officer.id, resetDefaultPassword: true }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Reset password failed");
+            toast.success(`รีเซ็ตรหัสผ่านให้ ${officer.fullName} เป็น 1234567890 เรียบร้อย! (บังคับเปลี่ยนรหัสในการ Login ครั้งแรก)`, { id: tId });
+            loadOfficers();
+        } catch (e: any) {
+            toast.error(e.message || "เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน", { id: tId });
+        }
+    };
+
     const handleResetPasswordSubmit = async () => {
         if (!resetTarget || !newPassword) {
             toast.error("กรุณากรอกรหัสผ่านใหม่");
@@ -175,12 +195,14 @@ export default function AdminOfficersPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: resetTarget.id, password: newPassword }),
             });
-            if (!res.ok) throw new Error("Reset password failed");
-            toast.success(`รีเซ็ตรหัสผ่านให้ ${resetTarget.fullName} สำเร็จ`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Reset password failed");
+            toast.success(`รีเซ็ตรหัสผ่านให้ ${resetTarget.fullName} สำเร็จแล้ว (บังคับเปลี่ยนเมื่อ Login)`, { id: data.id });
             setResetTarget(null);
             setNewPassword("");
-        } catch {
-            toast.error("เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน");
+            loadOfficers();
+        } catch (e: any) {
+            toast.error(e.message || "เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน");
         } finally {
             setResetting(false);
         }
@@ -374,41 +396,57 @@ export default function AdminOfficersPage() {
                                                 </span>
                                             </td>
 
-                                            {/* Status Switch */}
+                                            {/* Status Switch & Must Change Password Badge */}
                                             <td className="py-3.5 px-4 text-center">
-                                                <button
-                                                    onClick={() => handleToggleStatus(o)}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold transition-all ${
-                                                        o.status === "active"
-                                                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-400/20 hover:bg-emerald-500/20"
-                                                            : "bg-rose-500/10 text-rose-500 border-rose-400/20 hover:bg-rose-500/20"
-                                                    }`}
-                                                >
-                                                    <span className={`w-2 h-2 rounded-full ${o.status === "active" ? "bg-emerald-500" : "bg-rose-500"}`}></span>
-                                                    {o.status === "active" ? "ใช้งานปกติ" : "ระงับใช้งาน"}
-                                                </button>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <button
+                                                        onClick={() => handleToggleStatus(o)}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold transition-all ${
+                                                            o.status === "active"
+                                                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-400/20 hover:bg-emerald-500/20"
+                                                                : "bg-rose-500/10 text-rose-500 border-rose-400/20 hover:bg-rose-500/20"
+                                                        }`}
+                                                    >
+                                                        <span className={`w-2 h-2 rounded-full ${o.status === "active" ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                                                        {o.status === "active" ? "ใช้งานปกติ" : "ระงับใช้งาน"}
+                                                    </button>
+                                                    {o.mustChangePassword && (
+                                                        <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                                            <i className="fa-solid fa-triangle-exclamation text-[9px]"></i>
+                                                            รอเปลี่ยนรหัสผ่าน
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* Action Buttons */}
                                             <td className="py-3.5 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
+                                                        onClick={() => handleQuickResetDefault(o)}
+                                                        className="px-2 py-1 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/80 transition-all text-[11px] font-bold flex items-center gap-1"
+                                                        title="รีเซ็ตรหัสผ่านเป็น 1234567890 ทันที"
+                                                    >
+                                                        <i className="fa-solid fa-rotate-left text-amber-600"></i>
+                                                        <span>รีเซ็ต 1234567890</span>
+                                                    </button>
+                                                    <button
                                                         onClick={() => openEditModal(o)}
-                                                        className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition-all text-xs"
+                                                        className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition-all text-xs"
                                                         title="แก้ไขข้อมูล"
                                                     >
                                                         <i className="fa-solid fa-pen"></i>
                                                     </button>
                                                     <button
                                                         onClick={() => setResetTarget(o)}
-                                                        className="p-2 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 transition-all text-xs"
-                                                        title="รีเซ็ตรหัสผ่าน"
+                                                        className="p-1.5 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 transition-all text-xs"
+                                                        title="กำหนดรหัสผ่านใหม่เอง"
                                                     >
                                                         <i className="fa-solid fa-key"></i>
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteTarget(o)}
-                                                        className="p-2 rounded-xl border border-rose-100 text-rose-500 hover:bg-rose-50 transition-all text-xs"
+                                                        className="p-1.5 rounded-xl border border-rose-100 text-rose-500 hover:bg-rose-50 transition-all text-xs"
                                                         title="ลบบัญชี"
                                                     >
                                                         <i className="fa-solid fa-trash"></i>

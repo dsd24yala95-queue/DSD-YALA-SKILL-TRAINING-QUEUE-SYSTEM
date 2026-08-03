@@ -20,6 +20,7 @@ model User {
   memberId      String?   @unique
   lineUserId    String?   @unique // Add line user id
   profileJson   String?   // Store full form data as JSON string
+  mustChangePassword Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
