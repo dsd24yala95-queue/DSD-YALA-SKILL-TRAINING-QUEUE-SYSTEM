@@ -787,16 +787,15 @@ export default function AdminQueuePage() {
                                                         </>
                                                     )}
 
-                                                    {/* Delete — not for terminal statuses */}
-                                                    {q.status !== "cancelled" && q.status !== "completed" && q.status !== "passed" && (
-                                                        <button
-                                                            onClick={() => setDeleteTarget(q.id)}
-                                                            className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold hover:bg-red-50 hover:text-red-500 transition-all flex items-center gap-1"
-                                                        >
-                                                            <i className="fa-solid fa-trash-can"></i>
-                                                            ลบ
-                                                        </button>
-                                                    )}
+                                                    {/* Delete — available for ALL queue statuses */}
+                                                    <button
+                                                        onClick={() => setDeleteTarget(q.id)}
+                                                        className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold hover:bg-red-50 hover:text-red-500 transition-all flex items-center gap-1 border border-slate-200/60"
+                                                        title="ลบรายการคิวนี้"
+                                                    >
+                                                        <i className="fa-solid fa-trash-can"></i>
+                                                        ลบ
+                                                    </button>
                                                 </div>
                                             </td>
                                         </motion.tr>
