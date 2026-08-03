@@ -62,7 +62,12 @@ export async function POST(req: Request) {
         }
 
         const assignedRole = role || "officer_training";
-        if (!STAFF_ROLES.includes(assignedRole)) {
+        const isValidRoleString = (roleStr: string) => {
+            const roles = roleStr.split(",").map((r) => r.trim());
+            return roles.length > 0 && roles.every((r) => STAFF_ROLES.includes(r));
+        };
+
+        if (!isValidRoleString(assignedRole)) {
             return NextResponse.json({ error: "ตำแหน่ง/สิทธิ์การใช้งานไม่ถูกต้อง" }, { status: 400 });
         }
 
@@ -138,7 +143,11 @@ export async function PUT(req: Request) {
         }
         if (email !== undefined) updateData.email = email ? String(email).trim().toLowerCase() : null;
         if (role !== undefined) {
-            if (!STAFF_ROLES.includes(role)) {
+            const isValidRoleString = (roleStr: string) => {
+                const roles = roleStr.split(",").map((r) => r.trim());
+                return roles.length > 0 && roles.every((r) => STAFF_ROLES.includes(r));
+            };
+            if (!isValidRoleString(role)) {
                 return NextResponse.json({ error: "ตำแหน่ง/สิทธิ์การใช้งานไม่ถูกต้อง" }, { status: 400 });
             }
             updateData.role = role;

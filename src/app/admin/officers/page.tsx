@@ -39,6 +39,37 @@ const ROLE_LABELS: { [key: string]: { label: string; badgeCls: string; icon: str
     },
 };
 
+const AVAILABLE_PERMISSIONS = [
+    {
+        key: "admin",
+        label: "Super Admin (สิทธิ์ผู้ดูแลระบบสูงสุด)",
+        desc: "สิทธิ์เต็ม สามารถจัดการเจ้าหน้าที่, สิทธิ์การใช้งาน, ออกรายงาน และเข้าถึงทุกส่วน",
+        icon: "fa-shield-halved",
+        color: "border-purple-200 bg-purple-50/60 text-purple-800",
+    },
+    {
+        key: "officer_training",
+        label: "เจ้าหน้าที่ฝึกอบรม",
+        desc: "สิทธิ์จัดการหลักสูตรอบรมพัฒนาทักษะ และอนุมัติ/จัดการคิวฝึกอบรม",
+        icon: "fa-graduation-cap",
+        color: "border-blue-200 bg-blue-50/60 text-blue-800",
+    },
+    {
+        key: "officer_test",
+        label: "เจ้าหน้าที่ทดสอบมาตรฐาน",
+        desc: "สิทธิ์จัดการสาขาทดสอบมาตรฐานฝีมือ และอนุมัติ/จัดการคิวการทดสอบ",
+        icon: "fa-clipboard-check",
+        color: "border-indigo-200 bg-indigo-50/60 text-indigo-800",
+    },
+    {
+        key: "officer_registrar",
+        label: "เจ้าหน้าที่ต้อนรับ/ลงทะเบียน",
+        desc: "สิทธิ์รับรายงานตัวหน้างาน ออกคิว Walk-in และเช็กอินประชาชน",
+        icon: "fa-id-card",
+        color: "border-teal-200 bg-teal-50/60 text-teal-800",
+    },
+];
+
 export default function AdminOfficersPage() {
     const [officers, setOfficers] = useState<Officer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,12 +79,12 @@ export default function AdminOfficersPage() {
     // Modal state for Add/Edit
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Officer | null>(null);
+    const [selectedRoles, setSelectedRoles] = useState<string[]>(["officer_training"]);
     const [form, setForm] = useState({
         fullName: "",
         phoneNumber: "",
         email: "",
         password: "",
-        role: "officer_training",
         department: "ฝ่ายฝึกอบรมพัฒนาทักษะ",
     });
     const [saving, setSaving] = useState(false);
@@ -84,14 +115,40 @@ export default function AdminOfficersPage() {
         loadOfficers();
     }, [loadOfficers]);
 
+    const toggleRolePermission = (key: string) => {
+        if (key === "admin") {
+            if (selectedRoles.includes("admin")) {
+                setSelectedRoles(["officer_training"]);
+            } else {
+                setSelectedRoles(["admin", "officer_training", "officer_test", "officer_registrar"]);
+            }
+            return;
+        }
+
+        let nextRoles = [...selectedRoles];
+        if (nextRoles.includes(key)) {
+            nextRoles = nextRoles.filter((r) => r !== key);
+            // If admin was checked but we uncheck a sub-role, uncheck admin
+            nextRoles = nextRoles.filter((r) => r !== "admin");
+        } else {
+            nextRoles.push(key);
+        }
+
+        if (nextRoles.length === 0) {
+            nextRoles = ["officer_training"];
+        }
+
+        setSelectedRoles(nextRoles);
+    };
+
     const openAddModal = () => {
         setEditTarget(null);
+        setSelectedRoles(["officer_training"]);
         setForm({
             fullName: "",
             phoneNumber: "",
             email: "",
             password: "",
-            role: "officer_training",
             department: "ฝ่ายฝึกอบรมพัฒนาทักษะ",
         });
         setModalOpen(true);
@@ -99,12 +156,15 @@ export default function AdminOfficersPage() {
 
     const openEditModal = (officer: Officer) => {
         setEditTarget(officer);
+        const roles = officer.role
+            ? officer.role.split(",").map((r) => r.trim())
+            : ["officer_training"];
+        setSelectedRoles(roles);
         setForm({
             fullName: officer.fullName || "",
             phoneNumber: officer.phoneNumber || "",
             email: officer.email || "",
             password: "",
-            role: officer.role || "officer_training",
             department: officer.department || "",
         });
         setModalOpen(true);
@@ -116,18 +176,27 @@ export default function AdminOfficersPage() {
             return;
         }
 
+        if (selectedRoles.length === 0) {
+            toast.error("กรุณากำหนดสิทธิ์การใช้งานอย่างน้อย 1 สิทธิ์");
+            return;
+        }
+
         if (!editTarget && !form.password) {
             toast.error("กรุณากำหนดรหัสผ่านแรกเข้าสำหรับเจ้าหน้าที่ใหม่");
             return;
         }
+
+        const roleString = selectedRoles.includes("admin")
+            ? "admin"
+            : selectedRoles.join(",");
 
         setSaving(true);
         try {
             const endpoint = "/api/admin/officers";
             const method = editTarget ? "PUT" : "POST";
             const payload = editTarget
-                ? { id: editTarget.id, ...form }
-                : { ...form };
+                ? { id: editTarget.id, ...form, role: roleString }
+                : { ...form, role: roleString };
 
             const res = await fetch(endpoint, {
                 method,
@@ -138,7 +207,7 @@ export default function AdminOfficersPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to save officer");
 
-            toast.success(editTarget ? "อัปเดตข้อมูลเจ้าหน้าที่สำเร็จ" : "เพิ่มเจ้าหน้าที่ใหม่สำเร็จ");
+            toast.success(editTarget ? "อัปเดตข้อมูลและสิทธิ์เจ้าหน้าที่สำเร็จ" : "เพิ่มเจ้าหน้าที่ใหม่เรียบร้อยแล้ว");
             setModalOpen(false);
             loadOfficers();
         } catch (e: any) {
@@ -388,12 +457,27 @@ export default function AdminOfficersPage() {
                                                 {o.department || "—"}
                                             </td>
 
-                                            {/* Role Badge */}
+                                            {/* Role Badges */}
                                             <td className="py-3.5 px-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold ${roleInfo.badgeCls}`}>
-                                                    <i className={`fa-solid ${roleInfo.icon}`}></i>
-                                                    {roleInfo.label}
-                                                </span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {(o.role || "").split(",").map((rKey) => {
+                                                        const key = rKey.trim();
+                                                        const rInfo = ROLE_LABELS[key] || {
+                                                            label: key,
+                                                            badgeCls: "bg-slate-100 text-slate-600 border-slate-200",
+                                                            icon: "fa-user",
+                                                        };
+                                                        return (
+                                                            <span
+                                                                key={key}
+                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold ${rInfo.badgeCls}`}
+                                                            >
+                                                                <i className={`fa-solid ${rInfo.icon}`}></i>
+                                                                {rInfo.label}
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
                                             </td>
 
                                             {/* Status Switch & Must Change Password Badge */}
@@ -525,29 +609,57 @@ export default function AdminOfficersPage() {
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="font-bold text-slate-600 block mb-1">ระดับสิทธิ์ (Role)</label>
-                                        <select
-                                            value={form.role}
-                                            onChange={(e) => setForm({ ...form, role: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
-                                        >
-                                            <option value="officer_training">🎓 เจ้าหน้าที่ฝึกอบรม</option>
-                                            <option value="officer_test">📋 เจ้าหน้าที่ทดสอบมาตรฐาน</option>
-                                            <option value="officer_registrar">🆔 เจ้าหน้าที่ต้อนรับ/ลงทะเบียน</option>
-                                            <option value="admin">🛡️ Super Admin</option>
-                                        </select>
+                                <div>
+                                    <label className="font-bold text-slate-600 block mb-1">ฝ่ายงาน / ตำแหน่ง</label>
+                                    <input
+                                        type="text"
+                                        placeholder="เช่น ฝ่ายฝึกอบรมพัฒนาทักษะ สพร.24 ยะลา"
+                                        value={form.department}
+                                        onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="font-bold text-slate-700 block">
+                                            สิทธิ์การใช้งาน (กำหนดสิทธิ์ด้วยเช็คบ็อกซ์) <span className="text-rose-500">*</span>
+                                        </label>
+                                        <span className="text-[10px] text-indigo-600 font-semibold">
+                                            เลือกได้มากกว่า 1 สิทธิ์
+                                        </span>
                                     </div>
-                                    <div>
-                                        <label className="font-bold text-slate-600 block mb-1">ฝ่ายงาน / ตำแหน่ง</label>
-                                        <input
-                                            type="text"
-                                            placeholder="เช่น ฝ่ายฝึกอบรมพัฒนาทักษะ"
-                                            value={form.department}
-                                            onChange={(e) => setForm({ ...form, department: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
-                                        />
+                                    <div className="grid grid-cols-1 gap-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/60 max-h-56 overflow-y-auto">
+                                        {AVAILABLE_PERMISSIONS.map((p) => {
+                                            const isChecked = selectedRoles.includes(p.key);
+                                            return (
+                                                <label
+                                                    key={p.key}
+                                                    onClick={() => toggleRolePermission(p.key)}
+                                                    className={`flex items-start gap-3 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
+                                                        isChecked
+                                                            ? `${p.color} border-indigo-400 shadow-sm`
+                                                            : "border-slate-200/80 bg-white hover:bg-slate-50 text-slate-600"
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => {}} // Handled by onClick on container label
+                                                        className="mt-0.5 w-4 h-4 text-indigo-600 rounded focus:ring-indigo-400 cursor-pointer shrink-0"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-1.5 font-bold text-xs">
+                                                            <i className={`fa-solid ${p.icon} text-indigo-600`}></i>
+                                                            <span>{p.label}</span>
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-500 font-normal mt-0.5 leading-relaxed">
+                                                            {p.desc}
+                                                        </p>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>

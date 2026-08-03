@@ -4,6 +4,18 @@ import { NextResponse } from "next/server";
 
 export const STAFF_ROLES = ["admin", "officer_training", "officer_test", "officer_registrar"];
 
+export function hasStaffPermission(userRole?: string | null): boolean {
+    if (!userRole) return false;
+    const userRoles = userRole.split(",").map((r) => r.trim());
+    return userRoles.some((r) => STAFF_ROLES.includes(r));
+}
+
+export function isSuperAdmin(userRole?: string | null): boolean {
+    if (!userRole) return false;
+    const userRoles = userRole.split(",").map((r) => r.trim());
+    return userRoles.includes("admin");
+}
+
 export async function checkStaffAuth() {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -17,7 +29,7 @@ export async function checkStaffAuth() {
     }
 
     const role = session.user.role;
-    if (!role || role === "member" || !STAFF_ROLES.includes(role)) {
+    if (!hasStaffPermission(role)) {
         return {
             session,
             errorResponse: NextResponse.json(
@@ -42,7 +54,7 @@ export async function checkSuperAdminAuth() {
         };
     }
 
-    if (session.user.role !== "admin") {
+    if (!isSuperAdmin(session.user.role)) {
         return {
             session,
             errorResponse: NextResponse.json(
