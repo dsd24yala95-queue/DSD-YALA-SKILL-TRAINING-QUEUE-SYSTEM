@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import OfflineDetector from "@/components/OfflineDetector";
 import PwaRegistrar from "@/components/PwaRegistrar";
+import IosPwaGuideModal from "@/components/IosPwaGuideModal";
 import LayoutContent from "@/components/LayoutContent";
 import AuthProviderWrapper from "@/components/AuthProviderWrapper";
 import QueueAlertModal from "@/components/QueueAlertModal";
@@ -14,6 +15,11 @@ export const metadata: Metadata = {
     "สำนักงานพัฒนาฝีมือแรงงานยะลา (สพร.24) ระบบรับสมัครทดสอบมาตรฐานฝีมือแรงงานและฝึกอบรมพัฒนาทักษะ",
   keywords: ["พัฒนาฝีมือแรงงาน", "สพร.24", "ยะลา", "ทดสอบมาตรฐาน", "ฝึกอบรม"],
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "DSD YALA",
+    statusBarStyle: "default",
+  },
   openGraph: {
     title: "สพร.24 ยะลา — ระบบจองคิวพัฒนาฝีมือแรงงาน",
     description: "สมัครทดสอบมาตรฐานฝีมือแรงงานและฝึกอบรม พร้อมระบบจองคิวออนไลน์",
@@ -49,6 +55,7 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="DSD YALA" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
@@ -62,6 +69,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col bg-white text-slate-900 font-sans selection:bg-[#2563EB]/30">
         <PwaRegistrar />
+        <IosPwaGuideModal />
         <OfflineDetector />
         <AuthProviderWrapper>
           <QueueAlertModal />
