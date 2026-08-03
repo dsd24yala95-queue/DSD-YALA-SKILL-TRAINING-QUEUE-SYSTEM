@@ -335,25 +335,25 @@ export default function AdminQueuePage() {
         const ticketText = q.queueNumber ? `คิวหมายเลข ${q.queueNumber}` : "คิวของคุณ";
         const text = `ขอเชิญ${ticketText} คุณ ${q.memberName} เข้ารับบริการค่ะ`;
 
-        // 1. Try Google Translate TTS Audio (Most natural, fluent Thai voice)
+        // 1. Play Server-side Proxy TTS Audio (Fluent, natural Thai voice 100%)
         try {
-            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=th&client=tw-ob`;
-            const audio = new Audio(ttsUrl);
+            const audioUrl = `/api/tts?text=${encodeURIComponent(text)}`;
+            const audio = new Audio(audioUrl);
             audio.volume = 1.0;
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise
                     .then(() => {
-                        // Successfully playing Google TTS Thai Audio
+                        // Successfully playing Thai TTS Audio stream
                     })
                     .catch((err) => {
-                        // Fallback to Web Speech Synthesis if audio blocked
+                        console.warn("Proxy TTS Audio play failed, falling back to Web Speech:", err);
                         fallbackWebSpeech(text);
                     });
                 return;
             }
         } catch (e) {
-            console.warn("TTS Audio play failed, falling back to Web Speech:", e);
+            console.warn("TTS Audio play error, falling back to Web Speech:", e);
         }
 
         fallbackWebSpeech(text);
@@ -365,19 +365,28 @@ export default function AdminQueuePage() {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = "th-TH";
-                utterance.rate = 0.92;
+                utterance.rate = 0.9;
                 utterance.pitch = 1.0;
 
-                // Explicitly look for a Thai voice in available system voices
-                const voices = window.speechSynthesis.getVoices();
-                const thaiVoice = voices.find(
-                    (v) => v.lang === "th-TH" || v.lang.startsWith("th") || v.name.toLowerCase().includes("thai") || v.name.toLowerCase().includes("niwat") || v.name.toLowerCase().includes("kanya")
-                );
-                if (thaiVoice) {
-                    utterance.voice = thaiVoice;
-                }
+                const playWithVoice = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    const thaiVoice = voices.find(
+                        (v) => v.lang === "th-TH" || v.lang.startsWith("th") || v.name.toLowerCase().includes("thai") || v.name.toLowerCase().includes("niwat") || v.name.toLowerCase().includes("kanya") || v.name.toLowerCase().includes("pattara")
+                    );
+                    if (thaiVoice) {
+                        utterance.voice = thaiVoice;
+                    }
+                    window.speechSynthesis.speak(utterance);
+                };
 
-                window.speechSynthesis.speak(utterance);
+                if (window.speechSynthesis.getVoices().length > 0) {
+                    playWithVoice();
+                } else {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        playWithVoice();
+                    };
+                    window.speechSynthesis.speak(utterance);
+                }
             } catch (err) {
                 console.error("Speech Synthesis error:", err);
             }
