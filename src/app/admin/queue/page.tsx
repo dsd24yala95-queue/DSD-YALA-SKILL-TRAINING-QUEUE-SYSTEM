@@ -326,20 +326,57 @@ export default function AdminQueuePage() {
         }
     };
 
-    // 🔊 Audio Speech Announcement Engine (Web Speech Synthesis in Thai)
+    // 🔊 Audio Speech Announcement Engine (Authentic Thai Voice + TTS Fallback)
     const [audioCallEnabled, setAudioCallEnabled] = useState(true);
 
     const speakQueueCall = (q: QueueRow) => {
         if (!audioCallEnabled) return;
+        
+        const ticketText = q.queueNumber ? `คิวหมายเลข ${q.queueNumber}` : "คิวของคุณ";
+        const text = `ขอเชิญ${ticketText} คุณ ${q.memberName} เข้ารับบริการค่ะ`;
+
+        // 1. Try Google Translate TTS Audio (Most natural, fluent Thai voice)
+        try {
+            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=th&client=tw-ob`;
+            const audio = new Audio(ttsUrl);
+            audio.volume = 1.0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        // Successfully playing Google TTS Thai Audio
+                    })
+                    .catch((err) => {
+                        // Fallback to Web Speech Synthesis if audio blocked
+                        fallbackWebSpeech(text);
+                    });
+                return;
+            }
+        } catch (e) {
+            console.warn("TTS Audio play failed, falling back to Web Speech:", e);
+        }
+
+        fallbackWebSpeech(text);
+    };
+
+    const fallbackWebSpeech = (text: string) => {
         if (typeof window !== "undefined" && "speechSynthesis" in window) {
             try {
                 window.speechSynthesis.cancel();
-                const ticketText = q.queueNumber ? `คิวหมายเลข ${q.queueNumber}` : "คิวของคุณ";
-                const text = `ขอเชิญ${ticketText} คุณ ${q.memberName} เข้ารับบริการค่ะ`;
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = "th-TH";
                 utterance.rate = 0.92;
                 utterance.pitch = 1.0;
+
+                // Explicitly look for a Thai voice in available system voices
+                const voices = window.speechSynthesis.getVoices();
+                const thaiVoice = voices.find(
+                    (v) => v.lang === "th-TH" || v.lang.startsWith("th") || v.name.toLowerCase().includes("thai") || v.name.toLowerCase().includes("niwat") || v.name.toLowerCase().includes("kanya")
+                );
+                if (thaiVoice) {
+                    utterance.voice = thaiVoice;
+                }
+
                 window.speechSynthesis.speak(utterance);
             } catch (err) {
                 console.error("Speech Synthesis error:", err);
