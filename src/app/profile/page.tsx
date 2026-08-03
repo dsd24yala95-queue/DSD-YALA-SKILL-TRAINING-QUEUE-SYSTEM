@@ -62,6 +62,41 @@ export default function ProfilePage() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [notiLoading, setNotiLoading] = useState(false);
     const [calendarLoading, setCalendarLoading] = useState<string | null>(null);
+    const [clearingCache, setClearingCache] = useState(false);
+
+    const handleClearPwaCache = async () => {
+        setClearingCache(true);
+        try {
+            // 1. Unregister active Service Workers
+            if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+
+            // 2. Clear all PWA CacheStorage caches
+            if (typeof window !== "undefined" && "caches" in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((key) => caches.delete(key)));
+            }
+
+            // 3. Clear Session Storage
+            if (typeof window !== "undefined" && window.sessionStorage) {
+                window.sessionStorage.clear();
+            }
+
+            toast.success("ล้างแคชและอัปเดตระบบ PWA เรียบร้อยแล้ว! กำลังโหลดเวอร์ชันใหม่...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        } catch (err) {
+            console.error("Clear PWA cache error:", err);
+            toast.error("เกิดข้อผิดพลาดในการล้างแคช กรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setClearingCache(false);
+        }
+    };
 
     // Auto-redirect if not logged in
     useEffect(() => {
@@ -297,11 +332,24 @@ export default function ProfilePage() {
 
                         {/* Action Buttons */}
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-4 mt-4 space-y-3 backdrop-blur-md">
-                             <Link href="/profile/edit" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/25 transition-all">
+                             <Link href="/profile/edit" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/25 transition-all text-xs sm:text-sm">
                                  <i className="fa-solid fa-pen-to-square"></i>
                                  แก้ไขข้อมูลส่วนตัว
                              </Link>
-                             <button onClick={async () => { await logout(); router.push('/login'); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/5 border border-red-500/30 text-red-400 font-bold hover:bg-red-500/10 hover:text-red-300 transition-all">
+                             <button
+                                 onClick={handleClearPwaCache}
+                                 disabled={clearingCache}
+                                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold hover:bg-emerald-500/20 hover:text-emerald-200 transition-all text-xs sm:text-sm disabled:opacity-50"
+                                 title="อัปเดตแอป PWA เป็นเวอร์ชันล่าสุดและล้างแคชชั่วคราว"
+                             >
+                                 {clearingCache ? (
+                                     <span className="loading loading-spinner loading-xs text-emerald-300"></span>
+                                 ) : (
+                                     <i className="fa-solid fa-rotate text-emerald-400"></i>
+                                 )}
+                                 ⚡ อัปเดตแอป &amp; ล้างแคช PWA
+                             </button>
+                             <button onClick={async () => { await logout(); router.push('/login'); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white/5 border border-red-500/30 text-red-400 font-bold hover:bg-red-500/10 hover:text-red-300 transition-all text-xs sm:text-sm">
                                  <i className="fa-solid fa-right-from-bracket"></i>
                                  ออกจากระบบ
                              </button>
