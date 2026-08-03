@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { checkStaffAuth } from "@/lib/auth-guard";
 
 // POST /api/admin/walkin — Register walk-in member and/or book instant queue
 export async function POST(req: Request) {
     try {
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
+
         const body = await req.json();
         const {
             existingUserId,
@@ -29,6 +33,9 @@ export async function POST(req: Request) {
 
         // 1. Resolve or Create User Account
         if (existingUserId) {
+            if (typeof existingUserId !== "string") {
+                return NextResponse.json({ error: "ID สมาชิกไม่ถูกต้อง" }, { status: 400 });
+            }
             targetUser = await prisma.user.findUnique({
                 where: { id: existingUserId },
             });
@@ -37,11 +44,17 @@ export async function POST(req: Request) {
             }
         } else {
             // Validate required fields for new walk-in member
-            if (!fullName || !phoneNumber) {
-                return NextResponse.json({ error: "กรุณากรอกชื่อ-นามสกุล และเบอร์โทรศัพท์" }, { status: 400 });
+            if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
+                return NextResponse.json({ error: "กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง" }, { status: 400 });
+            }
+            if (!phoneNumber || typeof phoneNumber !== "string") {
+                return NextResponse.json({ error: "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง" }, { status: 400 });
             }
 
             const cleanPhone = phoneNumber.replace(/[^0-9]/g, "");
+            if (cleanPhone.length < 9 || cleanPhone.length > 10) {
+                return NextResponse.json({ error: "กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก" }, { status: 400 });
+            }
             const cleanCitizen = (citizenId || "").replace(/[^0-9]/g, "");
 
             // Check duplicate phone
@@ -63,23 +76,23 @@ export async function POST(req: Request) {
                 // Build profileJson
                 const profileObj = {
                     reg_title: title || "001",
-                    reg_firstname: fullName.split(" ")[0] || fullName,
-                    reg_lastname: fullName.split(" ").slice(1).join(" ") || "",
+                    reg_firstname: fullName.trim().split(" ")[0] || fullName.trim(),
+                    reg_lastname: fullName.trim().split(" ").slice(1).join(" ") || "",
                     reg_telephone: cleanPhone,
                     reg_citizenid: cleanCitizen,
-                    reg_email: email || "",
-                    reg_education: education || "",
-                    reg_address_province: addressProvince || "ยะลา",
-                    reg_address_district: addressDistrict || "",
-                    reg_address_subdistrict: addressSubdistrict || "",
+                    reg_email: email ? String(email).trim() : "",
+                    reg_education: education ? String(education).trim() : "",
+                    reg_address_province: addressProvince ? String(addressProvince).trim() : "ยะลา",
+                    reg_address_district: addressDistrict ? String(addressDistrict).trim() : "",
+                    reg_address_subdistrict: addressSubdistrict ? String(addressSubdistrict).trim() : "",
                     walkInRegistered: true,
                 };
 
                 targetUser = await prisma.user.create({
                     data: {
                         phoneNumber: cleanPhone,
-                        fullName,
-                        email: email || null,
+                        fullName: fullName.trim(),
+                        email: email ? String(email).trim() : null,
                         passwordHash,
                         role: "member",
                         memberId: generatedMemberId,
@@ -93,7 +106,14 @@ export async function POST(req: Request) {
         let newBooking: any = null;
         let queueTicketCode = "";
 
-        if (type && itemId && itemName) {
+        if (type || itemId || itemName) {
+            if (!type || !["training", "test"].includes(type)) {
+                return NextResponse.json({ error: "ประเภทการบริการต้องเป็น training หรือ test" }, { status: 400 });
+            }
+            if (!itemId || typeof itemId !== "string" || !itemName || typeof itemName !== "string") {
+                return NextResponse.json({ error: "กรุณาระบุหลักสูตร/สาขาที่จะเข้ารับบริการ" }, { status: 400 });
+            }
+
             // Find highest existing queue number for this item
             const latestBooking = await prisma.queueBooking.findFirst({
                 where: {
@@ -107,17 +127,17 @@ export async function POST(req: Request) {
             const prefix = type === "training" ? "TRN" : "TST";
             queueTicketCode = `${prefix}-${String(nextQueueNumber).padStart(3, "0")}`;
 
-            const todayStr = appointedDate || new Date().toISOString().split("T")[0];
+            const appointmentDateObj = appointedDate ? new Date(appointedDate) : new Date();
 
             newBooking = await prisma.queueBooking.create({
                 data: {
                     userId: targetUser.id,
                     bookingType: type,
                     itemId: itemId,
-                    itemName: itemName,
+                    itemName: itemName.trim(),
                     status: "checked_in", // Walk-in is automatically checked-in at reception
                     queueNumber: nextQueueNumber,
-                    appointedDate: todayStr,
+                    appointedDate: appointmentDateObj,
                     bookingDate: new Date(),
                 },
             });

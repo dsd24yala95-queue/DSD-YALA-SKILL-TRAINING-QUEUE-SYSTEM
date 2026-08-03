@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseProfileJson } from "@/lib/jsonEngine";
+import { checkStaffAuth } from "@/lib/auth-guard";
 
 export async function GET() {
     try {
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
+
         const [users, queues] = await Promise.all([
             prisma.user.findMany({
                 where: { role: "member" },

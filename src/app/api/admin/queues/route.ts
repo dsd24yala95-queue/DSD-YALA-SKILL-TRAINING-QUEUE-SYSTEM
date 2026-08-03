@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkStaffAuth } from "@/lib/auth-guard";
 
 export async function GET() {
     try {
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
+
         const bookings = await prisma.queueBooking.findMany({
             include: {
                 user: {

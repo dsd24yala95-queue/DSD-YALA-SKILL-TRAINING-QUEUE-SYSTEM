@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { checkStaffAuth, checkSuperAdminAuth, STAFF_ROLES } from "@/lib/auth-guard";
 
 // GET /api/admin/officers — Fetch all officers (role !== "member")
 export async function GET() {
     try {
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
+
         const officers = await prisma.user.findMany({
             where: {
                 role: {
@@ -32,25 +36,45 @@ export async function GET() {
     }
 }
 
-// POST /api/admin/officers — Create new officer
+// POST /api/admin/officers — Create new officer (Super Admin only)
 export async function POST(req: Request) {
     try {
+        const { errorResponse } = await checkSuperAdminAuth();
+        if (errorResponse) return errorResponse;
+
         const body = await req.json();
         const { fullName, phoneNumber, email, password, role, department } = body;
 
-        if (!phoneNumber || !password || !fullName) {
-            return NextResponse.json({ error: "กรุณากรอกชื่อ-นามสกุล, เบอร์โทรศัพท์ และรหัสผ่าน" }, { status: 400 });
+        if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
+            return NextResponse.json({ error: "กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง" }, { status: 400 });
+        }
+        if (!phoneNumber || typeof phoneNumber !== "string") {
+            return NextResponse.json({ error: "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง" }, { status: 400 });
+        }
+        if (!password || typeof password !== "string" || password.length < 6) {
+            return NextResponse.json({ error: "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร" }, { status: 400 });
+        }
+
+        const cleanPhone = phoneNumber.replace(/[^0-9]/g, "");
+        if (cleanPhone.length < 9 || cleanPhone.length > 10) {
+            return NextResponse.json({ error: "กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก" }, { status: 400 });
+        }
+
+        const assignedRole = role || "officer_training";
+        if (!STAFF_ROLES.includes(assignedRole)) {
+            return NextResponse.json({ error: "ตำแหน่ง/สิทธิ์การใช้งานไม่ถูกต้อง" }, { status: 400 });
         }
 
         // Check duplicate phone number
-        const existingPhone = await prisma.user.findUnique({ where: { phoneNumber } });
+        const existingPhone = await prisma.user.findUnique({ where: { phoneNumber: cleanPhone } });
         if (existingPhone) {
             return NextResponse.json({ error: "เบอร์โทรศัพท์นี้มีในระบบแล้ว" }, { status: 400 });
         }
 
         // Check duplicate email if provided
-        if (email) {
-            const existingEmail = await prisma.user.findUnique({ where: { email } });
+        const cleanEmail = email ? String(email).trim().toLowerCase() : null;
+        if (cleanEmail) {
+            const existingEmail = await prisma.user.findUnique({ where: { email: cleanEmail } });
             if (existingEmail) {
                 return NextResponse.json({ error: "อีเมลนี้มีในระบบแล้ว" }, { status: 400 });
             }
@@ -60,12 +84,12 @@ export async function POST(req: Request) {
 
         const newOfficer = await prisma.user.create({
             data: {
-                fullName,
-                phoneNumber,
-                email: email || null,
+                fullName: fullName.trim(),
+                phoneNumber: cleanPhone,
+                email: cleanEmail,
                 passwordHash,
-                role: role || "officer_training",
-                department: department || "ฝ่ายฝึกอบรมพัฒนาทักษะ",
+                role: assignedRole,
+                department: department ? String(department).trim() : "ฝ่ายฝึกอบรมพัฒนาทักษะ",
                 status: "active",
             },
             select: {
@@ -87,25 +111,42 @@ export async function POST(req: Request) {
     }
 }
 
-// PUT /api/admin/officers — Update officer details or reset password
+// PUT /api/admin/officers — Update officer details or reset password (Super Admin only)
 export async function PUT(req: Request) {
     try {
+        const { errorResponse } = await checkSuperAdminAuth();
+        if (errorResponse) return errorResponse;
+
         const body = await req.json();
         const { id, fullName, phoneNumber, email, role, department, status, password } = body;
 
-        if (!id) {
-            return NextResponse.json({ error: "Missing officer ID" }, { status: 400 });
+        if (!id || typeof id !== "string") {
+            return NextResponse.json({ error: "Missing or invalid officer ID" }, { status: 400 });
         }
 
         const updateData: any = {};
-        if (fullName !== undefined) updateData.fullName = fullName;
-        if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
-        if (email !== undefined) updateData.email = email || null;
-        if (role !== undefined) updateData.role = role;
-        if (department !== undefined) updateData.department = department;
-        if (status !== undefined) updateData.status = status;
+        if (fullName !== undefined) updateData.fullName = String(fullName).trim();
+        if (phoneNumber !== undefined) {
+            const cleanPhone = String(phoneNumber).replace(/[^0-9]/g, "");
+            if (cleanPhone.length < 9 || cleanPhone.length > 10) {
+                return NextResponse.json({ error: "เบอร์โทรศัพท์ต้องมี 9-10 หลัก" }, { status: 400 });
+            }
+            updateData.phoneNumber = cleanPhone;
+        }
+        if (email !== undefined) updateData.email = email ? String(email).trim().toLowerCase() : null;
+        if (role !== undefined) {
+            if (!STAFF_ROLES.includes(role)) {
+                return NextResponse.json({ error: "ตำแหน่ง/สิทธิ์การใช้งานไม่ถูกต้อง" }, { status: 400 });
+            }
+            updateData.role = role;
+        }
+        if (department !== undefined) updateData.department = String(department).trim();
+        if (status !== undefined) updateData.status = status === "inactive" ? "inactive" : "active";
 
         if (password) {
+            if (typeof password !== "string" || password.length < 6) {
+                return NextResponse.json({ error: "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร" }, { status: 400 });
+            }
             updateData.passwordHash = await bcrypt.hash(password, 10);
         }
 
@@ -131,9 +172,12 @@ export async function PUT(req: Request) {
     }
 }
 
-// DELETE /api/admin/officers?id=xxx — Delete officer account
+// DELETE /api/admin/officers?id=xxx — Delete officer account (Super Admin only)
 export async function DELETE(req: Request) {
     try {
+        const { errorResponse } = await checkSuperAdminAuth();
+        if (errorResponse) return errorResponse;
+
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("id");
 

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkStaffAuth } from "@/lib/auth-guard";
 
 // POST /api/admin/queues/call — Admin calls a member's queue
 export async function POST(req: Request) {
     try {
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
+
         const body = await req.json();
         const { queueId, userId, queueNumber, itemName } = body;
 
-        if (!queueId || !userId) {
-            return NextResponse.json({ error: "Missing queueId or userId" }, { status: 400 });
+        if (!queueId || typeof queueId !== "string" || !userId || typeof userId !== "string") {
+            return NextResponse.json({ error: "Missing or invalid queueId or userId" }, { status: 400 });
         }
 
         // Check if there's already an unread queue_call notification for this queue

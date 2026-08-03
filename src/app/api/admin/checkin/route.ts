@@ -1,31 +1,43 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkStaffAuth } from "@/lib/auth-guard";
 
 export async function POST(req: Request) {
     try {
-        const { idCard } = await req.json();
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
 
-        if (!idCard) {
-            return NextResponse.json({ error: "กรุณาระบุเลขบัตรประชาชนหรือเบอร์โทร" }, { status: 400 });
+        const body = await req.json();
+        const { idCard } = body;
+
+        if (!idCard || typeof idCard !== "string" || !idCard.trim()) {
+            return NextResponse.json({ error: "กรุณาระบุเลขบัตรประชาชนหรือเบอร์โทรศัพท์" }, { status: 400 });
         }
 
-        // Find user by phone (the schema doesn't have idCard as direct field, we search by phone first)
+        const cleanSearchTerm = idCard.replace(/[^0-9]/g, "");
+        if (!cleanSearchTerm) {
+            return NextResponse.json({ error: "รูปแบบเลขบัตรประชาชนหรือเบอร์โทรศัพท์ไม่ถูกต้อง" }, { status: 400 });
+        }
+
+        // Find user by phone
         const user = await prisma.user.findFirst({
             where: {
-                phoneNumber: idCard
+                phoneNumber: cleanSearchTerm
             }
         });
 
-        if (!user) {
+        let targetUser = user;
+
+        if (!targetUser) {
             // Search in profileJson manually if idCard isn't populated
             const users = await prisma.user.findMany();
             const matchedUser = users.find(u => {
-                if (u.phoneNumber === idCard) return true;
+                if (u.phoneNumber === cleanSearchTerm) return true;
                 if (u.profileJson) {
                     try {
                         const j = JSON.parse(u.profileJson);
-                        if (j.reg_citizenid === idCard) return true;
-                        if (j.reg_telephone === idCard) return true;
+                        if (j.reg_citizenid === cleanSearchTerm) return true;
+                        if (j.reg_telephone === cleanSearchTerm) return true;
                     } catch (e) {}
                 }
                 return false;
@@ -34,10 +46,7 @@ export async function POST(req: Request) {
             if (!matchedUser) {
                 return NextResponse.json({ error: "ไม่พบผู้ใช้งานด้วยข้อมูลนี้" }, { status: 404 });
             }
-            // Use the matched user
-            var targetUser = matchedUser;
-        } else {
-            var targetUser = user;
+            targetUser = matchedUser;
         }
 
         // Find today's bookings

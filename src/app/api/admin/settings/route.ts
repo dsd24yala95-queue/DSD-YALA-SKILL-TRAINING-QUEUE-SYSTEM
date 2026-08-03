@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkStaffAuth } from "@/lib/auth-guard";
 
 export async function POST(req: Request) {
     try {
-        const { key, value } = await req.json();
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
 
-        if (!key || value === undefined) {
-            return NextResponse.json({ error: "Missing key or value" }, { status: 400 });
+        const body = await req.json();
+        const { key, value } = body;
+
+        if (!key || typeof key !== "string" || !key.trim() || value === undefined) {
+            return NextResponse.json({ error: "Missing or invalid key or value" }, { status: 400 });
         }
 
         const setting = await prisma.systemSetting.upsert({
-            where: { key },
+            where: { key: key.trim() },
             update: { value: String(value) },
-            create: { key, value: String(value) }
+            create: { key: key.trim(), value: String(value) }
         });
 
         return NextResponse.json({ success: true, setting });

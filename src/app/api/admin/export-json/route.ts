@@ -76,8 +76,13 @@ const DSD_FIELD_ORDER = [
     "reg_title_en",
 ] as const;
 
+import { checkStaffAuth } from "@/lib/auth-guard";
+
 export async function GET(req: Request) {
     try {
+        const { errorResponse } = await checkStaffAuth();
+        if (errorResponse) return errorResponse;
+
         const { searchParams } = new URL(req.url);
         const courseId = searchParams.get("courseId");
         const courseName = searchParams.get("courseName");

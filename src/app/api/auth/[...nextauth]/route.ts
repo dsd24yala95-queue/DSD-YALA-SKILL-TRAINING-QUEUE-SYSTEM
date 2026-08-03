@@ -40,7 +40,7 @@ export const authOptions: AuthOptions = {
                     email: user.email,
                     name: user.fullName,
                     role: user.role,
-                    memberId: user.memberId
+                    memberId: user.memberId || undefined
                 };
             }
         })

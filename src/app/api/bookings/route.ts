@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { STAFF_ROLES } from "@/lib/auth-guard";
 
 export async function GET(req: Request) {
     try {
@@ -26,15 +29,37 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการจอง" }, { status: 401 });
+        }
+
         const body = await req.json();
-        
+        const { userId, bookingType, itemId, itemName } = body;
+
+        // Input validation
+        if (!userId || typeof userId !== "string") {
+            return NextResponse.json({ error: "กรุณาระบุ ID ผู้ใช้งาน" }, { status: 400 });
+        }
+        if (!bookingType || !["training", "test"].includes(bookingType)) {
+            return NextResponse.json({ error: "ประเภทการจองต้องเป็น training หรือ test" }, { status: 400 });
+        }
+        if (!itemId || typeof itemId !== "string" || !itemName || typeof itemName !== "string") {
+            return NextResponse.json({ error: "กรุณาระบุข้อมูลหลักสูตร/สาขาให้ครบถ้วน" }, { status: 400 });
+        }
+
+        const isStaff = STAFF_ROLES.includes(session.user.role);
+        if (!isStaff && session.user.id !== userId) {
+            return NextResponse.json({ error: "Forbidden — คุณสามารถจองคิวได้เฉพาะบัญชีของคุณเองเท่านั้น" }, { status: 403 });
+        }
+
         // Use a Prisma transaction for Concurrency Safety
         const booking = await prisma.$transaction(async (tx) => {
             // 1. Check for duplicate active bookings for this specific item
             const activeBooking = await tx.queueBooking.findFirst({
                 where: {
-                    userId: body.userId,
-                    itemId: body.itemId,
+                    userId: userId,
+                    itemId: itemId,
                     status: {
                         in: ["pending", "approved", "confirmed", "checked_in", "testing", "training"]
                     }
@@ -45,11 +70,11 @@ export async function POST(req: Request) {
                 throw new Error("ไม่สามารถจองซ้ำได้ เนื่องจากคุณมีคิวที่กำลังรอดำเนินการสำหรับบริการนี้อยู่แล้ว");
             }
 
-            // 2. Check Quota and lock the row (by updating or fetching inside transaction)
+            // 2. Check Quota and lock the row
             let queueNumber = 1;
 
-            if (body.bookingType === "training") {
-                const course = await tx.masterCourse.findUnique({ where: { id: body.itemId } });
+            if (bookingType === "training") {
+                const course = await tx.masterCourse.findUnique({ where: { id: itemId } });
                 if (!course) throw new Error("ไม่พบหลักสูตรนี้");
                 if (course.currentQueue >= course.maxSeats) {
                     throw new Error("เต็มโควต้าแล้ว ไม่สามารถจองได้");
@@ -57,28 +82,23 @@ export async function POST(req: Request) {
                 
                 // Increment currentQueue
                 const updatedCourse = await tx.masterCourse.update({
-                    where: { id: body.itemId },
+                    where: { id: itemId },
                     data: { currentQueue: { increment: 1 } }
                 });
-                // In a true queue system, queueNumber could just be the new currentQueue
                 queueNumber = updatedCourse.currentQueue;
                 
-            } else if (body.bookingType === "test") {
-                // Assuming Test queues use MasterBranch
-                // We'll calculate queue number based on today's bookings for the branch
+            } else if (bookingType === "test") {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
                 const count = await tx.queueBooking.count({
                     where: {
-                        itemId: body.itemId,
+                        itemId: itemId,
                         bookingDate: { gte: today }
                     }
                 });
 
-                // Wait, do we need to check maxQueue for Test Branch?
-                // Let's fetch branch to check maxQueue
-                const branch = await tx.masterBranch.findUnique({ where: { id: body.itemId } });
+                const branch = await tx.masterBranch.findUnique({ where: { id: itemId } });
                 if (branch && count >= branch.maxQueue) {
                     throw new Error("คิวทดสอบของวันนี้เต็มแล้ว");
                 }
@@ -88,10 +108,10 @@ export async function POST(req: Request) {
             // 3. Create the booking record
             const newBooking = await tx.queueBooking.create({
                 data: {
-                    userId: body.userId,
-                    bookingType: body.bookingType,
-                    itemId: body.itemId,
-                    itemName: body.itemName,
+                    userId: userId,
+                    bookingType: bookingType,
+                    itemId: itemId,
+                    itemName: itemName.trim(),
                     queueNumber: queueNumber,
                     status: "pending"
                 },
@@ -185,33 +205,67 @@ export async function POST(req: Request) {
             }
         }
 
-        return NextResponse.json(booking);
+        return NextResponse.json(booking, { status: 201 });
     } catch (error: any) {
-        // Return 400 for known business logic errors
-        if (error.message.includes("ไม่สามารถ") || error.message.includes("เต็ม")) {
+        if (error.message && (error.message.includes("ไม่สามารถ") || error.message.includes("เต็ม"))) {
             return NextResponse.json({ error: error.message }, { status: 400 });
         }
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Failed to create booking" }, { status: 500 });
     }
 }
 
 export async function PUT(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized — กรุณาเข้าสู่ระบบก่อนทำรายการ" }, { status: 401 });
+        }
+
         const body = await req.json();
-        const { id, ...data } = body;
+        const { id, status, appointedDate, isAcknowledged } = body;
         
+        if (!id || typeof id !== "string") {
+            return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
+        }
+
+        const isStaff = STAFF_ROLES.includes(session.user.role);
+
+        // Sanitize update data
+        const updateData: any = {};
+        if (status !== undefined) {
+            const allowedStatuses = ["pending", "approved", "confirmed", "checked_in", "testing", "training", "completed", "cancelled", "passed", "rejected"];
+            if (!allowedStatuses.includes(status)) {
+                return NextResponse.json({ error: "สถานะคิวไม่ถูกต้อง" }, { status: 400 });
+            }
+            updateData.status = status;
+        }
+        if (appointedDate !== undefined) {
+            updateData.appointedDate = appointedDate ? new Date(appointedDate) : null;
+        }
+        if (isAcknowledged !== undefined) {
+            updateData.isAcknowledged = Boolean(isAcknowledged);
+        }
+
         const booking = await prisma.$transaction(async (tx) => {
             const currentBooking = await tx.queueBooking.findUnique({ where: { id } });
             if (!currentBooking) throw new Error("Booking not found");
 
+            // Non-staff members can only cancel their own booking or acknowledge appointment
+            if (!isStaff && currentBooking.userId !== session.user.id) {
+                throw new Error("Forbidden — คุณไม่มีสิทธิ์จัดการคิวนี้");
+            }
+            if (!isStaff && status !== undefined && status !== "cancelled") {
+                throw new Error("Forbidden — สมาชิกทั่วไปสามารถทำได้เฉพาะการยกเลิกคิวเท่านั้น");
+            }
+
             const updatedBooking = await tx.queueBooking.update({
                 where: { id },
-                data,
+                data: updateData,
                 include: { user: true }
             });
 
             // If cancelled, decrement currentQueue
-            if (data.status === "cancelled" && currentBooking.status !== "cancelled") {
+            if (status === "cancelled" && currentBooking.status !== "cancelled") {
                 if (currentBooking.bookingType === "training") {
                     await tx.masterCourse.update({
                         where: { id: currentBooking.itemId },
@@ -224,7 +278,7 @@ export async function PUT(req: Request) {
         });
 
         // Send LINE Notification for status changes (Cancelled or Approved)
-        if (data.status && booking.user?.lineUserId && process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+        if (status && booking.user?.lineUserId && process.env.LINE_CHANNEL_ACCESS_TOKEN) {
             try {
                 const url = "https://api.line.me/v2/bot/message/push";
                 const headers = {
@@ -236,11 +290,11 @@ export async function PUT(req: Request) {
                 let bgColor = "";
                 let mainText = "";
 
-                if (data.status === "cancelled") {
+                if (status === "cancelled") {
                     title = "การจองคิวถูกยกเลิก";
                     bgColor = "#EF4444"; // Red-500
                     mainText = "ระบบได้ทำการยกเลิกคิวของคุณแล้ว";
-                } else if (data.status === "approved") {
+                } else if (status === "approved") {
                     title = "คิวของคุณได้รับการอนุมัติ";
                     bgColor = "#10B981"; // Emerald-500
                     mainText = "คุณสามารถมารับบริการตามวันเวลาที่กำหนดได้เลยครับ";
@@ -316,9 +370,26 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("id");
-        if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+        if (!id) return NextResponse.json({ error: "Missing booking id" }, { status: 400 });
+
+        const isStaff = STAFF_ROLES.includes(session.user.role);
+        const existing = await prisma.queueBooking.findUnique({ where: { id } });
+
+        if (!existing) {
+            return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+        }
+
+        if (!isStaff && existing.userId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden — คุณไม่มีสิทธิ์ลบคิวนี้" }, { status: 403 });
+        }
+
         await prisma.queueBooking.delete({ where: { id } });
         return NextResponse.json({ success: true });
     } catch (error: any) {
