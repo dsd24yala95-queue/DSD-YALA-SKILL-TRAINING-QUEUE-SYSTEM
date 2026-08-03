@@ -21,7 +21,11 @@ export const authOptions: AuthOptions = {
                 });
 
                 if (!user) {
-                    throw new Error("ไม่พบประวัติเบอร์โทรศัพท์นี้ ระบบกำลังพาท่านไปหน้าลงทะเบียนใหม่...");
+                    throw new Error("ไม่พบประวัติผู้ใช้งานหรือเบอร์โทรศัพท์นี้");
+                }
+
+                if (user.status === "inactive") {
+                    throw new Error("บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Super Admin");
                 }
 
                 const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
