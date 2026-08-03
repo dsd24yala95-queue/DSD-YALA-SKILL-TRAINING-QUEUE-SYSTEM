@@ -12,6 +12,7 @@ const menuItems = [
     { href: "/admin/queue", icon: "fa-list-check", label: "จัดการคิว", category: "main" },
     { href: "/admin/master", icon: "fa-book", label: "หลักสูตร/สาขา", category: "main" },
     { href: "/admin/members", icon: "fa-users", label: "สมาชิก", category: "main" },
+    { href: "/admin/officers", icon: "fa-user-shield", label: "จัดการเจ้าหน้าที่", category: "main" },
     { href: "/admin/report", icon: "fa-file-chart-column", label: "รายงาน", category: "main" },
 ];
 
