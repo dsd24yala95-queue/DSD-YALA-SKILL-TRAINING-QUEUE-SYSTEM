@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import MapLocationPickerModal from "@/components/MapLocationPickerModal";
 
 type Tab = "courses" | "branches";
 
@@ -40,6 +41,7 @@ export default function AdminMasterPage() {
     const [branches, setBranches] = useState<MasterBranch[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
+    const [mapPickerOpen, setMapPickerOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<any>(null);
     const [form, setForm] = useState<any>({});
     const [saving, setSaving] = useState(false);
@@ -49,8 +51,8 @@ export default function AdminMasterPage() {
         setLoading(true);
         try {
             const [cRes, bRes] = await Promise.all([
-                fetch("/api/master/courses"),
-                fetch("/api/master/branches"),
+                fetch("/api/admin/master/courses"),
+                fetch("/api/admin/master/branches"),
             ]);
             
             if (cRes.ok) setCourses(await cRes.json());
@@ -77,11 +79,19 @@ export default function AdminMasterPage() {
     };
 
     const handleSave = async () => {
+        const isC = tab === "courses";
+        const nameKey = isC ? "courseName" : "branchName";
+
+        if (!form[nameKey]?.trim()) {
+            toast.error(`กรุณากรอก${isC ? "ชื่อหลักสูตร" : "ชื่อสาขาทดสอบ"}`);
+            return;
+        }
+
         setSaving(true);
-        const endpoint = tab === "courses" ? "/api/master/courses" : "/api/master/branches";
         try {
-            const method = editTarget?.id ? "PUT" : "POST";
-            const payload = { ...form };
+            const endpoint = isC ? "/api/admin/master/courses" : "/api/admin/master/branches";
+            const method = editTarget ? "PUT" : "POST";
+            const payload = editTarget ? { ...form, id: editTarget.id } : form;
             
             const res = await fetch(endpoint, {
                 method,
@@ -91,7 +101,7 @@ export default function AdminMasterPage() {
 
             if (!res.ok) throw new Error("Failed to save data");
 
-            toast.success(editTarget?.id ? "แก้ไขข้อมูลสำเร็จ" : "เพิ่มข้อมูลสำเร็จ");
+            toast.success(editTarget ? "บันทึกการแก้ไขแล้ว" : "เพิ่มข้อมูลใหม่เรียบร้อย");
             setModalOpen(false);
             loadData();
         } catch (e: any) {
@@ -103,9 +113,10 @@ export default function AdminMasterPage() {
     };
 
     const handleDelete = async (id: string) => {
-        const endpoint = tab === "courses" ? "/api/master/courses" : "/api/master/branches";
+        const isC = tab === "courses";
+        const endpoint = isC ? `/api/admin/master/courses?id=${id}` : `/api/admin/master/branches?id=${id}`;
         try {
-            const res = await fetch(`${endpoint}?id=${id}`, { method: "DELETE" });
+            const res = await fetch(endpoint, { method: "DELETE" });
             if (!res.ok) throw new Error("Delete failed");
             toast.success("ลบข้อมูลสำเร็จ");
             setDeleteConfirm(null);
@@ -115,21 +126,94 @@ export default function AdminMasterPage() {
         }
     };
 
-    const field = (label: string, key: string, type = "text", opts?: { min?: number; icon?: string }) => (
-        <div key={key}>
-            <label className="text-xs font-bold text-slate-600 block mb-1">
-                {opts?.icon && <i className={`${opts.icon} mr-1 text-indigo-500`}></i>}
-                {label}
-            </label>
-            <input
-                type={type}
-                value={form[key] ?? ""}
-                min={opts?.min}
-                onChange={e => setForm((p: any) => ({ ...p, [key]: type === "number" ? Number(e.target.value) : e.target.value }))}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 transition-all"
-            />
-        </div>
-    );
+    const handleUseCurrentGPS = () => {
+        if (!navigator.geolocation) {
+            toast.error("อุปกรณ์นี้ไม่รองรับ GPS");
+            return;
+        }
+        toast.loading("กำลังดึงพิกัด GPS...", { id: "gps-quick" });
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const coords = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+                setForm((p: any) => ({ ...p, LocationGPS: coords }));
+                toast.success(`ดึงพิกัด GPS สำเร็จ: ${coords}`, { id: "gps-quick" });
+            },
+            (err) => {
+                console.error(err);
+                toast.error("ไม่สามารถดึงตำแหน่ง GPS ได้ กรุณาเปิด Location", { id: "gps-quick" });
+            },
+            { enableHighAccuracy: true }
+        );
+    };
+
+    const field = (label: string, key: string, type = "text", opts?: { min?: number; icon?: string }) => {
+        if (key === "LocationGPS") {
+            return (
+                <div key={key}>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-600">
+                            <i className="fa-solid fa-location-crosshairs mr-1 text-indigo-500"></i>
+                            {label}
+                        </label>
+                    </div>
+
+                    <div className="flex gap-2 mb-1.5">
+                        <input
+                            type="text"
+                            placeholder="เช่น 6.541094, 101.280388"
+                            value={form[key] ?? ""}
+                            onChange={e => setForm((p: any) => ({ ...p, [key]: e.target.value }))}
+                            className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 transition-all font-mono"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setMapPickerOpen(true)}
+                            className="px-3.5 py-2.5 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0 active:scale-95"
+                            title="เลือกปักหมุดบนแผนที่"
+                        >
+                            <i className="fa-solid fa-map-location-dot"></i>
+                            <span className="hidden sm:inline">ปักหมุดแผนที่</span>
+                        </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => setForm((p: any) => ({ ...p, LocationGPS: "6.541094, 101.280388" }))}
+                            className="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-[10px] font-bold border border-indigo-200/60 transition-all flex items-center gap-1"
+                        >
+                            <i className="fa-solid fa-building text-indigo-500"></i>
+                            📍 สพร.24 ยะลา
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleUseCurrentGPS}
+                            className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-bold border border-emerald-200/60 transition-all flex items-center gap-1"
+                        >
+                            <i className="fa-solid fa-location-crosshairs text-emerald-600"></i>
+                            🎯 พิกัด GPS ปัจจุบัน
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div key={key}>
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                    {opts?.icon && <i className={`${opts.icon} mr-1 text-indigo-500`}></i>}
+                    {label}
+                </label>
+                <input
+                    type={type}
+                    value={form[key] ?? ""}
+                    min={opts?.min}
+                    onChange={e => setForm((p: any) => ({ ...p, [key]: type === "number" ? Number(e.target.value) : e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 transition-all"
+                />
+            </div>
+        );
+    };
 
     const courseFields = [
         field("ชื่อหลักสูตร", "courseName"),
@@ -160,7 +244,6 @@ export default function AdminMasterPage() {
 
     return (
         <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">หลักสูตร / สาขา</h1>
@@ -171,7 +254,6 @@ export default function AdminMasterPage() {
                 </button>
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
                 {(["courses", "branches"] as Tab[]).map(t => (
                     <button key={t} onClick={() => setTab(t)} className={`px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${tab === t ? "bg-white border border-slate-200 text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>
@@ -216,7 +298,6 @@ export default function AdminMasterPage() {
                                     <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-snug mb-2">{item.courseName || item.branchName}</h3>
 
                                     <div className="space-y-1.5 mt-2">
-                                        {/* Date Range Display */}
                                         <p className="text-[12px] font-semibold text-slate-600 flex items-center gap-1.5">
                                             <i className="fa-regular fa-calendar text-indigo-500 shrink-0"></i>
                                             <span>{formatDateRange(item.Date, item.DateEnd)}</span>
@@ -235,6 +316,12 @@ export default function AdminMasterPage() {
                                         )}
 
                                         {item.LocationName && <p className="text-[11px] text-slate-500 truncate"><i className="fa-solid fa-location-dot w-4 text-rose-400"></i> {item.LocationName}</p>}
+                                        {item.LocationGPS && (
+                                            <p className="text-[11px] text-slate-500 font-mono flex items-center gap-1 truncate">
+                                                <i className="fa-solid fa-map-pin text-indigo-500 shrink-0"></i>
+                                                <span>{item.LocationGPS}</span>
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -259,7 +346,6 @@ export default function AdminMasterPage() {
                 </div>
             )}
 
-            {/* Add / Edit Modal */}
             <AnimatePresence>
                 {modalOpen && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
@@ -299,7 +385,13 @@ export default function AdminMasterPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <MapLocationPickerModal
+                isOpen={mapPickerOpen}
+                initialCoords={form.LocationGPS}
+                onClose={() => setMapPickerOpen(false)}
+                onSelectCoords={(coords) => setForm((prev: any) => ({ ...prev, LocationGPS: coords }))}
+            />
         </div>
     );
 }
-
