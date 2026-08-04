@@ -32,7 +32,24 @@ export async function GET() {
             orderBy: { createdAt: "desc" },
         });
 
-        return NextResponse.json(officers);
+        const formatted = officers.map((o: any) => {
+            let permissions: string[] = [];
+            try {
+                if (o.profileJson) {
+                    const parsed = JSON.parse(o.profileJson);
+                    if (Array.isArray(parsed.permissions)) {
+                        permissions = parsed.permissions;
+                    }
+                }
+            } catch (e) {}
+
+            return {
+                ...o,
+                permissions,
+            };
+        });
+
+        return NextResponse.json(formatted);
     } catch (error: any) {
         console.error("[officers GET] Error:", error);
         return NextResponse.json({ error: error.message || "Failed to fetch officers" }, { status: 500 });
@@ -130,7 +147,7 @@ export async function PUT(req: Request) {
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
-        const { id, fullName, phoneNumber, email, role, department, status, profileImage, password, resetDefaultPassword, mustChangePassword } = body;
+        const { id, fullName, phoneNumber, email, role, department, status, profileImage, password, resetDefaultPassword, mustChangePassword, permissions } = body;
 
         if (!id || typeof id !== "string") {
             return NextResponse.json({ error: "Missing or invalid officer ID" }, { status: 400 });
@@ -160,6 +177,17 @@ export async function PUT(req: Request) {
         if (profileImage !== undefined) updateData.profileImage = profileImage ? String(profileImage).trim() : null;
         if (status !== undefined) updateData.status = status === "inactive" ? "inactive" : "active";
         if (mustChangePassword !== undefined) updateData.mustChangePassword = Boolean(mustChangePassword);
+
+        if (permissions !== undefined && Array.isArray(permissions)) {
+            const existingUser = await prisma.user.findUnique({ where: { id }, select: { profileJson: true } });
+            let parsedProfile: any = {};
+            try {
+                if (existingUser?.profileJson) parsedProfile = JSON.parse(existingUser.profileJson);
+            } catch (e) {}
+
+            parsedProfile.permissions = permissions;
+            updateData.profileJson = JSON.stringify(parsedProfile);
+        }
 
         // Reset to default password "1234567890" or custom password
         if (resetDefaultPassword) {

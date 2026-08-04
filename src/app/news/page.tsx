@@ -80,10 +80,28 @@ const mockNews: NewsItem[] = [
 export default function NewsPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+    const [newsItems, setNewsItems] = useState<NewsItem[]>(mockNews);
+
+    React.useEffect(() => {
+        async function fetchNews() {
+            try {
+                const res = await fetch("/api/news");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        setNewsItems(data);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch live news:", e);
+            }
+        }
+        fetchNews();
+    }, []);
 
     const filteredNews = selectedCategory === "all"
-        ? mockNews
-        : mockNews.filter(n => n.category === selectedCategory);
+        ? newsItems
+        : newsItems.filter(n => n.category === selectedCategory);
 
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">

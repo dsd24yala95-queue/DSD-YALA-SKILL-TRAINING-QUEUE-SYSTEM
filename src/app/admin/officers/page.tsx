@@ -14,6 +14,7 @@ interface Officer {
     profileImage?: string | null;
     status: string;
     mustChangePassword?: boolean;
+    permissions?: string[];
     createdAt: string;
 }
 
@@ -122,7 +123,72 @@ export default function AdminOfficersPage() {
         }
     };
 
-    // Reset Password Modal
+    // Permission Control Modal State
+    const [permissionTarget, setPermissionTarget] = useState<Officer | null>(null);
+    const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+    const [savingPermissions, setSavingPermissions] = useState(false);
+
+    const ALL_MODULAR_PERMISSIONS = [
+        { key: "manage_queue", label: "🎫 จัดการและเรียกคิวประจำวัน", category: "ระบบคิว" },
+        { key: "manage_walkin", label: "🚹 ลงทะเบียน Walk-in หน้างาน", category: "ระบบคิว" },
+        { key: "manage_training", label: "🎓 จัดการหลักสูตรฝึกอบรม", category: "ฝึกอบรม" },
+        { key: "manage_testing", label: "📋 จัดการสาขาทดสอบมาตรฐาน", category: "ทดสอบมาตรฐาน" },
+        { key: "manage_members", label: "👥 จัดการข้อมูลสมาชิก", category: "สมาชิก" },
+        { key: "manage_news", label: "📰 จัดการข่าวสารและประกาศ", category: "ประชาสัมพันธ์" },
+        { key: "view_reports", label: "📊 ดูรายงานและส่งออกข้อมูล", category: "รายงาน" },
+        { key: "manage_officers", label: "🛡️ จัดการบัญชีและสิทธิ์เจ้าหน้าที่", category: "ผู้ดูแลระบบ" },
+    ];
+
+    const openPermissionsModal = (officer: Officer) => {
+        setPermissionTarget(officer);
+        if (officer.permissions && officer.permissions.length > 0) {
+            setSelectedPermissions(officer.permissions);
+        } else {
+            // Default presets based on role
+            const roles = (officer.role || "").split(",").map((r) => r.trim());
+            const defaultPerms: string[] = ["manage_queue"];
+            if (roles.includes("admin")) {
+                setSelectedPermissions(ALL_MODULAR_PERMISSIONS.map((p) => p.key));
+                return;
+            }
+            if (roles.includes("officer_registrar")) defaultPerms.push("manage_walkin", "manage_members");
+            if (roles.includes("officer_training")) defaultPerms.push("manage_training", "view_reports", "manage_news");
+            if (roles.includes("officer_test")) defaultPerms.push("manage_testing", "view_reports", "manage_news");
+            setSelectedPermissions(Array.from(new Set(defaultPerms)));
+        }
+    };
+
+    const handleSavePermissions = async () => {
+        if (!permissionTarget) return;
+        setSavingPermissions(true);
+        const toastId = toast.loading("กำลังบันทึกสิทธิ์การใช้งาน...");
+
+        try {
+            const res = await fetch("/api/admin/officers", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: permissionTarget.id,
+                    permissions: selectedPermissions,
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to update permissions");
+            }
+
+            toast.success(`อัปเดตสิทธิ์การใช้งานของ ${permissionTarget.fullName} สำเร็จแล้ว!`, { id: toastId });
+            setPermissionTarget(null);
+            loadOfficers();
+        } catch (err: any) {
+            toast.error(err.message || "เกิดข้อผิดพลาดในการบันทึกสิทธิ์", { id: toastId });
+        } finally {
+            setSavingPermissions(false);
+        }
+    };
+
+    // Reset Password Modal State
     const [resetTarget, setResetTarget] = useState<Officer | null>(null);
     const [newPassword, setNewPassword] = useState("");
     const [resetting, setResetting] = useState(false);
@@ -544,7 +610,15 @@ export default function AdminOfficersPage() {
 
                                             {/* Action Buttons */}
                                             <td className="py-4 px-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                                    <button
+                                                        onClick={() => openPermissionsModal(o)}
+                                                        className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-all text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                                                        title="กำหนดสิทธิ์การใช้งานของเจ้าหน้าที่"
+                                                    >
+                                                        <i className="fa-solid fa-sliders text-purple-600"></i>
+                                                        <span>กำหนดสิทธิ์</span>
+                                                    </button>
                                                     <button
                                                         onClick={() => handleQuickResetDefault(o)}
                                                         className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300/80 transition-all text-xs font-bold flex items-center gap-1.5"
@@ -800,6 +874,121 @@ export default function AdminOfficersPage() {
                                 </button>
                                 <button onClick={handleDelete} className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-500/20">
                                     ลบบัญชี
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* 🔑 Officer Permission Control Modal */}
+            <AnimatePresence>
+                {permissionTarget && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+                        <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-xl p-6 sm:p-7 my-8">
+                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+                                <div>
+                                    <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                        <i className="fa-solid fa-sliders text-purple-600"></i>
+                                        กำหนดสิทธิ์การใช้งานเจ้าหน้าที่
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        กำหนดสิทธิ์การเข้าถึงเมนูและฟังก์ชันให้แก่ <strong className="text-purple-700">{permissionTarget.fullName}</strong> ({permissionTarget.department || "สพร.24 ยะลา"})
+                                    </p>
+                                </div>
+                                <button onClick={() => setPermissionTarget(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100">
+                                    <i className="fa-solid fa-xmark text-lg"></i>
+                                </button>
+                            </div>
+
+                            {/* Quick Presets */}
+                            <div className="mb-5">
+                                <label className="text-xs font-bold text-slate-700 block mb-2">⚡ สิทธิ์สำเร็จรูป (Quick Presets)</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPermissions(["manage_queue", "manage_walkin", "manage_members"])}
+                                        className="p-2.5 rounded-xl border border-teal-200 bg-teal-50/50 hover:bg-teal-100/60 text-teal-800 text-[11px] font-bold text-left transition-all"
+                                    >
+                                        🚹 นายทะเบียน
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPermissions(["manage_queue", "manage_training", "view_reports", "manage_news"])}
+                                        className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/60 text-blue-800 text-[11px] font-bold text-left transition-all"
+                                    >
+                                        🎓 ฝ่ายฝึกอบรม
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPermissions(["manage_queue", "manage_testing", "view_reports", "manage_news"])}
+                                        className="p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/60 text-indigo-800 text-[11px] font-bold text-left transition-all"
+                                    >
+                                        📋 ฝ่ายทดสอบ
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPermissions(ALL_MODULAR_PERMISSIONS.map((p) => p.key))}
+                                        className="p-2.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/60 text-purple-800 text-[11px] font-bold text-left transition-all"
+                                    >
+                                        🛡️ Super Admin
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Granular Permission Checkboxes */}
+                            <div className="space-y-2.5 mb-6 max-h-[45vh] overflow-y-auto pr-1">
+                                <label className="text-xs font-bold text-slate-700 block">เลือกสิทธิ์การใช้งานรายหมวดหมู่ (Modular Permissions)</label>
+                                {ALL_MODULAR_PERMISSIONS.map((perm) => {
+                                    const checked = selectedPermissions.includes(perm.key);
+                                    return (
+                                        <div
+                                            key={perm.key}
+                                            onClick={() => {
+                                                if (checked) {
+                                                    setSelectedPermissions(selectedPermissions.filter((k) => k !== perm.key));
+                                                } else {
+                                                    setSelectedPermissions([...selectedPermissions, perm.key]);
+                                                }
+                                            }}
+                                            className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                                                checked
+                                                    ? "bg-purple-50/60 border-purple-300 text-purple-900 shadow-sm"
+                                                    : "bg-slate-50/60 border-slate-200 text-slate-600 hover:bg-slate-100/60"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-md flex items-center justify-center text-xs ${checked ? "bg-purple-600 text-white" : "border border-slate-300 bg-white"}`}>
+                                                    {checked && <i className="fa-solid fa-check"></i>}
+                                                </div>
+                                                <span className="text-xs font-bold">{perm.label}</span>
+                                            </div>
+                                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600">
+                                                {perm.category}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-3 border-t border-slate-100">
+                                <button
+                                    onClick={() => setPermissionTarget(null)}
+                                    className="flex-1 py-3 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={handleSavePermissions}
+                                    disabled={savingPermissions}
+                                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-purple-500/20 active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    {savingPermissions ? (
+                                        <><span className="loading loading-spinner loading-xs"></span> กำลังบันทึก...</>
+                                    ) : (
+                                        <><i className="fa-solid fa-floppy-disk"></i> บันทึกสิทธิ์การใช้งาน</>
+                                    )}
                                 </button>
                             </div>
                         </motion.div>

@@ -14,6 +14,7 @@ const menuItems = [
     { href: "/admin/walkin", icon: "fa-person-walking-arrow-right", label: "ลงทะเบียน Walk-in", category: "main" },
     { href: "/admin/training", icon: "fa-graduation-cap", label: "การฝึกอบรม", category: "main" },
     { href: "/admin/testing", icon: "fa-clipboard-check", label: "การทดสอบมาตรฐาน", category: "main" },
+    { href: "/admin/news", icon: "fa-newspaper", label: "จัดการข่าวสาร", category: "main" },
     { href: "/admin/members", icon: "fa-users", label: "สมาชิก", category: "main" },
     { href: "/admin/officers", icon: "fa-user-shield", label: "จัดการเจ้าหน้าที่", category: "main" },
     { href: "/admin/report", icon: "fa-file-chart-column", label: "รายงาน", category: "main" },
