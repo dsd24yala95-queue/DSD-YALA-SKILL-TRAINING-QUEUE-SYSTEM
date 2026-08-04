@@ -575,10 +575,10 @@ export default function AdminOfficersPage() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="font-bold text-slate-600 block mb-1">เบอร์โทรศัพท์ (ใช้ล็อกอิน) <span className="text-rose-500">*</span></label>
+                                        <label className="font-bold text-slate-600 block mb-1">Username / เบอร์โทรศัพท์ (ใช้ล็อกอิน) <span className="text-rose-500">*</span></label>
                                         <input
-                                            type="tel"
-                                            placeholder="08XXXXXXXX"
+                                            type="text"
+                                            placeholder="เช่น Pasinee J. หรือ 08XXXXXXXX"
                                             value={form.phoneNumber}
                                             onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
                                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"

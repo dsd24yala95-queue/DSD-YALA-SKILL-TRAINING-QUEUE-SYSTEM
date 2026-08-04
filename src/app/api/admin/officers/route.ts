@@ -56,9 +56,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร" }, { status: 400 });
         }
 
-        const cleanPhone = phoneNumber.replace(/[^0-9]/g, "");
-        if (cleanPhone.length < 9 || cleanPhone.length > 10) {
-            return NextResponse.json({ error: "กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก" }, { status: 400 });
+        const cleanPhone = String(phoneNumber).trim();
+        if (cleanPhone.length < 3) {
+            return NextResponse.json({ error: "Username หรือเบอร์โทรศัพท์ต้องมีความยาวอย่างน้อย 3 ตัวอักษร" }, { status: 400 });
         }
 
         const assignedRole = role || "officer_training";
@@ -135,9 +135,9 @@ export async function PUT(req: Request) {
         const updateData: any = {};
         if (fullName !== undefined) updateData.fullName = String(fullName).trim();
         if (phoneNumber !== undefined) {
-            const cleanPhone = String(phoneNumber).replace(/[^0-9]/g, "");
-            if (cleanPhone.length < 9 || cleanPhone.length > 10) {
-                return NextResponse.json({ error: "เบอร์โทรศัพท์ต้องมี 9-10 หลัก" }, { status: 400 });
+            const cleanPhone = String(phoneNumber).trim();
+            if (cleanPhone.length < 3) {
+                return NextResponse.json({ error: "Username หรือเบอร์โทรศัพท์ต้องมีความยาวอย่างน้อย 3 ตัวอักษร" }, { status: 400 });
             }
             updateData.phoneNumber = cleanPhone;
         }
