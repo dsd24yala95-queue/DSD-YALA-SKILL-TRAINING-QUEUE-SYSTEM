@@ -29,6 +29,7 @@ export default function EditProfilePage() {
     const { user, profile, loading: authLoading } = useAuth();
     const router = useRouter();
     const [saving, setSaving] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const [form, setForm] = useState({
         profileImage: "", // เพิ่มฟิลด์สำหรับรูปภาพ
@@ -142,8 +143,6 @@ export default function EditProfilePage() {
 
     const fieldStyle = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all";
     const labelStyle = "block text-sm font-semibold text-blue-200/60 mb-2";
-
-    const [uploadingImage, setUploadingImage] = useState(false);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
