@@ -69,6 +69,8 @@ export default function AdminLineOAPage() {
     // ===== Dashboard State =====
     const [stats, setStats] = useState<LineStats>({ totalMembers: 0, linkedMembers: 0, unlinkedMembers: 0, linkRate: 0 });
     const [linkedUsers, setLinkedUsers] = useState<LinkedUser[]>([]);
+    const [unlinkedUsers, setUnlinkedUsers] = useState<LinkedUser[]>([]);
+    const [memberFilter, setMemberFilter] = useState<"linked" | "unlinked" | "all">("all");
     const [searchLinked, setSearchLinked] = useState("");
 
     // ===== Broadcast State =====
@@ -102,6 +104,7 @@ export default function AdminLineOAPage() {
             const data = await res.json();
             setStats(data.stats || { totalMembers: 0, linkedMembers: 0, unlinkedMembers: 0, linkRate: 0 });
             setLinkedUsers(data.linkedUsers || []);
+            setUnlinkedUsers(data.unlinkedUsers || []);
             setLogs(data.notifications || []);
             if (data.autoReplySettings) {
                 setAutoReply(data.autoReplySettings);
@@ -188,7 +191,13 @@ export default function AdminLineOAPage() {
     };
 
     // ===== Filtered Data =====
-    const filteredLinkedUsers = linkedUsers.filter((u) =>
+    const displayMemberList = memberFilter === "linked"
+        ? linkedUsers
+        : memberFilter === "unlinked"
+            ? unlinkedUsers
+            : [...linkedUsers, ...unlinkedUsers];
+
+    const filteredMembers = displayMemberList.filter((u) =>
         (u.fullName || "").toLowerCase().includes(searchLinked.toLowerCase()) ||
         u.phoneNumber.includes(searchLinked) ||
         (u.lineUserId || "").toLowerCase().includes(searchLinked.toLowerCase())
@@ -265,20 +274,50 @@ export default function AdminLineOAPage() {
                     {/* ===== TAB 1: Dashboard ===== */}
                     {activeTab === "dashboard" && (
                         <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                            {/* Stat Cards */}
+                            {/* Stat Cards (Interactive Filter) */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-                                    <div className="text-xs text-slate-500 font-bold mb-1">👥 สมาชิกทั้งหมด</div>
-                                    <div className="text-3xl font-black text-slate-800">{stats.totalMembers.toLocaleString()}</div>
-                                </div>
-                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-green-200/60 p-5 shadow-sm">
-                                    <div className="text-xs text-green-600 font-bold mb-1">✅ ผูก LINE แล้ว</div>
-                                    <div className="text-3xl font-black text-green-700">{stats.linkedMembers.toLocaleString()}</div>
-                                </div>
-                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-amber-200/60 p-5 shadow-sm">
-                                    <div className="text-xs text-amber-600 font-bold mb-1">⏳ ยังไม่ผูก LINE</div>
-                                    <div className="text-3xl font-black text-amber-700">{stats.unlinkedMembers.toLocaleString()}</div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setMemberFilter("all")}
+                                    className={`text-left rounded-2xl border p-5 transition-all cursor-pointer ${
+                                        memberFilter === "all"
+                                            ? "bg-slate-900 text-white border-slate-900 shadow-lg ring-2 ring-slate-400"
+                                            : "bg-white/80 backdrop-blur-xl border-slate-200/60 hover:bg-slate-50 shadow-sm"
+                                    }`}
+                                >
+                                    <div className={`text-xs font-bold mb-1 ${memberFilter === "all" ? "text-slate-300" : "text-slate-500"}`}>👥 สมาชิกทั้งหมด</div>
+                                    <div className="text-3xl font-black">{stats.totalMembers.toLocaleString()}</div>
+                                    <div className="text-[10px] mt-2 font-medium opacity-80">คลิกเพื่อดูรายชื่อทั้งหมด ➔</div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setMemberFilter("linked")}
+                                    className={`text-left rounded-2xl border p-5 transition-all cursor-pointer ${
+                                        memberFilter === "linked"
+                                            ? "bg-green-600 text-white border-green-600 shadow-lg ring-2 ring-green-400"
+                                            : "bg-white/80 backdrop-blur-xl border-green-200/60 hover:bg-green-50/50 shadow-sm"
+                                    }`}
+                                >
+                                    <div className={`text-xs font-bold mb-1 ${memberFilter === "linked" ? "text-green-100" : "text-green-600"}`}>✅ ผูก LINE แล้ว</div>
+                                    <div className={`text-3xl font-black ${memberFilter === "linked" ? "text-white" : "text-green-700"}`}>{stats.linkedMembers.toLocaleString()}</div>
+                                    <div className="text-[10px] mt-2 font-medium opacity-80">คลิกเพื่อดูรายชื่อผู้ผูก LINE ➔</div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setMemberFilter("unlinked")}
+                                    className={`text-left rounded-2xl border p-5 transition-all cursor-pointer ${
+                                        memberFilter === "unlinked"
+                                            ? "bg-amber-500 text-white border-amber-500 shadow-lg ring-2 ring-amber-300"
+                                            : "bg-white/80 backdrop-blur-xl border-amber-200/60 hover:bg-amber-50/50 shadow-sm"
+                                    }`}
+                                >
+                                    <div className={`text-xs font-bold mb-1 ${memberFilter === "unlinked" ? "text-amber-100" : "text-amber-600"}`}>⏳ ยังไม่ผูก LINE</div>
+                                    <div className={`text-3xl font-black ${memberFilter === "unlinked" ? "text-white" : "text-amber-700"}`}>{stats.unlinkedMembers.toLocaleString()}</div>
+                                    <div className="text-[10px] mt-2 font-medium opacity-80">คลิกเพื่อดูรายชื่อที่ยังไม่ผูก ➔</div>
+                                </button>
+
                                 <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
                                     <DonutChart linked={stats.linkedMembers} total={stats.totalMembers} />
                                 </div>
@@ -310,46 +349,89 @@ export default function AdminLineOAPage() {
                                 </div>
                             </div>
 
-                            {/* Linked Users Table */}
+                            {/* Detailed Member Table (Filterable) */}
                             <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-black text-slate-800">📋 รายชื่อสมาชิกที่ผูก LINE ({filteredLinkedUsers.length})</h3>
-                                    <input
-                                        type="text" placeholder="🔍 ค้นหาชื่อ / เบอร์โทร..."
-                                        value={searchLinked} onChange={(e) => setSearchLinked(e.target.value)}
-                                        className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs w-56 focus:outline-none focus:ring-2 focus:ring-green-400/40"
-                                    />
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <h3 className="text-sm font-black text-slate-800">
+                                            📋 {memberFilter === "linked" ? "รายชื่อสมาชิกที่ผูก LINE แล้ว" : memberFilter === "unlinked" ? "รายชื่อสมาชิกที่ยังไม่ได้ผูก LINE" : "รายชื่อสมาชิกทั้งหมด"} ({filteredMembers.length})
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500">
+                                            {memberFilter === "linked" ? "แสดงสมาชิกที่มี LINE User ID ในระบบ" : memberFilter === "unlinked" ? "แสดงสมาชิกที่ยังไม่มี LINE User ID" : "แสดงสมาชิกทุกคนในระบบ"}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                                            <button onClick={() => setMemberFilter("all")} className={`px-2.5 py-1 rounded-lg transition-all ${memberFilter === "all" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}>ทั้งหมด</button>
+                                            <button onClick={() => setMemberFilter("linked")} className={`px-2.5 py-1 rounded-lg transition-all ${memberFilter === "linked" ? "bg-[#06C755] text-white shadow-sm" : "text-slate-500"}`}>ผูก LINE แล้ว ({stats.linkedMembers})</button>
+                                            <button onClick={() => setMemberFilter("unlinked")} className={`px-2.5 py-1 rounded-lg transition-all ${memberFilter === "unlinked" ? "bg-amber-500 text-white shadow-sm" : "text-slate-500"}`}>ยังไม่ผูก ({stats.unlinkedMembers})</button>
+                                        </div>
+                                        <input
+                                            type="text" placeholder="🔍 ค้นหาชื่อ / เบอร์โทร..."
+                                            value={searchLinked} onChange={(e) => setSearchLinked(e.target.value)}
+                                            className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs w-48 focus:outline-none focus:ring-2 focus:ring-green-400/40"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+
+                                <div className="overflow-x-auto max-h-[450px] overflow-y-auto">
                                     <table className="w-full text-xs">
                                         <thead className="sticky top-0 bg-slate-50 z-10">
                                             <tr className="text-slate-500 text-left">
                                                 <th className="py-2.5 px-3 font-bold">#</th>
                                                 <th className="py-2.5 px-3 font-bold">ชื่อ-สกุล</th>
                                                 <th className="py-2.5 px-3 font-bold">เบอร์โทรศัพท์</th>
+                                                <th className="py-2.5 px-3 font-bold">สถานะผูก LINE</th>
                                                 <th className="py-2.5 px-3 font-bold">LINE User ID</th>
                                                 <th className="py-2.5 px-3 font-bold">วันที่สมัคร</th>
                                                 <th className="py-2.5 px-3 font-bold text-right">จัดการ</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredLinkedUsers.length === 0 ? (
-                                                <tr><td colSpan={6} className="text-center py-8 text-slate-400">ไม่พบรายการ</td></tr>
-                                            ) : filteredLinkedUsers.map((u, i) => (
-                                                <tr key={u.id} className="border-t border-slate-100 hover:bg-green-50/30 transition-colors">
-                                                    <td className="py-3 px-3 text-slate-400">{i + 1}</td>
-                                                    <td className="py-3 px-3 font-bold text-slate-800">{u.fullName || "-"}</td>
-                                                    <td className="py-3 px-3 text-slate-600">{u.phoneNumber}</td>
-                                                    <td className="py-3 px-3 text-slate-500 font-mono text-[10px]">{u.lineUserId}</td>
-                                                    <td className="py-3 px-3 text-slate-500">{new Date(u.createdAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })}</td>
-                                                    <td className="py-3 px-3 text-right">
-                                                        <button onClick={() => handleUnlink(u.id, u.fullName || u.phoneNumber)}
-                                                            className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-[11px] font-bold transition-all">
-                                                            <i className="fa-solid fa-link-slash mr-1"></i> ยกเลิกผูก
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {filteredMembers.length === 0 ? (
+                                                <tr><td colSpan={7} className="text-center py-8 text-slate-400">ไม่พบรายการสมาชิก</td></tr>
+                                            ) : filteredMembers.map((u, i) => {
+                                                const isLinked = !!u.lineUserId;
+                                                return (
+                                                    <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                                                        <td className="py-3 px-3 text-slate-400">{i + 1}</td>
+                                                        <td className="py-3 px-3 font-bold text-slate-800">{u.fullName || "-"}</td>
+                                                        <td className="py-3 px-3 text-slate-600">{u.phoneNumber}</td>
+                                                        <td className="py-3 px-3">
+                                                            {isLinked ? (
+                                                                <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">
+                                                                    ✅ ผูก LINE แล้ว
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">
+                                                                    ⏳ ยังไม่ผูก LINE
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-3 px-3 text-slate-500 font-mono text-[10px]">
+                                                            {u.lineUserId || <span className="text-slate-300 font-sans italic">ยังไม่มีข้อมูล</span>}
+                                                        </td>
+                                                        <td className="py-3 px-3 text-slate-500">{new Date(u.createdAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })}</td>
+                                                        <td className="py-3 px-3 text-right">
+                                                            {isLinked ? (
+                                                                <button onClick={() => handleUnlink(u.id, u.fullName || u.phoneNumber)}
+                                                                    className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-[11px] font-bold transition-all">
+                                                                    <i className="fa-solid fa-link-slash mr-1"></i> ยกเลิกผูก
+                                                                </button>
+                                                            ) : (
+                                                                <button onClick={() => {
+                                                                    navigator.clipboard.writeText(`เพื่อรับการแจ้งเตือนคิว สพร.24 ยะลา กรุณาพิมพ์เบอร์โทรศัพท์ ${u.phoneNumber} ในช่องแชท LINE OA`);
+                                                                    toast.success(`คัดลอกข้อความแนะนำสำหรับ ${u.fullName || u.phoneNumber} แล้ว!`);
+                                                                }}
+                                                                    className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 text-[11px] font-bold transition-all">
+                                                                    <i className="fa-solid fa-copy mr-1"></i> คัดลอกวิธีผูก
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

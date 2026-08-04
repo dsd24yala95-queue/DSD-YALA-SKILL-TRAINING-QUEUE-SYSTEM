@@ -28,6 +28,21 @@ export async function GET() {
             take: 200,
         });
 
+        // 2b. Unlinked users list
+        const unlinkedUsers = await prisma.user.findMany({
+            where: { role: "member", OR: [{ lineUserId: null }, { lineUserId: "" }] },
+            select: {
+                id: true,
+                fullName: true,
+                phoneNumber: true,
+                lineUserId: true,
+                memberId: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+            take: 200,
+        });
+
         // 3. Recent notifications (last 200)
         const notifications = await prisma.notification.findMany({
             orderBy: { createdAt: "desc" },
@@ -62,6 +77,7 @@ export async function GET() {
         return NextResponse.json({
             stats: { totalMembers, linkedMembers, unlinkedMembers, linkRate },
             linkedUsers,
+            unlinkedUsers,
             notifications: notificationLogs,
             autoReplySettings,
         });
