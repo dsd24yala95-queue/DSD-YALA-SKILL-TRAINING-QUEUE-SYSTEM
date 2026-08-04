@@ -4,6 +4,9 @@ generator client {
 }
 
 datasource db {
+  // 💡 For Local Development: provider = "sqlite", url = "file:./dev.db"
+  // 🚀 For Supabase Online Production: provider = "postgresql", url = env("DATABASE_URL")
+  // (e.g. postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres)
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
