@@ -222,16 +222,19 @@ export default function AdminMembersPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">จัดการสมาชิก</h1>
-                    <p className="text-xs text-slate-400 mt-0.5">รายชื่อและข้อมูลสมาชิกทั้งหมดในระบบ ({members.length} คน)</p>
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                        <i className="fa-solid fa-users text-indigo-600"></i>
+                        จัดการสมาชิก (Member Management)
+                    </h1>
+                    <p className="text-sm font-semibold text-slate-500 mt-1">รายชื่อและข้อมูลสมาชิกทั้งหมดในระบบ ({members.length} คน)</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={loadMembers} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-2xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
+                <div className="flex items-center gap-3">
+                    <button onClick={loadMembers} className="flex items-center gap-2 px-4.5 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
                         <i className="fa-solid fa-rotate-right"></i> รีเฟรช
                     </button>
                     <button
                         onClick={() => setWalkInModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-95 shrink-0"
+                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-95 shrink-0"
                     >
                         <i className="fa-solid fa-user-plus"></i> ลงทะเบียน Walk-in
                     </button>
@@ -239,32 +242,32 @@ export default function AdminMembersPage() {
             </div>
 
             {/* Search */}
-            <div className="relative mb-5 max-w-md">
-                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <div className="relative mb-6 max-w-md">
+                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                 <input
                     type="text"
                     placeholder="ค้นหาชื่อ, เบอร์โทร, อีเมล, บัตรประชาชน..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm rounded-2xl border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 text-slate-700"
+                    className="w-full pl-11 pr-4 py-3 text-sm sm:text-base rounded-2xl border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 text-slate-800 font-medium"
                 />
             </div>
 
             {/* Stats Banner */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-8">
                 {[
-                    { label: "สมาชิกทั้งหมด", value: members.length, icon: "fa-users", color: "text-blue-600 bg-blue-50" },
-                    { label: "ผลการค้นหา", value: filtered.length, icon: "fa-filter", color: "text-indigo-600 bg-indigo-50" },
-                    { label: "มีอีเมล", value: members.filter(m => m.reg_email).length, icon: "fa-envelope", color: "text-emerald-600 bg-emerald-50" },
-                    { label: "มีเบอร์โทร", value: members.filter(m => m.reg_telephone).length, icon: "fa-phone", color: "text-amber-600 bg-amber-50" },
+                    { label: "สมาชิกทั้งหมด", value: members.length, icon: "fa-users", color: "text-blue-600 bg-blue-50 border-blue-200/60" },
+                    { label: "ผลการค้นหา", value: filtered.length, icon: "fa-filter", color: "text-indigo-600 bg-indigo-50 border-indigo-200/60" },
+                    { label: "มีอีเมล", value: members.filter(m => m.reg_email).length, icon: "fa-envelope", color: "text-emerald-600 bg-emerald-50 border-emerald-200/60" },
+                    { label: "มีเบอร์โทร", value: members.filter(m => m.reg_telephone).length, icon: "fa-phone", color: "text-amber-600 bg-amber-50 border-amber-200/60" },
                 ].map((s, i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm ${s.color}`}>
+                    <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4.5 shadow-sm flex items-center gap-3.5">
+                        <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center text-base shrink-0 ${s.color}`}>
                             <i className={`fa-solid ${s.icon}`}></i>
                         </div>
                         <div>
-                            <p className="text-xl font-black text-slate-800 leading-none">{s.value}</p>
-                            <p className="text-[10px] text-slate-400">{s.label}</p>
+                            <p className="text-2xl sm:text-3xl font-black text-slate-800 leading-none mb-0.5">{s.value}</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-500">{s.label}</p>
                         </div>
                     </div>
                 ))}
@@ -273,19 +276,19 @@ export default function AdminMembersPage() {
             {loading ? (
                 <div className="py-24 flex flex-col items-center gap-3">
                     <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="text-sm text-slate-400">กำลังโหลดรายชื่อสมาชิก...</p>
+                    <p className="text-sm font-medium text-slate-500">กำลังโหลดรายชื่อสมาชิก...</p>
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-slate-100 py-20 text-center text-slate-400">
+                <div className="bg-white rounded-3xl border border-slate-100 py-20 text-center text-slate-400 p-4">
                     <i className="fa-solid fa-user-slash text-4xl mb-3 block opacity-30"></i>
-                    <p className="text-sm">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</p>
+                    <p className="text-base font-semibold">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-slate-50/50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
-                                <tr>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-200 bg-slate-50/80 text-xs sm:text-sm font-black text-slate-700 uppercase tracking-wider">
                                     <th className="px-6 py-4 w-16 text-center">ลำดับ</th>
                                     <th className="px-6 py-4">ข้อมูลสมาชิก</th>
                                     <th className="px-6 py-4">ข้อมูลติดต่อ</th>
@@ -293,54 +296,54 @@ export default function AdminMembersPage() {
                                     <th className="px-6 py-4 text-center">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 text-sm">
                                 {filtered.map((m, i) => (
                                     <motion.tr 
                                         key={m.id}
                                         initial={{ opacity: 0, y: 5 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: Math.min(i * 0.02, 0.3) }}
-                                        className="hover:bg-slate-50/50 transition-colors group"
+                                        className="hover:bg-slate-50/80 transition-colors group"
                                     >
-                                        <td className="px-6 py-4 text-center font-medium text-slate-400">
+                                        <td className="px-6 py-4 text-center font-bold text-slate-500 text-sm">
                                             {i + 1}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avatarColor(i)} flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0`}>
+                                            <div className="flex items-center gap-3.5">
+                                                <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${avatarColor(i)} flex items-center justify-center text-white font-black text-base shadow-sm shrink-0`}>
                                                     {(m.reg_firstname || m.fullName || "?").charAt(0)}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="font-bold text-slate-800 leading-tight">{formatName(m)}</p>
-                                                    <p className="text-[10px] text-slate-400 truncate w-32 md:w-auto">{m.id}</p>
+                                                    <p className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">{formatName(m)}</p>
+                                                    <p className="text-xs font-mono text-slate-500 truncate w-36 md:w-auto mt-0.5">{m.id}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 space-y-1">
                                             {m.reg_telephone ? (
-                                                <p className="text-xs flex items-center gap-2">
-                                                    <i className="fa-solid fa-phone text-slate-300 w-3"></i> {m.reg_telephone}
+                                                <p className="text-xs sm:text-sm font-medium text-slate-700 flex items-center gap-2">
+                                                    <i className="fa-solid fa-phone text-slate-400 w-3.5"></i> {m.reg_telephone}
                                                 </p>
-                                            ) : <span className="text-xs text-slate-300">-</span>}
+                                            ) : <span className="text-xs text-slate-400">-</span>}
                                             {m.reg_email && (
-                                                <p className="text-xs flex items-center gap-2 truncate max-w-[150px] lg:max-w-[200px]">
-                                                    <i className="fa-solid fa-envelope text-slate-300 w-3"></i> <span className="truncate">{m.reg_email}</span>
+                                                <p className="text-xs sm:text-sm font-medium text-slate-600 flex items-center gap-2 truncate max-w-[180px] lg:max-w-[220px]">
+                                                    <i className="fa-solid fa-envelope text-slate-400 w-3.5"></i> <span className="truncate">{m.reg_email}</span>
                                                 </p>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                                        <td className="px-6 py-4 text-xs sm:text-sm font-mono font-bold text-slate-700">
                                             {m.reg_citizenid || "-"}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => setSelected(m)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors tooltip" data-tip="ดูรายละเอียด">
-                                                    <i className="fa-solid fa-eye text-xs"></i>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button onClick={() => setSelected(m)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-all text-sm shadow-sm" title="ดูรายละเอียด">
+                                                    <i className="fa-solid fa-eye"></i>
                                                 </button>
-                                                <button onClick={() => setEditMember(m)} className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition-colors tooltip" data-tip="แก้ไข">
-                                                    <i className="fa-solid fa-pen-to-square text-xs"></i>
+                                                <button onClick={() => setEditMember(m)} className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition-all text-sm shadow-sm" title="แก้ไข">
+                                                    <i className="fa-solid fa-pen-to-square"></i>
                                                 </button>
-                                                <button onClick={() => setDeleteMember(m)} className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors tooltip" data-tip="ลบ">
-                                                    <i className="fa-solid fa-trash text-xs"></i>
+                                                <button onClick={() => setDeleteMember(m)} className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-all text-sm shadow-sm" title="ลบ">
+                                                    <i className="fa-solid fa-trash"></i>
                                                 </button>
                                             </div>
                                         </td>
