@@ -322,18 +322,18 @@ export default function AdminOfficersPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                         <i className="fa-solid fa-user-shield text-indigo-600"></i>
                         จัดการเจ้าหน้าที่ (Officer Management)
                     </h1>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-sm text-slate-500 font-medium mt-1">
                         จัดการสิทธิ์ บัญชีผู้ใช้ การกำหนดฝ่ายงาน และสถานะเจ้าหน้าที่ สพร.24 ยะลา
                     </p>
                 </div>
 
                 <button
                     onClick={openAddModal}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/20 transition-all active:scale-95 shrink-0"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] hover:to-[#4338CA] text-white rounded-2xl text-sm sm:text-base font-bold shadow-md shadow-indigo-500/20 transition-all active:scale-95 shrink-0"
                 >
                     <i className="fa-solid fa-user-plus"></i> เพิ่มเจ้าหน้าที่ใหม่
                 </button>
@@ -348,13 +348,13 @@ export default function AdminOfficersPage() {
                     { label: "ฝ่ายทดสอบมาตรฐาน", value: testCount, icon: "fa-clipboard-check", color: "from-indigo-500 to-purple-500" },
                     { label: "ฝ่ายต้อนรับ/ลงทะเบียน", value: registrarCount, icon: "fa-id-card", color: "from-teal-500 to-emerald-600" },
                 ].map((c, i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm text-white text-sm shrink-0`}>
+                    <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4.5 shadow-sm flex items-center gap-3.5">
+                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${c.color} flex items-center justify-center shadow-sm text-white text-base shrink-0`}>
                             <i className={`fa-solid ${c.icon}`}></i>
                         </div>
                         <div>
-                            <p className="text-xl sm:text-2xl font-black text-slate-800">{c.value}</p>
-                            <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 leading-tight">{c.label}</p>
+                            <p className="text-2xl sm:text-3xl font-black text-slate-800">{c.value}</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-500 leading-tight">{c.label}</p>
                         </div>
                     </div>
                 ))}
@@ -362,20 +362,20 @@ export default function AdminOfficersPage() {
 
             {/* Search & Role Filter Bar */}
             <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm mb-6 flex flex-col md:flex-row gap-3 items-center justify-between">
-                <div className="relative w-full md:w-80">
-                    <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <div className="relative w-full md:w-96">
+                    <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                     <input
                         type="text"
                         placeholder="ค้นหาชื่อ, เบอร์โทร, อีเมล, ฝ่ายงาน..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-medium"
                     />
                 </div>
 
                 {/* Filter Selector */}
                 <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    <span className="text-xs font-bold text-slate-500 shrink-0">กรองสิทธิ์:</span>
+                    <span className="text-sm font-bold text-slate-600 shrink-0">กรองสิทธิ์:</span>
                     {[
                         { id: "all", label: "ทั้งหมด" },
                         { id: "admin", label: "Super Admin" },
@@ -386,7 +386,7 @@ export default function AdminOfficersPage() {
                         <button
                             key={r.id}
                             onClick={() => setFilterRole(r.id)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
                                 filterRole === r.id
                                     ? "bg-indigo-600 text-white shadow-sm"
                                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -402,13 +402,13 @@ export default function AdminOfficersPage() {
             {loading ? (
                 <div className="py-24 flex flex-col items-center gap-3">
                     <span className="loading loading-spinner loading-lg text-indigo-600"></span>
-                    <p className="text-xs text-slate-400 font-medium">กำลังโหลดรายชื่อเจ้าหน้าที่...</p>
+                    <p className="text-sm text-slate-500 font-medium">กำลังโหลดรายชื่อเจ้าหน้าที่...</p>
                 </div>
             ) : filteredOfficers.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-100 py-16 text-center text-slate-400 p-4">
                     <i className="fa-solid fa-user-slash text-4xl mb-3 block opacity-30"></i>
-                    <p className="text-sm font-semibold mb-3">ไม่พบข้อมูลเจ้าหน้าที่ตามเงื่อนไข</p>
-                    <button onClick={openAddModal} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">
+                    <p className="text-base font-semibold mb-3">ไม่พบข้อมูลเจ้าหน้าที่ตามเงื่อนไข</p>
+                    <button onClick={openAddModal} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-sm">
                         + เพิ่มเจ้าหน้าที่ใหม่
                     </button>
                 </div>
@@ -417,15 +417,15 @@ export default function AdminOfficersPage() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                <tr className="border-b border-slate-200 bg-slate-50/80 text-xs sm:text-sm font-black text-slate-700 uppercase tracking-wider">
                                     <th className="py-4 px-5">เจ้าหน้าที่</th>
                                     <th className="py-4 px-4">ฝ่ายงาน / ตำแหน่ง</th>
-                                    <th className="py-4 px-4">ระดับสิทธิ์ (Role)</th>
+                                    <th className="py-4 px-4">ระดับสิทธิ์ (ROLE)</th>
                                     <th className="py-4 px-4 text-center">สถานะใช้งาน</th>
                                     <th className="py-4 px-4 text-right">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 text-xs">
+                            <tbody className="divide-y divide-slate-100 text-sm">
                                 {filteredOfficers.map((o, idx) => {
                                     const roleInfo = ROLE_LABELS[o.role] || {
                                         label: o.role,
@@ -437,29 +437,29 @@ export default function AdminOfficersPage() {
                                     return (
                                         <tr key={o.id} className="hover:bg-slate-50/80 transition-colors">
                                             {/* Officer Name & Contacts */}
-                                            <td className="py-3.5 px-5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${gradCls} flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0`}>
+                                            <td className="py-4 px-5">
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${gradCls} flex items-center justify-center text-white font-black text-base shadow-sm shrink-0`}>
                                                         {o.fullName ? o.fullName.charAt(0) : "A"}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-slate-800 leading-snug">{o.fullName}</p>
-                                                        <p className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                                        <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">{o.fullName}</p>
+                                                        <p className="text-xs text-slate-500 font-medium flex items-center gap-2 mt-0.5">
                                                             <span><i className="fa-solid fa-phone text-slate-400 mr-1"></i>{o.phoneNumber}</span>
-                                                            {o.email && <span className="truncate max-w-[150px]"><i className="fa-regular fa-envelope text-slate-400 mr-1"></i>{o.email}</span>}
+                                                            {o.email && <span className="truncate max-w-[200px]"><i className="fa-regular fa-envelope text-slate-400 mr-1"></i>{o.email}</span>}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </td>
 
                                             {/* Department */}
-                                            <td className="py-3.5 px-4 font-semibold text-slate-700">
+                                            <td className="py-4 px-4 font-semibold text-slate-800 text-xs sm:text-sm">
                                                 {o.department || "—"}
                                             </td>
 
                                             {/* Role Badges */}
-                                            <td className="py-3.5 px-4">
-                                                <div className="flex flex-wrap gap-1">
+                                            <td className="py-4 px-4">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {(o.role || "").split(",").map((rKey) => {
                                                         const key = rKey.trim();
                                                         const rInfo = ROLE_LABELS[key] || {
@@ -470,7 +470,7 @@ export default function AdminOfficersPage() {
                                                         return (
                                                             <span
                                                                 key={key}
-                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${rInfo.badgeCls}`}
+                                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold ${rInfo.badgeCls}`}
                                                             >
                                                                 <i className={`fa-solid ${rInfo.icon}`}></i>
                                                                 {rInfo.label}
@@ -481,22 +481,22 @@ export default function AdminOfficersPage() {
                                             </td>
 
                                             {/* Status Switch & Must Change Password Badge */}
-                                            <td className="py-3.5 px-4 text-center">
-                                                <div className="flex flex-col items-center gap-1">
+                                            <td className="py-4 px-4 text-center">
+                                                <div className="flex flex-col items-center gap-1.5">
                                                     <button
                                                         onClick={() => handleToggleStatus(o)}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold transition-all ${
+                                                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all ${
                                                             o.status === "active"
-                                                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-400/20 hover:bg-emerald-500/20"
-                                                                : "bg-rose-500/10 text-rose-500 border-rose-400/20 hover:bg-rose-500/20"
+                                                                ? "bg-emerald-500/10 text-emerald-700 border-emerald-400/30 hover:bg-emerald-500/20"
+                                                                : "bg-rose-500/10 text-rose-600 border-rose-400/30 hover:bg-rose-500/20"
                                                         }`}
                                                     >
-                                                        <span className={`w-2 h-2 rounded-full ${o.status === "active" ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                                                        <span className={`w-2.5 h-2.5 rounded-full ${o.status === "active" ? "bg-emerald-500" : "bg-rose-500"}`}></span>
                                                         {o.status === "active" ? "ใช้งานปกติ" : "ระงับใช้งาน"}
                                                     </button>
                                                     {o.mustChangePassword && (
-                                                        <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                                                            <i className="fa-solid fa-triangle-exclamation text-[9px]"></i>
+                                                        <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-300">
+                                                            <i className="fa-solid fa-triangle-exclamation text-xs"></i>
                                                             รอเปลี่ยนรหัสผ่าน
                                                         </span>
                                                     )}
@@ -504,11 +504,11 @@ export default function AdminOfficersPage() {
                                             </td>
 
                                             {/* Action Buttons */}
-                                            <td className="py-3.5 px-4 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
+                                            <td className="py-4 px-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => handleQuickResetDefault(o)}
-                                                        className="px-2 py-1 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/80 transition-all text-[11px] font-bold flex items-center gap-1"
+                                                        className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300/80 transition-all text-xs font-bold flex items-center gap-1.5"
                                                         title="รีเซ็ตรหัสผ่านเป็น 1234567890 ทันที"
                                                     >
                                                         <i className="fa-solid fa-rotate-left text-amber-600"></i>
@@ -552,80 +552,80 @@ export default function AdminOfficersPage() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
                         <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 sm:p-7 my-8">
                             <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
-                                <h2 className="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+                                <h2 className="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2">
                                     <i className="fa-solid fa-user-shield text-indigo-600"></i>
                                     {editTarget ? "✏️ แก้ไขข้อมูลเจ้าหน้าที่" : "➕ เพิ่มเจ้าหน้าที่ใหม่"}
                                 </h2>
                                 <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
-                                    <i className="fa-solid fa-xmark text-lg"></i>
+                                    <i className="fa-solid fa-xmark text-xl"></i>
                                 </button>
                             </div>
 
-                            <div className="space-y-4 text-xs">
+                            <div className="space-y-4.5 text-sm">
                                 <div>
-                                    <label className="font-bold text-slate-600 block mb-1">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
+                                    <label className="font-bold text-slate-700 block mb-1.5 text-sm">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
                                     <input
                                         type="text"
                                         placeholder="เช่น นายสมชาย ใจดี"
                                         value={form.fullName}
                                         onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-medium"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                     <div>
-                                        <label className="font-bold text-slate-600 block mb-1">Username / เบอร์โทรศัพท์ (ใช้ล็อกอิน) <span className="text-rose-500">*</span></label>
+                                        <label className="font-bold text-slate-700 block mb-1.5 text-sm">Username / เบอร์โทรศัพท์ (ใช้ล็อกอิน) <span className="text-rose-500">*</span></label>
                                         <input
                                             type="text"
                                             placeholder="เช่น Pasinee J. หรือ 08XXXXXXXX"
                                             value={form.phoneNumber}
                                             onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-medium"
                                         />
                                     </div>
                                     <div>
-                                        <label className="font-bold text-slate-600 block mb-1">อีเมลเจ้าหน้าที่</label>
+                                        <label className="font-bold text-slate-700 block mb-1.5 text-sm">อีเมลเจ้าหน้าที่</label>
                                         <input
                                             type="email"
                                             placeholder="officer@dsd.go.th"
                                             value={form.email}
                                             onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-medium"
                                         />
                                     </div>
                                 </div>
 
                                 {!editTarget && (
                                     <div>
-                                        <label className="font-bold text-slate-600 block mb-1">รหัสผ่านแรกเข้า <span className="text-rose-500">*</span></label>
+                                        <label className="font-bold text-slate-700 block mb-1.5 text-sm">รหัสผ่านแรกเข้า <span className="text-rose-500">*</span></label>
                                         <input
                                             type="password"
                                             placeholder="อย่างน้อย 6 ตัวอักษร"
                                             value={form.password}
                                             onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-medium"
                                         />
                                     </div>
                                 )}
 
                                 <div>
-                                    <label className="font-bold text-slate-600 block mb-1">ฝ่ายงาน / ตำแหน่ง</label>
+                                    <label className="font-bold text-slate-700 block mb-1.5 text-sm">ฝ่ายงาน / ตำแหน่ง</label>
                                     <input
                                         type="text"
                                         placeholder="เช่น ฝ่ายฝึกอบรมพัฒนาทักษะ สพร.24 ยะลา"
                                         value={form.department}
                                         onChange={(e) => setForm({ ...form, department: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-medium"
                                     />
                                 </div>
 
                                 <div>
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <label className="font-bold text-slate-700 block">
+                                        <label className="font-bold text-slate-800 block text-sm">
                                             สิทธิ์การใช้งาน (กำหนดสิทธิ์ด้วยเช็คบ็อกซ์) <span className="text-rose-500">*</span>
                                         </label>
-                                        <span className="text-[10px] text-indigo-600 font-semibold">
+                                        <span className="text-xs text-indigo-600 font-bold">
                                             เลือกได้มากกว่า 1 สิทธิ์
                                         </span>
                                     </div>
