@@ -11,6 +11,7 @@ import CommandPaletteModal from "@/components/CommandPaletteModal";
 const menuItems = [
     { href: "/admin", icon: "fa-chart-pie", label: "แดชบอร์ด", category: "main" },
     { href: "/admin/queue", icon: "fa-list-check", label: "จัดการคิว", category: "main" },
+    { href: "/admin/walkin", icon: "fa-person-walking-arrow-right", label: "ลงทะเบียน Walk-in", category: "main" },
     { href: "/admin/training", icon: "fa-graduation-cap", label: "การฝึกอบรม", category: "main" },
     { href: "/admin/testing", icon: "fa-clipboard-check", label: "การทดสอบมาตรฐาน", category: "main" },
     { href: "/admin/members", icon: "fa-users", label: "สมาชิก", category: "main" },
