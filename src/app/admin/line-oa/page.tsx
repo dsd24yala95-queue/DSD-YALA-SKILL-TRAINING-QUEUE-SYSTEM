@@ -78,7 +78,7 @@ export default function AdminLineOAPage() {
     const [broadcastTitle, setBroadcastTitle] = useState("");
     const [showBroadcastConfirm, setShowBroadcastConfirm] = useState(false);
     const [broadcasting, setBroadcasting] = useState(false);
-    const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: number } | null>(null);
+    const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: number; details?: Array<{ userId: string; name: string; lineUserId: string; status: "success" | "failed"; reason?: string }> } | null>(null);
 
     // ===== Logs State =====
     const [logs, setLogs] = useState<NotificationLog[]>([]);
@@ -156,7 +156,7 @@ export default function AdminLineOAPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Broadcast failed");
-            setBroadcastResult({ sent: data.sent || 0, failed: data.failed || 0 });
+            setBroadcastResult({ sent: data.sent || 0, failed: data.failed || 0, details: data.details || [] });
             toast.success(`ส่ง Broadcast สำเร็จ! (${data.sent} คน)`, { id: toastId });
             setShowBroadcastConfirm(false);
             setBroadcastMessage("");
@@ -463,12 +463,36 @@ export default function AdminLineOAPage() {
 
                                     {/* Broadcast Result */}
                                     {broadcastResult && (
-                                        <div className="mt-4 p-3 rounded-xl bg-green-50 border border-green-200">
-                                            <div className="text-xs font-bold text-green-800 mb-1">📊 ผลการส่ง Broadcast</div>
-                                            <div className="flex gap-4 text-xs">
-                                                <span className="text-green-700">✅ สำเร็จ: <strong>{broadcastResult.sent}</strong> คน</span>
-                                                <span className="text-rose-600">❌ ล้มเหลว: <strong>{broadcastResult.failed}</strong> คน</span>
+                                        <div className="mt-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                    <span>📊 รายงานผลการส่ง Broadcast</span>
+                                                </div>
+                                                <div className="flex gap-2 text-xs font-bold">
+                                                    <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700">✅ สำเร็จ {broadcastResult.sent} คน</span>
+                                                    <span className="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700">❌ ล้มเหลว {broadcastResult.failed} คน</span>
+                                                </div>
                                             </div>
+
+                                            {/* Details Breakdown List */}
+                                            {broadcastResult.details && broadcastResult.details.length > 0 && (
+                                                <div className="border-t border-slate-100 pt-2.5 space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                                                    <div className="text-[10px] font-bold text-slate-400 block mb-1">รายชื่อผู้รับและสถานะ:</div>
+                                                    {broadcastResult.details.map((item, idx) => (
+                                                        <div key={idx} className={`p-2 rounded-xl text-xs flex items-center justify-between ${
+                                                            item.status === "success" ? "bg-green-50/70 text-green-900 border border-green-200/50" : "bg-rose-50/70 text-rose-900 border border-rose-200/50"
+                                                        }`}>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm">{item.status === "success" ? "✅" : "❌"}</span>
+                                                                <span className="font-bold">{item.name}</span>
+                                                            </div>
+                                                            <span className="text-[10px] font-semibold opacity-80">
+                                                                {item.status === "success" ? "ส่งข้อความสำเร็จ" : (item.reason || "บล็อก LINE OA / ID ไม่ถูกต้อง")}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

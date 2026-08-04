@@ -109,11 +109,12 @@ export async function POST(req: Request) {
 
         const targetUsers = await prisma.user.findMany({
             where: whereClause,
-            select: { id: true, lineUserId: true, fullName: true },
+            select: { id: true, lineUserId: true, fullName: true, phoneNumber: true },
         });
 
         let sent = 0;
         let failed = 0;
+        const details: Array<{ userId: string; name: string; lineUserId: string; status: "success" | "failed"; reason?: string }> = [];
         const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
         if (!token) {
@@ -122,6 +123,8 @@ export async function POST(req: Request) {
 
         for (const user of targetUsers) {
             if (!user.lineUserId) continue;
+
+            const userName = user.fullName || user.phoneNumber;
 
             try {
                 let msgPayload;
@@ -186,12 +189,32 @@ export async function POST(req: Request) {
 
                 if (response.ok) {
                     sent++;
+                    details.push({ userId: user.id, name: userName, lineUserId: user.lineUserId, status: "success" });
+                    
+                    // Create Notification log entry for user
+                    try {
+                        await prisma.notification.create({
+                            data: {
+                                userId: user.id,
+                                title: title || "📢 ประกาศจาก สพร.24 ยะลา",
+                                message: message,
+                                type: "general",
+                                read: false,
+                            },
+                        });
+                    } catch (errLog) {
+                        console.error("Failed to create Notification record:", errLog);
+                    }
                 } else {
                     failed++;
-                    console.error(`Failed to send to ${user.lineUserId}:`, await response.text());
+                    const errRes = await response.json().catch(() => ({ message: "LINE API returned non-200" }));
+                    const reason = errRes.message || "บล็อก LINE OA / ID ไม่ถูกต้อง";
+                    details.push({ userId: user.id, name: userName, lineUserId: user.lineUserId, status: "failed", reason });
+                    console.error(`Failed to send to ${user.lineUserId}:`, errRes);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 failed++;
+                details.push({ userId: user.id, name: userName, lineUserId: user.lineUserId, status: "failed", reason: err.message || "Network Error" });
                 console.error(`Error sending to ${user.lineUserId}:`, err);
             }
         }
@@ -208,6 +231,7 @@ export async function POST(req: Request) {
                         message: message.substring(0, 200),
                         sent,
                         failed,
+                        details,
                     }),
                 },
                 create: {
@@ -219,12 +243,13 @@ export async function POST(req: Request) {
                         message: message.substring(0, 200),
                         sent,
                         failed,
+                        details,
                     }),
                 },
             });
         } catch {}
 
-        return NextResponse.json({ success: true, sent, failed, total: targetUsers.length });
+        return NextResponse.json({ success: true, sent, failed, total: targetUsers.length, details });
     } catch (error: any) {
         console.error("LINE OA POST Error:", error);
         return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
