@@ -1,4 +1,4 @@
-# Base Node.js image
+# Base Node.js image (Alpine = musl libc)
 FROM node:20-alpine AS base
 
 # Step 1: Dependencies
@@ -13,11 +13,12 @@ RUN npm ci
 
 # Step 2: Builder
 FROM base AS builder
+RUN apk add --no-cache openssl libc6-compat
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate Prisma Client & Build Next.js app
 RUN npx prisma generate
@@ -27,8 +28,8 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN apk add --no-cache openssl libc6-compat
 
@@ -48,7 +49,7 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
