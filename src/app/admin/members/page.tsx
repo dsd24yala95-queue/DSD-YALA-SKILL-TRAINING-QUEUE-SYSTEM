@@ -185,7 +185,11 @@ export default function AdminMembersPage() {
                 } as Member;
             });
 
-            formattedList.sort((a, b) => (a.reg_firstname || "").localeCompare(b.reg_firstname || "", "th"));
+            formattedList.sort((a, b) => {
+                const nameA = a.reg_firstname || a.fullName || "";
+                const nameB = b.reg_firstname || b.fullName || "";
+                return nameA.localeCompare(nameB, "th");
+            });
             setMembers(formattedList);
         } catch {
             toast.error("ไม่สามารถโหลดข้อมูลสมาชิกได้");
