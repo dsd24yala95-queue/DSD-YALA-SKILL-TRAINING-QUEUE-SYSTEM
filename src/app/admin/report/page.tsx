@@ -284,6 +284,55 @@ export default function AdminReportPage() {
         }
     };
 
+    const handleExportCSVDirect = async (formatType: "signature" | "dsd" = "signature") => {
+        setExportingJson(true);
+        try {
+            const selected = jsonCourses.find((c) => c.id === selectedJsonCourse);
+            const isAll = !selected || selected.id === "__all__";
+
+            const params = new URLSearchParams();
+            if (!isAll && selected) {
+                params.set("courseId", selected.id);
+                params.set("courseName", selected.name);
+                params.set("mode", selected.type);
+            } else {
+                params.set("courseName", "DSD_YALA_ALL_MEMBERS");
+            }
+
+            const endpoint = formatType === "signature" 
+                ? `/api/admin/export-csv?${params.toString()}`
+                : `/api/admin/export-json?${params.toString()}&format=csv`;
+
+            const res = await fetch(endpoint);
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || "Export failed");
+            }
+
+            const disposition = res.headers.get("Content-Disposition") || "";
+            let filename = "DSD_Export.csv";
+            const match = disposition.match(/filename\*=UTF-8''(.+)/);
+            if (match) filename = decodeURIComponent(match[1]);
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast.success(`ดาวน์โหลดไฟล์ CSV สำเร็จ: ${filename}`);
+            setShowJsonModal(false);
+        } catch (e: any) {
+            toast.error(`เกิดข้อผิดพลาด: ${e.message}`);
+        } finally {
+            setExportingJson(false);
+        }
+    };
+
     useEffect(() => { loadReport(); }, [loadReport]);
 
     if (loading) return (
@@ -579,24 +628,36 @@ export default function AdminReportPage() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-2.5">
                                 <button
-                                    onClick={() => !exportingJson && setShowJsonModal(false)}
+                                    onClick={() => handleExportCSVDirect("signature")}
                                     disabled={exportingJson}
-                                    className="flex-1 px-5 py-3 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-emerald-200 disabled:opacity-60"
                                 >
-                                    ยกเลิก
+                                    <i className="fa-solid fa-file-csv"></i> ใบเซ็นชื่อ (CSV)
+                                </button>
+                                <button
+                                    onClick={() => handleExportCSVDirect("dsd")}
+                                    disabled={exportingJson}
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-teal-200 disabled:opacity-60"
+                                >
+                                    <i className="fa-solid fa-table"></i> 50 ฟิลด์ (CSV)
                                 </button>
                                 <button
                                     onClick={handleExportJSON}
                                     disabled={exportingJson}
-                                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-violet-200 disabled:opacity-60"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md shadow-violet-200 disabled:opacity-60"
                                 >
-                                    {exportingJson ? (
-                                        <><span className="loading loading-spinner loading-xs"></span> กำลังสร้างไฟล์...</>
-                                    ) : (
-                                        <><i className="fa-solid fa-download"></i> ดาวน์โหลด JSON</>
-                                    )}
+                                    <i className="fa-solid fa-file-code"></i> JSON (DSD)
+                                </button>
+                            </div>
+                            <div className="mt-3 text-center">
+                                <button
+                                    onClick={() => !exportingJson && setShowJsonModal(false)}
+                                    disabled={exportingJson}
+                                    className="text-xs font-bold text-slate-400 hover:text-slate-600"
+                                >
+                                    ยกเลิก
                                 </button>
                             </div>
                         </motion.div>

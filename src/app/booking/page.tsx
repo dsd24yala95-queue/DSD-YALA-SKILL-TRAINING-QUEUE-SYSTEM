@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createQueueBooking, getActiveCourses, getActiveBranches, MasterCourse, MasterBranch } from "@/lib/services/db-service";
 import { toast } from "sonner";
@@ -10,7 +10,11 @@ import { toast } from "sonner";
 type BookingType = "test" | "training" | null;
 
 export default function BookingPage() {
-    const [selectedType, setSelectedType] = useState<BookingType>(null);
+    const searchParams = useSearchParams();
+    const initialTypeParam = searchParams.get("type");
+    const [selectedType, setSelectedType] = useState<BookingType>(
+        initialTypeParam === "test" || initialTypeParam === "training" ? initialTypeParam : null
+    );
     const router = useRouter();
     const { user, profile } = useAuth();
     const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -18,6 +22,13 @@ export default function BookingPage() {
     const [courses, setCourses] = useState<MasterCourse[]>([]);
     const [branches, setBranches] = useState<MasterBranch[]>([]);
     const [dataLoading, setDataLoading] = useState(true);
+
+    useEffect(() => {
+        const typeInUrl = searchParams.get("type");
+        if (typeInUrl === "test" || typeInUrl === "training") {
+            setSelectedType(typeInUrl);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         async function loadMasterData() {
@@ -35,13 +46,14 @@ export default function BookingPage() {
     }, []);
 
     const handleBooking = async (type: "test" | "training", itemId: string, itemName: string) => {
-        const targetUserId = profile?.uid || profile?.memberId || user?.id;
         if (!user) {
-            toast.error("กรุณาเข้าสู่ระบบก่อนดำเนินการจองคิว");
-            router.push("/login");
+            toast.info("กรุณาเข้าสู่ระบบก่อนดำเนินการจองคิว");
+            const targetUrl = `/booking?type=${type}&id=${itemId}`;
+            router.push(`/login?callbackUrl=${encodeURIComponent(targetUrl)}`);
             return;
         }
 
+        const targetUserId = profile?.uid || profile?.memberId || user?.id;
         if (!targetUserId) {
             toast.error("ข้อมูลโปรไฟล์ของคุณยังไม่สมบูรณ์ กรุณาอัปเดตโปรไฟล์ก่อนจองคิว");
             router.push("/profile/edit");

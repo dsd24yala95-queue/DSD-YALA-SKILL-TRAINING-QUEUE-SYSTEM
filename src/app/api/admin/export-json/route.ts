@@ -87,6 +87,7 @@ export async function GET(req: Request) {
         const courseId = searchParams.get("courseId");
         const courseName = searchParams.get("courseName");
         const mode = searchParams.get("mode") || "training"; // "training" | "test" | "all"
+        const format = searchParams.get("format"); // "json" | "csv"
 
         let users: any[] = [];
 
@@ -100,6 +101,7 @@ export async function GET(req: Request) {
                 include: {
                     user: true,
                 },
+                orderBy: { queueNumber: "asc" },
             });
 
             // Deduplicate by userId
@@ -115,6 +117,7 @@ export async function GET(req: Request) {
             // No filter → export ALL members (role = "member")
             users = await prisma.user.findMany({
                 where: { role: "member" },
+                orderBy: { createdAt: "desc" },
             });
         }
 
@@ -155,6 +158,27 @@ export async function GET(req: Request) {
         const safeName = courseName
             ? courseName.replace(/[^ก-๙a-zA-Z0-9_ ]/g, "").trim().replace(/ /g, "_")
             : "DSD_Export";
+
+        if (format === "csv") {
+            const escapeCsv = (val: any) => `"${String(val ?? "").replace(/"/g, '""')}"`;
+            const csvRows: string[] = [
+                DSD_FIELD_ORDER.map(escapeCsv).join(","),
+            ];
+            output.forEach((row: any) => {
+                csvRows.push(DSD_FIELD_ORDER.map((f) => escapeCsv(row[f])).join(","));
+            });
+
+            const csvContent = "\uFEFF" + csvRows.join("\r\n");
+            const filename = `${safeName}.csv`;
+
+            return new NextResponse(csvContent, {
+                status: 200,
+                headers: {
+                    "Content-Type": "text/csv; charset=utf-8",
+                    "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
+                },
+            });
+        }
 
         const filename = `${safeName}.json`;
 
