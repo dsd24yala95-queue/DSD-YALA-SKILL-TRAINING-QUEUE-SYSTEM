@@ -314,9 +314,20 @@ export default function AdminMembersPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3.5">
-                                                <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${avatarColor(i)} flex items-center justify-center text-white font-black text-base shadow-sm shrink-0`}>
-                                                    {(m.reg_firstname || m.fullName || "?").charAt(0)}
-                                                </div>
+                                                {(() => {
+                                                    const avatarUrl = (m as any).profileImage || m.profileImage || (m as any).profileImageUrl;
+                                                    const isValid = avatarUrl && typeof avatarUrl === "string" && (avatarUrl.startsWith("http") || avatarUrl.startsWith("/"));
+
+                                                    return (
+                                                        <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${avatarColor(i)} flex items-center justify-center text-white font-black text-base shadow-sm shrink-0 overflow-hidden`}>
+                                                            {isValid ? (
+                                                                <img src={avatarUrl} alt={formatName(m)} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                (m.reg_firstname || m.fullName || "?").charAt(0)
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
                                                 <div className="min-w-0">
                                                     <p className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">{formatName(m)}</p>
                                                     <p className="text-xs font-mono text-slate-500 truncate w-36 md:w-auto mt-0.5">{m.id}</p>

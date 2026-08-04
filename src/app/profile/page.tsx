@@ -279,13 +279,31 @@ export default function ProfilePage() {
                 <div className="relative overflow-hidden rounded-3xl border border-white/20 shadow-2xl bg-white/5 backdrop-blur-2xl p-8 mb-8">
                     <div className="absolute inset-0 opacity-[0.02] bg-noise mix-blend-overlay"></div>
                     <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#2563EB]/20 to-[#6366F1]/20 flex items-center justify-center border border-white/10 overflow-hidden relative shadow-inner">
-                            {pData.profileImageUrl || detail.profileImage ? (
-                                <Image src={pData.profileImageUrl || detail.profileImage} alt="Profile" fill className="object-cover" />
-                            ) : (
-                                <i className="fa-solid fa-user text-white/40 text-4xl"></i>
-                            )}
-                        </div>
+                        {(() => {
+                            const rawUrl = user?.profileImage || pData.profileImageUrl || detail.profileImage;
+                            const isValidUrl = rawUrl && typeof rawUrl === "string" && (rawUrl.startsWith("http") || rawUrl.startsWith("/"));
+                            const displayName = `${titleTH} ${firstName} ${lastName}`.trim() || user?.name || "สมาชิก";
+                            const initialChar = displayName.replace(/^(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)\s*/, "").charAt(0) || "ส";
+
+                            return (
+                                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center border-2 border-white/20 overflow-hidden relative shadow-xl shrink-0">
+                                    {isValidUrl ? (
+                                        <img
+                                            src={rawUrl}
+                                            alt={displayName}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLElement).style.display = 'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="text-white font-black text-3xl sm:text-4xl drop-shadow-md">
+                                            {initialChar}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })()}
                         <div className="text-center md:text-left">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                 <h1 className="text-2xl font-bold text-gradient-gold">

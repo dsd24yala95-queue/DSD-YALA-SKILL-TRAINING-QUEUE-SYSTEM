@@ -27,12 +27,19 @@ export const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseS
  */
 export async function uploadToSupabaseBucket(
     file: File | Blob | Buffer,
-    bucketName: string = "uploads",
+    bucketName: string = "avatars",
     filePath: string = `image_${Date.now()}.png`,
     contentType: string = "image/png"
 ): Promise<{ url: string | null; error: string | null }> {
     try {
-        const { data, error } = await supabase.storage
+        // Ensure bucket exists or create it using supabaseAdmin
+        try {
+            await supabaseAdmin.storage.createBucket(bucketName, { public: true });
+        } catch (e) {
+            // Bucket already exists
+        }
+
+        const { data, error } = await supabaseAdmin.storage
             .from(bucketName)
             .upload(filePath, file, {
                 contentType,
@@ -44,7 +51,7 @@ export async function uploadToSupabaseBucket(
             return { url: null, error: error.message };
         }
 
-        const { data: publicUrlData } = supabase.storage
+        const { data: publicUrlData } = supabaseAdmin.storage
             .from(bucketName)
             .getPublicUrl(data.path);
 

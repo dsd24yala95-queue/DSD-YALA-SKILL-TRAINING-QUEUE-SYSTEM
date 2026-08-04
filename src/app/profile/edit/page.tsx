@@ -143,46 +143,36 @@ export default function EditProfilePage() {
     const fieldStyle = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all";
     const labelStyle = "block text-sm font-semibold text-blue-200/60 mb-2";
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file || !user) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new window.Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 500;
-                const MAX_HEIGHT = 500;
-                let width = img.width;
-                let height = img.height;
+        setUploadingImage(true);
+        const toastId = toast.loading("กำลังอัปโหลดรูปภาพไปยัง Supabase Cloud Storage...");
 
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("userId", user.id);
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                
-                if (profile) {
-                    const p: any = profile;
-                    setForm(prev => ({ ...prev, profileImage: dataUrl }));
-                };
-            };
-            img.src = event.target?.result as string;
-        };
-        reader.readAsDataURL(file);
+            const res = await fetch("/api/users/avatar", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+
+            setForm(prev => ({ ...prev, profileImage: data.avatarUrl }));
+            toast.success("อัปโหลดรูปโปรไฟล์ไปยัง Supabase Storage สำเร็จ!", { id: toastId });
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || "ไม่สามารถอัปโหลดรูปภาพได้", { id: toastId });
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     return (
@@ -207,19 +197,47 @@ export default function EditProfilePage() {
                     
                     {/* Profile Image Upload */}
                     <div className="mb-8 flex flex-col items-center">
-                        <div className="relative w-32 h-32 rounded-2xl bg-gradient-to-br from-[#2563EB]/20 to-[#6366F1]/20 flex items-center justify-center border border-white/10 overflow-hidden shadow-inner mb-4">
-                            {form.profileImage ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={form.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                                <i className="fa-solid fa-user text-white/40 text-5xl"></i>
-                            )}
-                            <label className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
-                                <i className="fa-solid fa-camera text-white text-2xl"></i>
-                                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                        <div className="relative w-32 h-32 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center border-2 border-white/20 overflow-hidden shadow-2xl mb-4 group">
+                            {uploadingImage ? (
+                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 text-white z-20">
+                                    <span className="loading loading-spinner loading-md text-white"></span>
+                                    <span className="text-xs font-bold">กำลังอัปโหลด...</span>
+                                </div>
+                            ) : null}
+
+                            {(() => {
+                                const isValidUrl = form.profileImage && typeof form.profileImage === "string" && (form.profileImage.startsWith("http") || form.profileImage.startsWith("/"));
+                                const displayName = `${form.reg_firstname} ${form.reg_lastname}`.trim() || user?.name || "สมาชิก";
+                                const initialChar = displayName.charAt(0) || "ส";
+
+                                return isValidUrl ? (
+                                    <img
+                                        src={form.profileImage}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLElement).style.display = 'none';
+                                        }}
+                                    />
+                                ) : (
+                                    <span className="text-white font-black text-5xl drop-shadow-md">
+                                        {initialChar}
+                                    </span>
+                                );
+                            })()}
+
+                            <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white z-10 gap-1">
+                                <i className="fa-solid fa-camera text-2xl"></i>
+                                <span className="text-[10px] font-bold">เปลี่ยนรูปภาพ</span>
+                                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="hidden" />
                             </label>
                         </div>
-                        <p className="text-blue-200/50 text-xs">คลิกที่รูปเพื่ออัปโหลด (รองรับ JPEG/PNG)</p>
+                        <label className="cursor-pointer px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2">
+                            <i className="fa-solid fa-cloud-arrow-up text-blue-400"></i>
+                            {uploadingImage ? "กำลังอัปโหลดรูป..." : "📷 อัปโหลดรูปโปรไฟล์ใหม่"}
+                            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="hidden" />
+                        </label>
+                        <p className="text-blue-200/50 text-xs mt-2">รองรับไฟล์ JPG, PNG, WEBP (ขนาดไม่เกิน 10MB)</p>
                     </div>
 
                     {/* Section 1: ข้อมูลส่วนบุคคล */}
