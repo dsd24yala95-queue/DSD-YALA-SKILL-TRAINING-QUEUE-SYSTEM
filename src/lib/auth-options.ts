@@ -73,6 +73,23 @@ export const authOptions: AuthOptions = {
     },
     session: {
         strategy: "jwt",
+        maxAge: 1 * 60 * 60, // 1 Hour (3,600 seconds)
+        updateAge: 15 * 60,  // Auto sliding refresh every 15 minutes while active
+    },
+    jwt: {
+        maxAge: 1 * 60 * 60, // 1 Hour
+    },
+    cookies: {
+        sessionToken: {
+            name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 1 * 60 * 60, // 1 Hour Cookie Expiry
+            },
+        },
     },
     secret: process.env.NEXTAUTH_SECRET || "your-secret-key-for-dev",
 };

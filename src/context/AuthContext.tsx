@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             mounted = false;
         };
-    }, [session]);
+    }, [session, status]);
 
     const logout = async () => {
         await signOut({ redirect: false });
