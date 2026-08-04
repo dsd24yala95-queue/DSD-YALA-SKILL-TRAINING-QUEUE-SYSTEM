@@ -1,21 +1,14 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import ws from "ws";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://dokvvlvlxfzdlgxpkkbd.supabase.co";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
-const clientOptions: any = {};
-if (typeof window === "undefined") {
-    clientOptions.realtime = { transport: ws };
-}
-
 // Public Supabase client for Browser & Client Components
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, clientOptions);
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // Admin Supabase client with Service Role for Server Routes & Admin Tasks
 export const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
-    ...clientOptions,
     auth: {
         autoRefreshToken: false,
         persistSession: false,
