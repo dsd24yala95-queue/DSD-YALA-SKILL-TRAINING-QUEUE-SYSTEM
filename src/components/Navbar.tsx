@@ -9,8 +9,8 @@ import NotificationsMenu from "@/components/NotificationsMenu";
 
 const navLinks = [
     { href: "/", label: "หน้าหลัก", icon: "fa-house", exact: true },
-    { href: "/booking?type=training", label: "ฝึกอบรม", icon: "fa-graduation-cap" },
-    { href: "/booking?type=test", label: "ทดสอบมาตรฐาน", icon: "fa-clipboard-check" },
+    { href: "/training", label: "ฝึกอบรม", icon: "fa-graduation-cap" },
+    { href: "/testing", label: "ทดสอบมาตรฐาน", icon: "fa-clipboard-check" },
     { href: "#news", label: "ข่าวสาร", icon: "fa-newspaper" },
     { href: "#footer", label: "ติดต่อ", icon: "fa-phone" },
 ];

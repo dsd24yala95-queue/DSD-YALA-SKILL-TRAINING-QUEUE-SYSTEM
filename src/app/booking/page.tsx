@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -81,11 +82,21 @@ export default function BookingPage() {
     const isFull = (course: MasterCourse) => course.currentQueue >= course.maxSeats;
 
     return (
-        <div className="relative min-h-screen bg-gradient-to-br from-[#001a33] via-[#003366] to-[#002244] py-12 px-4 overflow-hidden">
+        <div className="relative min-h-screen bg-[#0F172A] text-white py-12 px-4 overflow-hidden">
             {/* Background elements */}
-            <div className="absolute inset-0 overflow-hidden -z-10">
-                <div className="absolute top-20 left-10 w-72 h-72 bg-[#2563EB]/10 rounded-full blur-3xl animate-float"></div>
-                <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#6366F1]/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }}></div>
+            <div className="absolute inset-0 z-0">
+                <Image
+                    src="/bg1.png"
+                    alt="DSD Yala Background"
+                    fill
+                    className="object-cover object-center opacity-40"
+                    priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A]/90 via-[#0F172A]/80 to-[#0F172A]"></div>
+                <div
+                    className="absolute inset-0 opacity-[0.08]"
+                    style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+                ></div>
             </div>
 
             <motion.div
