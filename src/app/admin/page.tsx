@@ -116,15 +116,15 @@ export default function AdminDashboard() {
             {/* Topbar */}
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">แดชบอร์ดจัดการระบบ</h1>
-                    <p className="text-xs font-medium text-slate-400 mt-0.5">ภาพรวมสถิติการใช้งาน และการวิเคราะห์กลุ่มเป้าหมาย สพร.24 ยะลา (DSD 50-Field Schema)</p>
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">แดชบอร์ดจัดการระบบ</h1>
+                    <p className="text-sm font-semibold text-slate-500 mt-1">ภาพรวมสถิติการใช้งาน และการวิเคราะห์กลุ่มเป้าหมาย สพร.24 ยะลา (DSD 50-Field Schema)</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="px-4 py-2 bg-white rounded-2xl border border-slate-100 text-xs font-semibold text-slate-500 shadow-sm flex items-center gap-2">
+                    <div className="px-4.5 py-2.5 bg-white rounded-2xl border border-slate-100 text-sm font-bold text-slate-600 shadow-sm flex items-center gap-2">
                         <i className="fa-regular fa-clock text-blue-500"></i>
                         {time || "--:--"}
                     </div>
-                    <Link href="/admin/queue" className="w-9 h-9 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 shadow-sm transition-all">
+                    <Link href="/admin/queue" className="w-10 h-10 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-sm transition-all text-base">
                         <i className="fa-solid fa-list-check"></i>
                     </Link>
                 </div>
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
             {loading ? (
                 <div className="py-24 flex flex-col items-center justify-center gap-3">
                     <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="text-sm font-semibold text-slate-400">กำลังเชื่อมต่อข้อมูลสถิติ DSD Analytics...</p>
+                    <p className="text-base font-semibold text-slate-500">กำลังเชื่อมต่อข้อมูลสถิติ DSD Analytics...</p>
                 </div>
             ) : (
                 <>
@@ -149,13 +149,13 @@ export default function AdminDashboard() {
                             >
                                 <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div className="flex items-center justify-between mb-4">
-                                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-md shadow-indigo-500/10`}>
-                                        <i className={`fa-solid ${stat.icon} text-white text-sm`}></i>
+                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-md shadow-indigo-500/10`}>
+                                        <i className={`fa-solid ${stat.icon} text-white text-base`}></i>
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded-md">อัปเดตเรียลไทม์</span>
+                                    <span className="text-xs font-bold text-slate-500 uppercase bg-slate-100 px-2.5 py-1 rounded-md">อัปเดตเรียลไทม์</span>
                                 </div>
-                                <div className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{stat.value}</div>
-                                <div className="text-xs font-semibold text-slate-400">{stat.label}</div>
+                                <div className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-none mb-1.5">{stat.value}</div>
+                                <div className="text-sm font-bold text-slate-500">{stat.label}</div>
                             </motion.div>
                         ))}
                     </div>

@@ -37,6 +37,7 @@
 }
 
 html {
+  font-size: 118%; /* Global +20% font scale across entire web app */
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
