@@ -74,7 +74,7 @@ export async function POST(req: Request) {
                 const generatedMemberId = `WALK-${Date.now().toString().slice(-6)}`;
 
                 // Build profileJson
-                const profileObj = {
+                let profileObj: any = {
                     reg_title: title || "001",
                     reg_firstname: fullName.trim().split(" ")[0] || fullName.trim(),
                     reg_lastname: fullName.trim().split(" ").slice(1).join(" ") || "",
@@ -87,6 +87,15 @@ export async function POST(req: Request) {
                     reg_address_subdistrict: addressSubdistrict ? String(addressSubdistrict).trim() : "",
                     walkInRegistered: true,
                 };
+
+                if (body.profileJson) {
+                    try {
+                        const parsedCustom = typeof body.profileJson === "string" ? JSON.parse(body.profileJson) : body.profileJson;
+                        profileObj = { ...profileObj, ...parsedCustom, walkInRegistered: true };
+                    } catch (e) {
+                        console.warn("[walkin POST] Custom profileJson parse error:", e);
+                    }
+                }
 
                 targetUser = await prisma.user.create({
                     data: {

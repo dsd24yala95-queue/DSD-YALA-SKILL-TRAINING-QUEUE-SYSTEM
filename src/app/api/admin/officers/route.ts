@@ -23,6 +23,8 @@ export async function GET() {
                 role: true,
                 department: true,
                 status: true,
+                profileImage: true,
+                profileJson: true,
                 mustChangePassword: true,
                 createdAt: true,
                 updatedAt: true,
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
-        const { fullName, phoneNumber, email, password, role, department } = body;
+        const { fullName, phoneNumber, email, password, role, department, profileImage } = body;
 
         if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
             return NextResponse.json({ error: "กรุณากรอกชื่อ-นามสกุลให้ถูกต้อง" }, { status: 400 });
@@ -96,6 +98,7 @@ export async function POST(req: Request) {
                 passwordHash,
                 role: assignedRole,
                 department: department ? String(department).trim() : "ฝ่ายฝึกอบรมพัฒนาทักษะ",
+                profileImage: profileImage ? String(profileImage).trim() : null,
                 status: "active",
                 mustChangePassword: true, // Force password change on first login
             },
@@ -106,6 +109,7 @@ export async function POST(req: Request) {
                 email: true,
                 role: true,
                 department: true,
+                profileImage: true,
                 status: true,
                 mustChangePassword: true,
                 createdAt: true,
@@ -126,7 +130,7 @@ export async function PUT(req: Request) {
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
-        const { id, fullName, phoneNumber, email, role, department, status, password, resetDefaultPassword, mustChangePassword } = body;
+        const { id, fullName, phoneNumber, email, role, department, status, profileImage, password, resetDefaultPassword, mustChangePassword } = body;
 
         if (!id || typeof id !== "string") {
             return NextResponse.json({ error: "Missing or invalid officer ID" }, { status: 400 });
@@ -153,6 +157,7 @@ export async function PUT(req: Request) {
             updateData.role = role;
         }
         if (department !== undefined) updateData.department = String(department).trim();
+        if (profileImage !== undefined) updateData.profileImage = profileImage ? String(profileImage).trim() : null;
         if (status !== undefined) updateData.status = status === "inactive" ? "inactive" : "active";
         if (mustChangePassword !== undefined) updateData.mustChangePassword = Boolean(mustChangePassword);
 
@@ -178,6 +183,7 @@ export async function PUT(req: Request) {
                 email: true,
                 role: true,
                 department: true,
+                profileImage: true,
                 status: true,
                 mustChangePassword: true,
                 updatedAt: true,

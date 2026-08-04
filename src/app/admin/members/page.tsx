@@ -57,6 +57,7 @@ export default function AdminMembersPage() {
     const [deleteMember, setDeleteMember] = useState<Member | null>(null);
     const [saving, setSaving] = useState(false);
     const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+    const [walkInMode, setWalkInMode] = useState<"quick" | "full">("quick");
     const [walkInSaving, setWalkInSaving] = useState(false);
     const [walkInForm, setWalkInForm] = useState({
         title: "001",
@@ -66,6 +67,51 @@ export default function AdminMembersPage() {
         email: "",
         education: "ปริญญาตรี",
     });
+
+    const handleWalkInFullSave = async (profileJsonStr: string) => {
+        try {
+            const parsed = JSON.parse(profileJsonStr);
+            const resolveTitle = (code: string) => {
+                if (code === "001") return "นาย";
+                if (code === "002") return "นาง";
+                if (code === "003") return "นางสาว";
+                return "";
+            };
+            const fullName = `${resolveTitle(parsed.reg_title || "")}${parsed.reg_firstname || ""} ${parsed.reg_lastname || ""}`.trim();
+            const phoneNumber = parsed.reg_telephone;
+
+            if (!fullName || !phoneNumber) {
+                toast.error("กรุณากรอกชื่อจริง นามสกุล และเบอร์โทรศัพท์");
+                return;
+            }
+
+            setWalkInSaving(true);
+            const res = await fetch("/api/admin/walkin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: parsed.reg_title || "001",
+                    fullName,
+                    phoneNumber,
+                    citizenId: parsed.reg_citizenid || "",
+                    email: parsed.reg_email || "",
+                    education: parsed.reg_education || "",
+                    profileJson: profileJsonStr,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to register walk-in member");
+
+            toast.success(`ลงทะเบียนสมาชิก Walk-in (แบบเต็ม) สำเร็จ (${data.user.fullName})`);
+            setWalkInModalOpen(false);
+            loadMembers();
+        } catch (err: any) {
+            toast.error(err.message || "เกิดข้อผิดพลาดในการลงทะเบียน Walk-in");
+        } finally {
+            setWalkInSaving(false);
+        }
+    };
 
     const handleWalkInSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -487,7 +533,7 @@ export default function AdminMembersPage() {
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 sm:p-7 my-8"
                     >
-                        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                             <h2 className="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
                                 <i className="fa-solid fa-user-plus text-indigo-600"></i>
                                 ลงทะเบียนสมาชิก Walk-in หน้างาน
@@ -497,105 +543,142 @@ export default function AdminMembersPage() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleWalkInSubmit} className="space-y-3.5 text-xs">
-                            <div className="grid grid-cols-3 gap-2">
-                                <div>
-                                    <label className="font-bold text-slate-600 block mb-1">คำนำหน้า</label>
-                                    <select
-                                        value={walkInForm.title}
-                                        onChange={(e) => setWalkInForm({ ...walkInForm, title: e.target.value })}
-                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                        {/* Mode Segment Switcher */}
+                        <div className="flex bg-slate-100 p-1 rounded-2xl mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setWalkInMode("quick")}
+                                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                                    walkInMode === "quick"
+                                        ? "bg-white text-indigo-600 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-800"
+                                }`}
+                            >
+                                ⚡ กรอกแบบด่วน (6 ฟิลด์)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setWalkInMode("full")}
+                                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                                    walkInMode === "full"
+                                        ? "bg-white text-indigo-600 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-800"
+                                }`}
+                            >
+                                📝 กรอกแบบเต็ม (50 ฟิลด์ DSD)
+                            </button>
+                        </div>
+
+                        {walkInMode === "full" ? (
+                            <div className="h-[65vh]">
+                                <FullMemberEditForm
+                                    initialData={{}}
+                                    onSave={handleWalkInFullSave}
+                                    onCancel={() => setWalkInModalOpen(false)}
+                                    saving={walkInSaving}
+                                />
+                            </div>
+                        ) : (
+                            <form onSubmit={handleWalkInSubmit} className="space-y-3.5 text-xs">
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">คำนำหน้า</label>
+                                        <select
+                                            value={walkInForm.title}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, title: e.target.value })}
+                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        >
+                                            <option value="001">นาย</option>
+                                            <option value="002">นาง</option>
+                                            <option value="003">นางสาว</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="font-bold text-slate-600 block mb-1">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            placeholder="เช่น สมชาย ใจดี"
+                                            value={walkInForm.fullName}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, fullName: e.target.value })}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">เบอร์โทรศัพท์ <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="tel"
+                                            placeholder="08XXXXXXXX"
+                                            value={walkInForm.phoneNumber}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, phoneNumber: e.target.value })}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">เลขบัตรประชาชน (13 หลัก)</label>
+                                        <input
+                                            type="text"
+                                            maxLength={13}
+                                            placeholder="1950100XXXXXX"
+                                            value={walkInForm.citizenId}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, citizenId: e.target.value })}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-mono text-xs"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">อีเมลผู้สมัคร</label>
+                                        <input
+                                            type="email"
+                                            placeholder="example@mail.com"
+                                            value={walkInForm.email}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, email: e.target.value })}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-slate-600 block mb-1">ระดับการศึกษา</label>
+                                        <select
+                                            value={walkInForm.education}
+                                            onChange={(e) => setWalkInForm({ ...walkInForm, education: e.target.value })}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        >
+                                            <option value="มัธยมศึกษาตอนต้น">มัธยมศึกษาตอนต้น (ม.3)</option>
+                                            <option value="มัธยมศึกษาตอนปลาย">มัธยมศึกษาตอนปลาย (ม.6)</option>
+                                            <option value="ปวช.">ปวช.</option>
+                                            <option value="ปวส.">ปวส.</option>
+                                            <option value="ปริญญาตรี">ปริญญาตรี</option>
+                                            <option value="สูงกว่าปริญญาตรี">สูงกว่าปริญญาตรี</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <p className="text-[11px] text-slate-400 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/60 leading-relaxed">
+                                    💡 <strong className="text-indigo-700">คำแนะนำ:</strong> บัญชีสมาชิกจะถูกสร้างทันที โดยผู้สมัครสามารถใช้รหัสผ่านแรกเข้าเป็นเลข 6 หลักสุดท้ายของบัตรประชาชน หรือเบอร์โทรศัพท์
+                                </p>
+
+                                <div className="flex gap-3 pt-3 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setWalkInModalOpen(false)}
+                                        className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
                                     >
-                                        <option value="001">นาย</option>
-                                        <option value="002">นาง</option>
-                                        <option value="003">นางสาว</option>
-                                    </select>
-                                </div>
-                                <div className="col-span-2">
-                                    <label className="font-bold text-slate-600 block mb-1">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        placeholder="เช่น สมชาย ใจดี"
-                                        value={walkInForm.fullName}
-                                        onChange={(e) => setWalkInForm({ ...walkInForm, fullName: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="font-bold text-slate-600 block mb-1">เบอร์โทรศัพท์ <span className="text-rose-500">*</span></label>
-                                    <input
-                                        type="tel"
-                                        placeholder="08XXXXXXXX"
-                                        value={walkInForm.phoneNumber}
-                                        onChange={(e) => setWalkInForm({ ...walkInForm, phoneNumber: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="font-bold text-slate-600 block mb-1">เลขบัตรประชาชน (13 หลัก)</label>
-                                    <input
-                                        type="text"
-                                        maxLength={13}
-                                        placeholder="1950100XXXXXX"
-                                        value={walkInForm.citizenId}
-                                        onChange={(e) => setWalkInForm({ ...walkInForm, citizenId: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-mono text-xs"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="font-bold text-slate-600 block mb-1">อีเมลผู้สมัคร</label>
-                                    <input
-                                        type="email"
-                                        placeholder="example@mail.com"
-                                        value={walkInForm.email}
-                                        onChange={(e) => setWalkInForm({ ...walkInForm, email: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="font-bold text-slate-600 block mb-1">ระดับการศึกษา</label>
-                                    <select
-                                        value={walkInForm.education}
-                                        onChange={(e) => setWalkInForm({ ...walkInForm, education: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={walkInSaving}
+                                        className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] text-white text-xs font-bold transition-all disabled:opacity-50 shadow-md shadow-indigo-500/20 active:scale-95"
                                     >
-                                        <option value="มัธยมศึกษาตอนต้น">มัธยมศึกษาตอนต้น (ม.3)</option>
-                                        <option value="มัธยมศึกษาตอนปลาย">มัธยมศึกษาตอนปลาย (ม.6)</option>
-                                        <option value="ปวช.">ปวช.</option>
-                                        <option value="ปวส.">ปวส.</option>
-                                        <option value="ปริญญาตรี">ปริญญาตรี</option>
-                                        <option value="สูงกว่าปริญญาตรี">สูงกว่าปริญญาตรี</option>
-                                    </select>
+                                        {walkInSaving ? "กำลังลงทะเบียน..." : "💾 ลงทะเบียนสมาชิก Walk-in"}
+                                    </button>
                                 </div>
-                            </div>
-
-                            <p className="text-[11px] text-slate-400 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100/60 leading-relaxed">
-                                💡 <strong className="text-indigo-700">คำแนะนำ:</strong> บัญชีสมาชิกจะถูกสร้างทันที โดยผู้สมัครสามารถใช้รหัสผ่านแรกเข้าเป็นเลข 6 หลักสุดท้ายของบัตรประชาชน หรือเบอร์โทรศัพท์
-                            </p>
-
-                            <div className="flex gap-3 pt-3 border-t border-slate-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setWalkInModalOpen(false)}
-                                    className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={walkInSaving}
-                                    className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:from-[#4F46E5] text-white text-xs font-bold transition-all disabled:opacity-50 shadow-md shadow-indigo-500/20 active:scale-95"
-                                >
-                                    {walkInSaving ? "กำลังลงทะเบียน..." : "💾 ลงทะเบียนสมาชิก Walk-in"}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        )}
                     </motion.div>
                 </div>
             )}

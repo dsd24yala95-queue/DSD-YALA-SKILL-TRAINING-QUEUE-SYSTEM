@@ -11,6 +11,7 @@ interface Officer {
     email: string | null;
     role: string;
     department: string | null;
+    profileImage?: string | null;
     status: string;
     mustChangePassword?: boolean;
     createdAt: string;
@@ -86,8 +87,40 @@ export default function AdminOfficersPage() {
         email: "",
         password: "",
         department: "ฝ่ายฝึกอบรมพัฒนาทักษะ",
+        profileImage: "",
     });
     const [saving, setSaving] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        const toastId = toast.loading("กำลังอัปโหลดรูปโปรไฟล์เจ้าหน้าที่...");
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            if (editTarget?.id) {
+                formData.append("userId", editTarget.id);
+            }
+
+            const res = await fetch("/api/users/avatar", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+
+            setForm((prev) => ({ ...prev, profileImage: data.avatarUrl }));
+            toast.success("อัปโหลดรูปโปรไฟล์เจ้าหน้าที่สำเร็จ!", { id: toastId });
+        } catch (err: any) {
+            toast.error(err.message || "ไม่สามารถอัปโหลดรูปภาพได้", { id: toastId });
+        } finally {
+            setUploadingImage(false);
+        }
+    };
 
     // Reset Password Modal
     const [resetTarget, setResetTarget] = useState<Officer | null>(null);
@@ -150,6 +183,7 @@ export default function AdminOfficersPage() {
             email: "",
             password: "",
             department: "ฝ่ายฝึกอบรมพัฒนาทักษะ",
+            profileImage: "",
         });
         setModalOpen(true);
     };
@@ -166,6 +200,7 @@ export default function AdminOfficersPage() {
             email: officer.email || "",
             password: "",
             department: officer.department || "",
+            profileImage: officer.profileImage || "",
         });
         setModalOpen(true);
     };
@@ -439,8 +474,12 @@ export default function AdminOfficersPage() {
                                             {/* Officer Name & Contacts */}
                                             <td className="py-4 px-5">
                                                 <div className="flex items-center gap-3.5">
-                                                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${gradCls} flex items-center justify-center text-white font-black text-base shadow-sm shrink-0`}>
-                                                        {o.fullName ? o.fullName.charAt(0) : "A"}
+                                                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${gradCls} flex items-center justify-center text-white font-black text-base shadow-sm shrink-0 overflow-hidden`}>
+                                                        {o.profileImage && typeof o.profileImage === "string" && (o.profileImage.startsWith("http") || o.profileImage.startsWith("/")) ? (
+                                                            <img src={o.profileImage} alt={o.fullName} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            o.fullName ? o.fullName.charAt(0) : "A"
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <p className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">{o.fullName}</p>
@@ -562,6 +601,35 @@ export default function AdminOfficersPage() {
                             </div>
 
                             <div className="space-y-4.5 text-sm">
+                                {/* Profile Image Picker */}
+                                <div className="flex flex-col items-center justify-center pb-1">
+                                    <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-slate-200 overflow-hidden shadow-md group mb-2">
+                                        {uploadingImage ? (
+                                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs font-bold gap-1 z-20">
+                                                <span className="loading loading-spinner loading-xs text-white"></span>
+                                                <span>กำลังอัปโหลด...</span>
+                                            </div>
+                                        ) : null}
+                                        {form.profileImage && (form.profileImage.startsWith("http") || form.profileImage.startsWith("/")) ? (
+                                            <img src={form.profileImage} alt="Officer Avatar" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-white font-black text-3xl">
+                                                {form.fullName ? form.fullName.charAt(0) : "เจ้า"}
+                                            </span>
+                                        )}
+                                        <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[11px] font-bold z-10 gap-1">
+                                            <i className="fa-solid fa-camera text-lg"></i>
+                                            <span>เปลี่ยนรูป</span>
+                                            <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingImage} className="hidden" />
+                                        </label>
+                                    </div>
+                                    <label className="cursor-pointer text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5">
+                                        <i className="fa-solid fa-cloud-arrow-up"></i>
+                                        {uploadingImage ? "กำลังอัปโหลด..." : "📷 อัปโหลดรูปโปรไฟล์เจ้าหน้าที่"}
+                                        <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingImage} className="hidden" />
+                                    </label>
+                                </div>
+
                                 <div>
                                     <label className="font-bold text-slate-700 block mb-1.5 text-sm">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
                                     <input
