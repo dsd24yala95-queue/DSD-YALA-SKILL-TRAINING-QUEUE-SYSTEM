@@ -38,14 +38,10 @@ export const authOptions: AuthOptions = {
                     throw new Error("บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Super Admin");
                 }
 
-                // สำหรับสมาชิกทั่วไป (role === "member") สามารถเข้าสู่ระบบด้วยเบอร์โทรศัพท์อย่างเดียวได้
-                // สำหรับเจ้าหน้าที่/ผู้ดูแลระบบ (role !== "member") ต้องตรวจสอบรหัสผ่าน
-                if (user.role !== "member") {
-                    if (!credentials?.password) {
-                        throw new Error("กรุณากรอกรหัสผ่านสำหรับเจ้าหน้าที่");
-                    }
+                // สมาชิกทั่วไป (role === "member"): เข้าสู่ระบบด้วยเบอร์โทรศัพท์อย่างเดียว ไม่ต้องตรวจรหัสผ่าน
+                // เจ้าหน้าที่/ผู้ดูแลระบบ (role !== "member"): ตรวจสอบรหัสผ่านเฉพาะเมื่อล็อกอินผ่านหน้าแอดมิน
+                if (user.role !== "member" && credentials?.password) {
                     const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-
                     if (!isValid) {
                         throw new Error("รหัสผ่านไม่ถูกต้อง");
                     }
