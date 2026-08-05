@@ -133,7 +133,10 @@ export default function AdminOfficersPage() {
         { key: "manage_walkin", label: "🚹 ลงทะเบียน Walk-in หน้างาน", category: "ระบบคิว" },
         { key: "manage_training", label: "🎓 จัดการหลักสูตรฝึกอบรม", category: "ฝึกอบรม" },
         { key: "manage_testing", label: "📋 จัดการสาขาทดสอบมาตรฐาน", category: "ทดสอบมาตรฐาน" },
-        { key: "manage_members", label: "👥 จัดการข้อมูลสมาชิก", category: "สมาชิก" },
+        { key: "manage_members", label: "👥 ดูและค้นหารายชื่อสมาชิก", category: "สมาชิก" },
+        { key: "add_member", label: "➕ เพิ่ม/ลงทะเบียนสมาชิกใหม่", category: "สมาชิก" },
+        { key: "edit_member", label: "✏️ แก้ไขข้อมูลสมาชิก", category: "สมาชิก" },
+        { key: "delete_member", label: "🗑️ ลบสมาชิก / เมมเบอร์", category: "สมาชิก" },
         { key: "manage_news", label: "📰 จัดการข่าวสารและประกาศ", category: "ประชาสัมพันธ์" },
         { key: "view_reports", label: "📊 ดูรายงานและส่งออกข้อมูล", category: "รายงาน" },
         { key: "manage_officers", label: "🛡️ จัดการบัญชีและสิทธิ์เจ้าหน้าที่", category: "ผู้ดูแลระบบ" },
@@ -151,7 +154,7 @@ export default function AdminOfficersPage() {
                 setSelectedPermissions(ALL_MODULAR_PERMISSIONS.map((p) => p.key));
                 return;
             }
-            if (roles.includes("officer_registrar")) defaultPerms.push("manage_walkin", "manage_members");
+            if (roles.includes("officer_registrar")) defaultPerms.push("manage_walkin", "manage_members", "add_member", "edit_member", "delete_member");
             if (roles.includes("officer_training")) defaultPerms.push("manage_training", "view_reports", "manage_news");
             if (roles.includes("officer_test")) defaultPerms.push("manage_testing", "view_reports", "manage_news");
             setSelectedPermissions(Array.from(new Set(defaultPerms)));
@@ -907,7 +910,7 @@ export default function AdminOfficersPage() {
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedPermissions(["manage_queue", "manage_walkin", "manage_members"])}
+                                        onClick={() => setSelectedPermissions(["manage_queue", "manage_walkin", "manage_members", "add_member", "edit_member", "delete_member"])}
                                         className="p-2.5 rounded-xl border border-teal-200 bg-teal-50/50 hover:bg-teal-100/60 text-teal-800 text-[11px] font-bold text-left transition-all"
                                     >
                                         🚹 นายทะเบียน
