@@ -113,19 +113,33 @@ export default function AdminDashboard() {
 
     return (
         <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
-            {/* Topbar */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+            {/* Dashboard Sub-Banner */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-slate-200/60 gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">แดชบอร์ดจัดการระบบ</h1>
-                    <p className="text-sm font-semibold text-slate-500 mt-1">ภาพรวมสถิติการใช้งาน และการวิเคราะห์กลุ่มเป้าหมาย สพร.24 ยะลา (DSD 50-Field Schema)</p>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
+                        <span>ภาพรวมสถิติระบบคิว & การวิเคราะห์กลุ่มเป้าหมาย</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold">
+                            DSD 50-Field Schema
+                        </span>
+                    </h2>
+                    <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
+                        สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา (สพร.24 ยะลา) — ข้อมูลอัปเดตแบบเรียลไทม์
+                    </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="px-4.5 py-2.5 bg-white rounded-2xl border border-slate-100 text-sm font-bold text-slate-600 shadow-sm flex items-center gap-2">
-                        <i className="fa-regular fa-clock text-blue-500"></i>
-                        {time || "--:--"}
-                    </div>
-                    <Link href="/admin/queue" className="w-10 h-10 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 shadow-sm transition-all text-base">
+                <div className="flex items-center gap-2.5 shrink-0">
+                    <Link
+                        href="/admin/queue"
+                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
+                    >
                         <i className="fa-solid fa-list-check"></i>
+                        <span>จัดการคิวประจำวัน</span>
+                    </Link>
+                    <Link
+                        href="/admin/walkin"
+                        className="px-4 py-2.5 bg-white border border-slate-200/80 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2"
+                    >
+                        <i className="fa-solid fa-user-plus text-indigo-500"></i>
+                        <span>Walk-in</span>
                     </Link>
                 </div>
             </div>
