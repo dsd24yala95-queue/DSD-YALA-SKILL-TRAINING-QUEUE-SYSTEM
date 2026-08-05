@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
-import { STAFF_ROLES } from "@/lib/auth-guard";
+import { STAFF_ROLES, hasStaffPermission } from "@/lib/auth-guard";
 
 export async function GET(req: Request) {
     try {
@@ -86,7 +86,7 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: "Missing or invalid user id" }, { status: 400 });
         }
 
-        const isStaff = STAFF_ROLES.includes(session.user.role);
+        const isStaff = hasStaffPermission(session.user.role);
         const isSelf = session.user.id === id;
 
         if (!isStaff && !isSelf) {
@@ -134,7 +134,7 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !session.user || !STAFF_ROLES.includes(session.user.role)) {
+        if (!session || !session.user || !hasStaffPermission(session.user.role)) {
             return NextResponse.json({ error: "Forbidden — เฉพาะเจ้าหน้าที่ที่มีสิทธิ์ลบข้อมูลสมาชิก" }, { status: 403 });
         }
 

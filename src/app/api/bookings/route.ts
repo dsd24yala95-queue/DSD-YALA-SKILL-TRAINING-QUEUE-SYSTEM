@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
-import { STAFF_ROLES } from "@/lib/auth-guard";
+import { STAFF_ROLES, hasStaffPermission } from "@/lib/auth-guard";
 
 export async function GET(req: Request) {
     try {
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "กรุณาระบุข้อมูลหลักสูตร/สาขาให้ครบถ้วน" }, { status: 400 });
         }
 
-        const isStaff = STAFF_ROLES.includes(session.user.role);
+        const isStaff = hasStaffPermission(session.user.role);
         if (!isStaff && session.user.id !== userId) {
             return NextResponse.json({ error: "Forbidden — คุณสามารถจองคิวได้เฉพาะบัญชีของคุณเองเท่านั้น" }, { status: 403 });
         }
@@ -228,7 +228,7 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
         }
 
-        const isStaff = STAFF_ROLES.includes(session.user.role);
+        const isStaff = hasStaffPermission(session.user.role);
 
         // Sanitize update data
         const updateData: any = {};
@@ -379,7 +379,7 @@ export async function DELETE(req: Request) {
         const id = searchParams.get("id");
         if (!id) return NextResponse.json({ error: "Missing booking id" }, { status: 400 });
 
-        const isStaff = STAFF_ROLES.includes(session.user.role);
+        const isStaff = hasStaffPermission(session.user.role);
         const existing = await prisma.queueBooking.findUnique({ where: { id } });
 
         if (!existing) {

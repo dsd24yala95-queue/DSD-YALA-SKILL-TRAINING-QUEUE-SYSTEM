@@ -194,15 +194,16 @@ export default function AdminMembersPage() {
         setSaving(true);
         try {
             const res = await fetch(`/api/users?id=${deleteMember.id}`, { method: "DELETE" });
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
                 toast.success("ลบสมาชิกสำเร็จ");
                 setDeleteMember(null);
                 loadMembers();
             } else {
-                toast.error("เกิดข้อผิดพลาดในการลบ");
+                toast.error(data.error || "เกิดข้อผิดพลาดในการลบข้อมูล");
             }
-        } catch (e) {
-            toast.error("เกิดข้อผิดพลาดในการลบ");
+        } catch (e: any) {
+            toast.error(e?.message || "เกิดข้อผิดพลาดในการลบข้อมูล");
         } finally {
             setSaving(false);
         }
