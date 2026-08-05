@@ -47,6 +47,71 @@ export async function pushMessage(lineUserId: string, messageType: string, data:
     }
 }
 
+export async function getLineQuotaInfo() {
+    const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+    if (!token) {
+        return {
+            success: false,
+            type: "limited",
+            totalQuota: 200,
+            usedQuota: 0,
+            remainingQuota: 200,
+            hasToken: false,
+        };
+    }
+
+    try {
+        const [quotaRes, usageRes] = await Promise.all([
+            fetch("https://api.line.me/v2/bot/message/quota", {
+                headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch("https://api.line.me/v2/bot/message/quota/consumption", {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+        ]);
+
+        let totalQuota = 200;
+        let type = "limited";
+        if (quotaRes.ok) {
+            const quotaData = await quotaRes.json();
+            type = quotaData.type || "limited";
+            if (quotaData.type === "limited") {
+                totalQuota = quotaData.value || 200;
+            } else if (quotaData.type === "none") {
+                totalQuota = 999999;
+            }
+        }
+
+        let usedQuota = 0;
+        if (usageRes.ok) {
+            const usageData = await usageRes.json();
+            usedQuota = usageData.totalUsage || 0;
+        }
+
+        const remainingQuota = Math.max(0, totalQuota - usedQuota);
+
+        return {
+            success: true,
+            type,
+            totalQuota,
+            usedQuota,
+            remainingQuota,
+            hasToken: true,
+        };
+    } catch (error: any) {
+        console.error("Failed to fetch LINE Quota:", error);
+        return {
+            success: false,
+            type: "limited",
+            totalQuota: 200,
+            usedQuota: 0,
+            remainingQuota: 200,
+            hasToken: true,
+            error: error.message,
+        };
+    }
+}
+
 export function generateMessageTemplate(messageType: string, data: any) {
     const appUrl = process.env.NEXTAUTH_URL || "https://dsd-yala-skill-training-queue-system.onrender.com";
 

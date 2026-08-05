@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { pushMessage, generateMessageTemplate } from "@/lib/services/line-service";
+import { pushMessage, generateMessageTemplate, getLineQuotaInfo } from "@/lib/services/line-service";
 
 // ===== GET: Fetch LINE OA Dashboard Data =====
 export async function GET() {
@@ -12,6 +12,9 @@ export async function GET() {
         });
         const unlinkedMembers = totalMembers - linkedMembers;
         const linkRate = totalMembers > 0 ? Math.round((linkedMembers / totalMembers) * 100) : 0;
+
+        // Fetch LINE quota info directly from LINE API
+        const quotaInfo = await getLineQuotaInfo();
 
         // 2. Linked users list
         const linkedUsers = await prisma.user.findMany({
@@ -76,6 +79,7 @@ export async function GET() {
 
         return NextResponse.json({
             stats: { totalMembers, linkedMembers, unlinkedMembers, linkRate },
+            quotaInfo,
             linkedUsers,
             unlinkedUsers,
             notifications: notificationLogs,

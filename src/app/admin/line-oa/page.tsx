@@ -62,12 +62,29 @@ const BROADCAST_TEMPLATES = [
     { value: "general_alert", label: "🔔 แจ้งเตือนทั่วไป", desc: "Flex Card แจ้งเตือนเรื่องทั่วไป" },
 ];
 
+interface QuotaInfo {
+    success: boolean;
+    type: string;
+    totalQuota: number;
+    usedQuota: number;
+    remainingQuota: number;
+    hasToken: boolean;
+}
+
 export default function AdminLineOAPage() {
     const [activeTab, setActiveTab] = useState<TabId>("dashboard");
     const [loading, setLoading] = useState(true);
 
     // ===== Dashboard State =====
     const [stats, setStats] = useState<LineStats>({ totalMembers: 0, linkedMembers: 0, unlinkedMembers: 0, linkRate: 0 });
+    const [quota, setQuota] = useState<QuotaInfo>({
+        success: true,
+        type: "limited",
+        totalQuota: 200,
+        usedQuota: 0,
+        remainingQuota: 200,
+        hasToken: true,
+    });
     const [linkedUsers, setLinkedUsers] = useState<LinkedUser[]>([]);
     const [unlinkedUsers, setUnlinkedUsers] = useState<LinkedUser[]>([]);
     const [memberFilter, setMemberFilter] = useState<"linked" | "unlinked" | "all">("all");
@@ -103,6 +120,9 @@ export default function AdminLineOAPage() {
             if (!res.ok) throw new Error("Failed to load LINE OA data");
             const data = await res.json();
             setStats(data.stats || { totalMembers: 0, linkedMembers: 0, unlinkedMembers: 0, linkRate: 0 });
+            if (data.quotaInfo) {
+                setQuota(data.quotaInfo);
+            }
             setLinkedUsers(data.linkedUsers || []);
             setUnlinkedUsers(data.unlinkedUsers || []);
             setLogs(data.notifications || []);
@@ -323,14 +343,28 @@ export default function AdminLineOAPage() {
                                 </div>
                             </div>
 
-                            {/* LINE Bot Info */}
-                            <div className="bg-gradient-to-r from-[#06C755]/10 to-green-50 rounded-2xl border border-green-200/60 p-5 mb-6">
-                                <h3 className="text-sm font-black text-green-800 mb-3 flex items-center gap-2">
-                                    <i className="fa-brands fa-line text-[#06C755]"></i> ข้อมูล LINE Bot
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* LINE Bot Info & Quota Counter */}
+                            <div className="bg-gradient-to-r from-[#06C755]/10 via-green-50 to-emerald-50 rounded-2xl border border-green-200/80 p-5 mb-6 shadow-sm">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-green-200/60">
+                                    <h3 className="text-sm font-black text-green-900 flex items-center gap-2">
+                                        <i className="fa-brands fa-line text-[#06C755] text-lg"></i>
+                                        สถานะ LINE Bot & Broadcast Quota (Messaging API)
+                                    </h3>
+                                    <a
+                                        href="https://manager.line.biz/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[11px] font-bold text-green-700 hover:text-green-800 bg-white/80 hover:bg-white px-3 py-1.5 rounded-xl border border-green-300 transition-all flex items-center gap-1.5"
+                                    >
+                                        <span>ดูใน LINE Official Account Manager</span>
+                                        <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                    </a>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {/* Webhook URL */}
                                     <div>
-                                        <label className="text-[10px] font-bold text-green-700 block mb-0.5">Webhook URL</label>
+                                        <label className="text-[10px] font-bold text-green-800 block mb-1">Webhook URL สำหรับ LINE Developers</label>
                                         <div className="flex gap-2">
                                             <input readOnly value={webhookUrl} className="flex-1 px-3 py-2 rounded-xl bg-white border border-green-200 text-xs text-slate-700 font-mono" />
                                             <button onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.success("คัดลอก Webhook URL แล้ว!"); }}
@@ -339,12 +373,50 @@ export default function AdminLineOAPage() {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* Token Status */}
                                     <div>
-                                        <label className="text-[10px] font-bold text-green-700 block mb-0.5">สถานะ Token</label>
-                                        <div className="px-3 py-2 rounded-xl bg-white border border-green-200 text-xs text-green-700 font-bold flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                            Token ถูกตั้งค่าแล้ว (Active)
+                                        <label className="text-[10px] font-bold text-green-800 block mb-1">สถานะการเชื่อมต่อ Messaging API</label>
+                                        <div className="px-3 py-2 rounded-xl bg-white border border-green-200 text-xs text-green-800 font-bold flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                <span>{quota.hasToken ? "LINE Token Active" : "ยังไม่ได้ตั้งค่า Token"}</span>
+                                            </div>
+                                            <span className="text-[10px] font-mono text-slate-400">v2/bot</span>
                                         </div>
+                                    </div>
+
+                                    {/* Live Quota Counter Card */}
+                                    <div className="bg-white p-3.5 rounded-xl border border-green-200/90 shadow-xs">
+                                        <div className="flex items-center justify-between text-xs mb-1">
+                                            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                                                <i className="fa-solid fa-bullhorn text-[#06C755]"></i>
+                                                โควต้า Broadcast เดือนนี้
+                                            </span>
+                                            <span className="font-mono font-bold text-green-700 text-xs">
+                                                เหลือ {quota.remainingQuota.toLocaleString()} ข้อความ
+                                            </span>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        {(() => {
+                                            const pct = quota.totalQuota > 0 ? Math.min(100, Math.round((quota.usedQuota / quota.totalQuota) * 100)) : 0;
+                                            const isHigh = pct >= 80;
+                                            return (
+                                                <div className="mt-2">
+                                                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                        <div
+                                                            className={`h-full transition-all duration-700 ${isHigh ? "bg-amber-500" : "bg-[#06C755]"}`}
+                                                            style={{ width: `${pct}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1 font-medium">
+                                                        <span>ใช้ไปแล้ว {quota.usedQuota.toLocaleString()} / {quota.totalQuota.toLocaleString()}</span>
+                                                        <span className={isHigh ? "text-amber-600 font-bold" : "text-green-600 font-bold"}>{pct}%</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
@@ -444,10 +516,15 @@ export default function AdminLineOAPage() {
                         <motion.div key="broadcast" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Compose Area */}
-                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
-                                        <i className="fa-solid fa-bullhorn text-[#06C755]"></i> เขียนข้อความ Broadcast
-                                    </h3>
+                                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                        <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                                            <i className="fa-solid fa-bullhorn text-[#06C755]"></i> เขียนข้อความ Broadcast
+                                        </h3>
+                                        <div className="px-3 py-1.5 rounded-xl bg-green-50 border border-green-200/80 text-[11px] font-bold text-green-700 flex items-center gap-1.5">
+                                            <i className="fa-solid fa-calculator text-[10px]"></i>
+                                            <span>โควต้าเดือนนี้เหลือ: <strong className="text-green-800 font-mono text-xs">{quota.remainingQuota.toLocaleString()}</strong> ข้อความ</span>
+                                        </div>
+                                    </div>
 
                                     {/* Target */}
                                     <div className="mb-4">
