@@ -3,6 +3,16 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+// ─── Session Policy ──────────────────────────────────────────────────────────
+// • maxAge  = 1 ชั่วโมง  (token หมดอายุถ้าไม่ active)
+// • NO updateAge          (ไม่ต่ออายุอัตโนมัติ — หมด 1 ชั่วโมงต้อง login ใหม่)
+// • loginAt timestamp     (บังคับ re-login หลัง 8 ชั่วโมง นับจากครั้งแรกที่ login)
+// • Cookie ไม่มี maxAge  (ปิด Browser → cookie หาย → ต้อง login ใหม่ทุกครั้ง)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_SESSION_SECONDS = 1 * 60 * 60;        // 1 ชั่วโมง
+const FORCE_RELOGIN_SECONDS = 8 * 60 * 60;      // 8 ชั่วโมง (1 วันทำงาน)
+
 export const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
@@ -48,16 +58,34 @@ export const authOptions: AuthOptions = {
     ],
     callbacks: {
         async jwt({ token, user }) {
+            // เมื่อ login ครั้งแรก — บันทึกเวลา login ลงใน token
             if (user) {
                 token.id = user.id;
                 token.role = (user as any).role;
                 token.department = (user as any).department;
                 token.phoneNumber = (user as any).phoneNumber;
                 token.mustChangePassword = (user as any).mustChangePassword;
+                token.loginAt = Math.floor(Date.now() / 1000); // Unix timestamp (วินาที)
             }
+
+            // Force re-login: ถ้า login มานานเกิน FORCE_RELOGIN_SECONDS → ยกเลิก token
+            if (token.loginAt) {
+                const now = Math.floor(Date.now() / 1000);
+                const ageSeconds = now - (token.loginAt as number);
+                if (ageSeconds > FORCE_RELOGIN_SECONDS) {
+                    // คืน null จะทำให้ NextAuth ถือว่า session ไม่ valid → redirect login
+                    return { ...token, expired: true };
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {
+            // ถ้า token ถูกบังคับหมดอายุ → คืน session ว่างเพื่อให้ middleware จับได้
+            if ((token as any).expired) {
+                return { ...session, user: undefined as any, expires: new Date(0).toISOString() };
+            }
+
             if (session.user) {
                 (session.user as any).id = token.id as string;
                 (session.user as any).role = token.role as string;
@@ -73,21 +101,23 @@ export const authOptions: AuthOptions = {
     },
     session: {
         strategy: "jwt",
-        maxAge: 1 * 60 * 60, // 1 Hour (3,600 seconds)
-        updateAge: 15 * 60,  // Auto sliding refresh every 15 minutes while active
+        maxAge: MAX_SESSION_SECONDS,
+        // ❌ ไม่มี updateAge → token ไม่ต่ออายุอัตโนมัติ
     },
     jwt: {
-        maxAge: 1 * 60 * 60, // 1 Hour
+        maxAge: MAX_SESSION_SECONDS,
     },
     cookies: {
         sessionToken: {
-            name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+            name: process.env.NODE_ENV === "production"
+                ? "__Secure-next-auth.session-token"
+                : "next-auth.session-token",
             options: {
                 httpOnly: true,
                 sameSite: "lax",
                 path: "/",
                 secure: process.env.NODE_ENV === "production",
-                maxAge: 1 * 60 * 60, // 1 Hour Cookie Expiry
+                // ❌ ไม่มี maxAge → เป็น Session Cookie (ปิด Browser แล้วหาย)
             },
         },
     },
