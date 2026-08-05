@@ -131,6 +131,10 @@ export default function SkillTestingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {branches.map((branch, index) => {
                             const isSubmittingThis = bookingId === branch.id;
+                            const max = branch.maxQueue || 20;
+                            const current = branch.currentQueue || 0;
+                            const percent = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
+                            const full = current >= max && max > 0;
 
                             return (
                                 <motion.div
@@ -147,9 +151,15 @@ export default function SkillTestingPage() {
                                                 <i className="fa-solid fa-layer-group text-[10px]"></i>
                                                 ระดับมาตรฐาน {branch.levels || "ระดับ 1"}
                                             </span>
-                                            <span className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-extrabold border border-blue-500/30">
-                                                เปิดรับสมัคร
-                                            </span>
+                                            {full ? (
+                                                <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-extrabold border border-rose-500/30">
+                                                    เต็มแล้ว
+                                                </span>
+                                            ) : (
+                                                <span className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-extrabold border border-blue-500/30">
+                                                    เปิดรับสมัคร
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Branch Icon & Name */}
@@ -168,22 +178,40 @@ export default function SkillTestingPage() {
                                             </div>
                                         </div>
 
-                                        {/* Max Queue Info */}
-                                        <div className="bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700/50 mb-5 flex items-center justify-between text-xs">
-                                            <span className="text-slate-400 font-bold">โควต้ารับสมัครต่อรอบ:</span>
-                                            <span className="text-blue-400 font-extrabold">{branch.maxQueue || 20} คน/รอบ</span>
+                                        {/* Quota Progress Info */}
+                                        <div className="bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700/50 mb-5">
+                                            <div className="flex justify-between text-xs font-bold mb-1.5">
+                                                <span className="text-slate-400">โควตารับสมัครต่อรอบ:</span>
+                                                <span className={full ? "text-rose-400 font-extrabold" : "text-blue-400 font-extrabold"}>
+                                                    {current > 0 ? `${current} / ${max} คน (${percent}%)` : `${max} คน/รอบ`}
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-500 ${
+                                                        full ? "bg-rose-500" : "bg-gradient-to-r from-blue-500 to-indigo-400"
+                                                    }`}
+                                                    style={{ width: `${current > 0 ? percent : 100}%` }}
+                                                ></div>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Action Button */}
                                     <button
                                         type="button"
-                                        disabled={isSubmittingThis}
+                                        disabled={full || isSubmittingThis}
                                         onClick={() => handleBooking(branch.id, branch.branchName)}
-                                        className="w-full py-3.5 rounded-2xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-95"
+                                        className={`w-full py-3.5 rounded-2xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
+                                            full
+                                                ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                                                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20 hover:shadow-blue-500/30"
+                                        }`}
                                     >
                                         {isSubmittingThis ? (
                                             <><span className="loading loading-spinner loading-xs"></span> กำลังส่งคำขอ...</>
+                                        ) : full ? (
+                                            <><i className="fa-solid fa-lock"></i> ที่นั่งเต็มแล้ว</>
                                         ) : (
                                             <><i className="fa-solid fa-paper-plane"></i> จองคิว / สมัครทดสอบมาตรฐาน</>
                                         )}
