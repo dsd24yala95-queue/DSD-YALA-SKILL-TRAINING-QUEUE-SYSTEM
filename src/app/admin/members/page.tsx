@@ -55,6 +55,9 @@ export default function AdminMembersPage() {
     const [selected, setSelected] = useState<Member | null>(null);
     const [editMember, setEditMember] = useState<Member | null>(null);
     const [deleteMember, setDeleteMember] = useState<Member | null>(null);
+    const [resetPasswordMember, setResetPasswordMember] = useState<Member | null>(null);
+    const [newPassword, setNewPassword] = useState("");
+    const [resettingPassword, setResettingPassword] = useState(false);
     const [saving, setSaving] = useState(false);
     const [walkInModalOpen, setWalkInModalOpen] = useState(false);
     const [walkInMode, setWalkInMode] = useState<"quick" | "full">("quick");
@@ -67,6 +70,38 @@ export default function AdminMembersPage() {
         email: "",
         education: "ปริญญาตรี",
     });
+
+    const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!resetPasswordMember) return;
+        if (!newPassword || newPassword.length < 6) {
+            toast.error("กรุณากรอกรหัสผ่านใหม่อย่างน้อย 6 ตัวอักษร");
+            return;
+        }
+
+        setResettingPassword(true);
+        try {
+            const res = await fetch("/api/users", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: resetPasswordMember.id,
+                    password: newPassword,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการตั้งรหัสผ่านใหม่");
+
+            toast.success(`ตั้งรหัสผ่านใหม่ให้คุณ ${formatName(resetPasswordMember)} สำเร็จแล้ว`);
+            setResetPasswordMember(null);
+            setNewPassword("");
+        } catch (err: any) {
+            toast.error(err.message || "ไม่สามารถตั้งรหัสผ่านใหม่ได้");
+        } finally {
+            setResettingPassword(false);
+        }
+    };
 
     const handleWalkInFullSave = async (profileJsonStr: string) => {
         try {
@@ -404,6 +439,9 @@ export default function AdminMembersPage() {
                                                 <button onClick={() => setEditMember(m)} className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition-all text-sm shadow-sm" title="แก้ไข">
                                                     <i className="fa-solid fa-pen-to-square"></i>
                                                 </button>
+                                                <button onClick={() => { setResetPasswordMember(m); setNewPassword(m.reg_telephone || "123456"); }} className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center transition-all text-sm shadow-sm" title="ตั้งรหัสผ่านใหม่">
+                                                    <i className="fa-solid fa-key"></i>
+                                                </button>
                                                 <button onClick={() => setDeleteMember(m)} className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-all text-sm shadow-sm" title="ลบ">
                                                     <i className="fa-solid fa-trash"></i>
                                                 </button>
@@ -680,6 +718,81 @@ export default function AdminMembersPage() {
                                 </div>
                             </form>
                         )}
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Reset Password Modal */}
+            {resetPasswordMember && (
+                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                                    <i className="fa-solid fa-key"></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800">ตั้งรหัสผ่านใหม่ (Reset Password)</h3>
+                                    <p className="text-xs text-slate-500 font-medium">สมาชิก: {formatName(resetPasswordMember)}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setResetPasswordMember(null)} className="text-slate-400 hover:text-slate-600 p-1">
+                                <i className="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleResetPasswordSubmit} className="space-y-4 mt-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 block mb-1">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label>
+                                <input
+                                    type="text"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="กรอกรหัสผ่านใหม่"
+                                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                />
+                            </div>
+
+                            {/* Quick Presets */}
+                            <div className="space-y-2">
+                                <span className="text-[11px] font-bold text-slate-500 block">⚡ ตัวเลือกด่วน:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {resetPasswordMember.reg_telephone && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewPassword(resetPasswordMember.reg_telephone || "")}
+                                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+                                        >
+                                            📱 ใช้เบอร์โทรศัพท์ ({resetPasswordMember.reg_telephone})
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewPassword("123456")}
+                                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+                                    >
+                                        🔢 123456
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setResetPasswordMember(null)}
+                                    className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={resettingPassword}
+                                    className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-md shadow-amber-500/20"
+                                >
+                                    {resettingPassword ? "กำลังบันทึก..." : "🔑 บันทึกรหัสผ่านใหม่"}
+                                </button>
+                            </div>
+                        </form>
                     </motion.div>
                 </div>
             )}

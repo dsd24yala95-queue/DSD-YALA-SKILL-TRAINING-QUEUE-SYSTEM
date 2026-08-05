@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { STAFF_ROLES, hasStaffPermission } from "@/lib/auth-guard";
+import bcrypt from "bcryptjs";
 
 export async function GET(req: Request) {
     try {
@@ -80,7 +81,7 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json();
-        const { id, fullName, phoneNumber, email, profileJson, role, status, department } = body;
+        const { id, fullName, phoneNumber, email, profileJson, role, status, department, password } = body;
 
         if (!id || typeof id !== "string") {
             return NextResponse.json({ error: "Missing or invalid user id" }, { status: 400 });
@@ -98,6 +99,13 @@ export async function PUT(req: Request) {
         if (phoneNumber !== undefined) updateData.phoneNumber = String(phoneNumber).replace(/[^0-9]/g, "");
         if (email !== undefined) updateData.email = email ? String(email).trim().toLowerCase() : null;
         if (profileJson !== undefined) updateData.profileJson = typeof profileJson === "string" ? profileJson : JSON.stringify(profileJson);
+
+        if (password) {
+            if (typeof password !== "string" || password.length < 6) {
+                return NextResponse.json({ error: "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร" }, { status: 400 });
+            }
+            updateData.passwordHash = await bcrypt.hash(password, 10);
+        }
 
         // Sensitive fields can only be modified by Super Admin
         if (session.user.role === "admin") {
