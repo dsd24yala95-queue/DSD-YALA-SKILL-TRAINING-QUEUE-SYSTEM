@@ -10,7 +10,6 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
-    const [password, setPassword] = useState("123456"); // Default/hidden for now if they only use phone
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
@@ -37,7 +36,6 @@ export default function LoginPage() {
             const res = await signIn("credentials", {
                 redirect: false,
                 phoneNumber: phone,
-                password: password,
             });
 
             if (res?.error) {
