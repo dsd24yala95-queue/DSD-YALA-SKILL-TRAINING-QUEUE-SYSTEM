@@ -516,6 +516,7 @@ export default function AdminLineOAPage() {
                         <motion.div key="broadcast" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Compose Area */}
+                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
                                     <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                                         <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                                             <i className="fa-solid fa-bullhorn text-[#06C755]"></i> เขียนข้อความ Broadcast
