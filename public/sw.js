@@ -36,16 +36,26 @@ workbox.routing.registerRoute(
   })
 );
 
-// Cache local API calls with Network First strategy
+// Cache local API calls with Network First strategy (max 5 mins TTL to prevent stale queues)
 workbox.routing.registerRoute(
   ({ url }) => url.pathname.startsWith('/api/'),
   new workbox.strategies.NetworkFirst({
     cacheName: 'api-cache',
     plugins: [
-      new workbox.expiration.ExpirationPlugin({ maxEntries: 30 }),
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 30,
+        maxAgeSeconds: 5 * 60, // 5 minutes max age for API responses
+      }),
     ],
   })
 );
+
+// Listen for message from client to skip waiting
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 // Manual caching of essential shell and offline fallback
 self.addEventListener('install', (event) => {

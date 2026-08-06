@@ -35,10 +35,19 @@ export default function IosPwaGuideModal() {
             return;
         }
 
-        // Show iOS PWA installation guide if on iOS Safari, not standalone, and not dismissed recently
+        // Show iOS PWA installation guide if on iOS Safari, not standalone, and not dismissed within last 7 days
         if (isAppleDevice && !inStandaloneMode && !isLine) {
-            const dismissed = localStorage.getItem("dsd_ios_pwa_guide_dismissed");
-            if (!dismissed) {
+            const dismissedStr = localStorage.getItem("dsd_ios_pwa_guide_dismissed");
+            let shouldShow = true;
+            if (dismissedStr) {
+                const dismissedDate = new Date(dismissedStr).getTime();
+                const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+                if (Date.now() - dismissedDate < sevenDaysMs) {
+                    shouldShow = false;
+                }
+            }
+
+            if (shouldShow) {
                 // Delay showing by 2.5 seconds so user isn't immediately spammed
                 const timer = setTimeout(() => setShowBanner(true), 2500);
                 return () => clearTimeout(timer);

@@ -1,8 +1,12 @@
 {
+  "id": "/",
   "name": "DSD YALA SKILL QUEUE SYSTEM",
   "short_name": "DSD YALA",
   "description": "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา - ระบบรับสมัครและจองคิวพัฒนาฝีมือแรงงาน",
   "start_url": "/",
+  "scope": "/",
+  "lang": "th",
+  "dir": "ltr",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0B3C74",
