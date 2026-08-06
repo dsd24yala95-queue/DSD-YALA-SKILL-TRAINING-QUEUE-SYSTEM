@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import OfflineDetector from "@/components/OfflineDetector";
 import PwaRegistrar from "@/components/PwaRegistrar";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import IosPwaGuideModal from "@/components/IosPwaGuideModal";
 import LayoutContent from "@/components/LayoutContent";
 import AuthProviderWrapper from "@/components/AuthProviderWrapper";
@@ -69,6 +70,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col bg-white text-slate-900 font-sans selection:bg-[#2563EB]/30">
         <PwaRegistrar />
+        <PwaInstallPrompt />
         <IosPwaGuideModal />
         <OfflineDetector />
         <AuthProviderWrapper>

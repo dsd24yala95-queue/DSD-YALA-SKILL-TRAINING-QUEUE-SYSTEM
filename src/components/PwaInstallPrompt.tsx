@@ -30,27 +30,14 @@ export default function PwaInstallPrompt() {
       }
     }
 
-    // 3. Detect Platform
-    const ua = navigator.userAgent;
-    const isIos = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-    const isSafari = /Safari/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua);
-
-    if (isIos) {
-      setPlatform("ios");
-      // For iOS, show prompt automatically if not standalone
-      // Delay showing to not startle the user immediately
-      const timer = setTimeout(() => setShowPrompt(true), 3000);
-      return () => clearTimeout(timer);
-    }
-
-    // 4. Android/Chrome Custom Prompt Interceptor
+    // 3. Android/Chrome Custom Prompt Interceptor
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setPlatform("android");
       
-      // Delay prompt display slightly
-      setTimeout(() => setShowPrompt(true), 2000);
+      // Delay prompt display slightly (2.5s)
+      setTimeout(() => setShowPrompt(true), 2500);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
