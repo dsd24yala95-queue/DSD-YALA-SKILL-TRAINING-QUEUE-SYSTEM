@@ -315,3 +315,16 @@ body {
 .focus-ring:focus-visible {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
 }
+
+/* Print Page Isolation */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  /* Hide main background pages, headers, sidebars, and overlays when printing */
+  main, header, nav, aside, footer {
+    display: none !important;
+  }
+}
