@@ -86,53 +86,48 @@ export default function Home() {
                     {/* Left Content */}
                     <div className="w-full md:w-[55%] pt-10 md:pt-0 flex flex-col justify-center text-left">
                         {/* Tag */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-bold text-white mb-6 w-max backdrop-blur-sm shadow-lg shadow-black/20">
-                            <div className="w-2 h-2 bg-[#FBBF24] rounded-full shadow-[0_0_8px_#fbbf24]"></div>
-                            DSD YALA SKILL QUEUE SYSTEM
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-bold text-white mb-6 w-max backdrop-blur-md shadow-lg shadow-black/20">
+                            <div className="w-2.5 h-2.5 bg-[#FBBF24] rounded-full shadow-[0_0_8px_#fbbf24]"></div>
+                            ยินดีต้อนรับสู่ระบบ
                         </div>
 
                         {/* Headings */}
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-2 drop-shadow-md">
+                        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-1 drop-shadow-md">
                             สถาบันพัฒนาฝีมือแรงงาน
                         </h1>
-                        <h2 className="text-5xl lg:text-7xl font-black text-[#3B82F6] mb-6 drop-shadow-lg">
-                            24 ยะลา
+                        <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black mb-6 drop-shadow-lg flex items-center gap-3">
+                            <span className="text-white">24</span>
+                            <span className="text-[#2563EB]">ยะลา</span>
                         </h2>
 
-                        <p className="text-sm md:text-base text-slate-300 mb-10 max-w-lg leading-relaxed drop-shadow">
-                            ระบบรับสมัครและจองคิวการพัฒนาฝีมือแรงงาน เพื่อยกระดับทักษะและมาตรฐานแรงงานไทยสู่ระดับสากลด้วยเทคโนโลยีดิจิทัลอัจฉริยะ
+                        <p className="text-xs sm:text-base text-slate-300 mb-8 max-w-lg leading-relaxed drop-shadow">
+                            ระบบรับสมัครและจองคิวการพัฒนาฝีมือแรงงาน เพื่อยกระดับทักษะและมาตรฐานแรงงานไทยสู่มาตรฐานสากล
                         </p>
 
-                        {/* Buttons */}
-                        <div className="flex flex-col gap-4 w-full max-w-md">
-                            <Link href="/testing" className="group relative flex items-center bg-slate-900/70 backdrop-blur-2xl border border-slate-700/60 hover:border-blue-500/60 text-white rounded-2xl overflow-hidden transition-all duration-300 shadow-xl hover:shadow-[0_0_30px_rgba(59,130,246,0.35)] hover:-translate-y-0.5">
-                                <div className="p-4 bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                                    <i className="fa-solid fa-clipboard-check text-2xl text-blue-100 group-hover:scale-110 transition-transform duration-300"></i>
+                        {/* Buttons matching Mockup Image 2 */}
+                        <div className="flex flex-col gap-3.5 w-full max-w-md">
+                            {/* Card 1: สมัครฝึกอบรม */}
+                            <Link href="/training" className="group relative flex items-center bg-gradient-to-r from-[#1D4ED8] to-[#1E40AF] hover:from-[#2563EB] hover:to-[#1D4ED8] text-white rounded-2xl p-3.5 sm:p-4 transition-all duration-300 shadow-xl shadow-blue-950/40 hover:-translate-y-0.5 border border-blue-400/30">
+                                <div className="w-12 h-12 rounded-xl bg-[#2563EB] text-white flex items-center justify-center text-xl shrink-0 shadow-md">
+                                    <i className="fa-solid fa-graduation-cap"></i>
                                 </div>
-                                <div className="px-6 py-4 flex-1 flex items-center justify-between">
-                                    <div className="text-left">
-                                        <div className="font-bold text-sm md:text-base flex items-center gap-2 text-white group-hover:text-blue-200 transition-colors">
-                                            ทดสอบมาตรฐานฝีมือ <span className="bg-red-500/90 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full leading-none uppercase shadow-sm shadow-red-500/50 animate-pulse">HOT</span>
-                                        </div>
-                                        <div className="text-[10px] md:text-xs text-slate-400 font-semibold tracking-wider uppercase mt-1">Skills Testing</div>
-                                    </div>
-                                    <i className="fa-solid fa-chevron-right text-slate-500 group-hover:text-blue-400 transition-all duration-300 group-hover:translate-x-1.5 text-lg"></i>
+                                <div className="ml-3.5 flex-1 text-left">
+                                    <h3 className="font-extrabold text-base sm:text-lg text-white leading-tight">สมัครฝึกอบรม</h3>
+                                    <p className="text-xs text-blue-200/80 font-medium mt-0.5">หลักสูตรพัฒนาฝีมือ</p>
                                 </div>
+                                <i className="fa-solid fa-chevron-right text-white/80 text-lg mr-2 group-hover:translate-x-1 transition-transform"></i>
                             </Link>
 
-                            <Link href="/training" className="group relative flex items-center bg-slate-900/70 backdrop-blur-2xl border border-slate-700/60 hover:border-emerald-500/60 text-white rounded-2xl overflow-hidden transition-all duration-300 shadow-xl hover:shadow-[0_0_30px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
-                                <div className="p-4 bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                                    <i className="fa-solid fa-graduation-cap text-2xl text-emerald-100 group-hover:scale-110 transition-transform duration-300"></i>
+                            {/* Card 2: ทดสอบมาตรฐานฝีมือ */}
+                            <Link href="/testing" className="group relative flex items-center bg-gradient-to-r from-[#065F46] to-[#047857] hover:from-[#059669] hover:to-[#047857] text-white rounded-2xl p-3.5 sm:p-4 transition-all duration-300 shadow-xl shadow-emerald-950/40 hover:-translate-y-0.5 border border-emerald-400/30">
+                                <div className="w-12 h-12 rounded-xl bg-[#10B981] text-white flex items-center justify-center text-xl shrink-0 shadow-md">
+                                    <i className="fa-solid fa-clipboard-check"></i>
                                 </div>
-                                <div className="px-6 py-4 flex-1 flex items-center justify-between">
-                                    <div className="text-left">
-                                        <div className="font-bold text-sm md:text-base flex items-center gap-2 text-white group-hover:text-emerald-200 transition-colors">
-                                            สมัครฝึกอบรมอาชีพ <span className="bg-emerald-500/90 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full leading-none uppercase shadow-sm shadow-emerald-500/50 animate-pulse">AVAILABLE</span>
-                                        </div>
-                                        <div className="text-[10px] md:text-xs text-slate-400 font-semibold tracking-wider uppercase mt-1">Training Courses</div>
-                                    </div>
-                                    <i className="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 transition-all duration-300 group-hover:translate-x-1.5 text-lg"></i>
+                                <div className="ml-3.5 flex-1 text-left">
+                                    <h3 className="font-extrabold text-base sm:text-lg text-white leading-tight">ทดสอบมาตรฐานฝีมือ</h3>
+                                    <p className="text-xs text-emerald-200/80 font-medium mt-0.5">ตรวจสอบมาตรฐานฝีมือ</p>
                                 </div>
+                                <i className="fa-solid fa-chevron-right text-white/80 text-lg mr-2 group-hover:translate-x-1 transition-transform"></i>
                             </Link>
                         </div>
 
@@ -285,56 +280,59 @@ export default function Home() {
                     </motion.button>
                 ) : (
                     <motion.div 
-                        drag
-                        className="fixed z-[9999] bottom-20 md:bottom-6 right-3 md:right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-5 md:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] w-[calc(100%-1.5rem)] max-w-[290px] md:max-w-[320px] cursor-grab active:cursor-grabbing"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        className="fixed z-[9999] bottom-20 md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 flex items-center justify-between gap-3"
                     >
-                        {/* Bell Icon overlapping top right */}
-                        <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#FBBF24] rounded-full flex items-center justify-center shadow-lg text-[#0F172A] text-xl z-[10000] animate-bounce shadow-[#FBBF24]/40">
-                            <i className="fa-solid fa-bell"></i>
+                        {/* Live Queue Container Box */}
+                        <div className="bg-[#0B1528]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-4 sm:p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex-1 max-w-md">
+                            <div className="flex items-center justify-between mb-3 text-xs">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]"></div>
+                                    <span className="font-extrabold text-emerald-400 tracking-wider">LIVE QUEUE</span>
+                                </div>
+                                <div className="text-[11px] text-slate-400 font-medium">
+                                    อัพเดต {mounted ? new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "14:35"} น.
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Stat 1: คิวรอทดสอบ */}
+                                <div className="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center text-lg shrink-0">
+                                        <i className="fa-solid fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-bold">คิวรอทดสอบ</p>
+                                        <p className="text-xl font-black text-white leading-tight">
+                                            {queueData.count} <span className="text-xs font-bold text-slate-400">คิว</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Stat 2: เวลารอเฉลี่ย */}
+                                <div className="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center text-lg shrink-0">
+                                        <i className="fa-regular fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-400 font-bold">เวลารอเฉลี่ย</p>
+                                        <p className="text-xl font-black text-white leading-tight">
+                                            {queueData.waitTime || 15} <span className="text-xs font-bold text-slate-400">นาที</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="absolute top-3.5 right-3.5 flex items-center gap-1 z-[10000]">
-                            <button 
-                                onClick={() => setIsWidgetMinimized(true)}
-                                className="w-7 h-7 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
-                                title="ย่อขนาด"
-                            >
-                                <i className="fa-solid fa-minus text-xs"></i>
-                            </button>
-                            <button 
-                                onClick={() => setShowLiveQueue(false)}
-                                className="w-7 h-7 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
-                                title="ปิด"
-                            >
-                                <i className="fa-solid fa-xmark text-sm"></i>
-                            </button>
-                        </div>
-                        
-                        <div className="flex items-center justify-between mb-6 pr-12 cursor-move">
-                            <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
-                                <span className="text-sm font-bold text-emerald-400 uppercase tracking-widest">LIVE QUEUE</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-6 divide-x divide-white/10">
-                            <div>
-                                <div className="text-xs text-slate-400 mb-2 font-medium">คิวรอทดสอบ</div>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-black text-white">{queueData.count}</span>
-                                    <span className="text-sm text-slate-400">คน</span>
-                                </div>
-                            </div>
-                            <div className="pl-6">
-                                <div className="text-xs text-slate-400 mb-2 font-medium">เวลาคิวเฉลี่ย</div>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-black text-white">{queueData.waitTime}</span>
-                                    <span className="text-sm text-slate-400">นาที</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-white/10 text-right">
-                            <span className="text-[10px] text-slate-400 font-medium tracking-widest">สพร.24 ยะลา</span>
-                        </div>
+                        {/* Floating Action Button: ดูคิวทั้งหมด */}
+                        <Link
+                            href="/booking"
+                            className="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#3B82F6] hover:to-[#2563EB] text-white px-5 py-4 sm:py-5 rounded-3xl font-extrabold text-xs sm:text-sm shadow-xl shadow-blue-600/30 flex items-center gap-2.5 transition-all duration-300 active:scale-95 border border-blue-400/40 shrink-0"
+                        >
+                            <i className="fa-solid fa-ticket text-lg text-amber-300"></i>
+                            <span className="whitespace-nowrap">ดูคิวทั้งหมด</span>
+                        </Link>
                     </motion.div>
                 )
             )}
