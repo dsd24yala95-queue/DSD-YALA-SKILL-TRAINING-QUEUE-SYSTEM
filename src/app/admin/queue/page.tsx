@@ -741,6 +741,18 @@ export default function AdminQueuePage() {
                                             <td className="px-4 py-3.5">
                                                 <p className="font-bold text-slate-800 text-sm leading-tight">{q.memberName}</p>
                                                 <p className="text-xs text-slate-500 mt-0.5 font-medium">{q.memberPhone}</p>
+                                                {/* Mobile Detail Subtitle (Visible on < md screens) */}
+                                                <div className="md:hidden mt-1.5 pt-1 border-t border-slate-100/60 flex flex-col gap-0.5 text-xs">
+                                                    <span className="font-semibold text-indigo-600 truncate max-w-[200px]">
+                                                        [{q.type === "test" ? "ทดสอบ" : "อบรม"}] {q.itemName}
+                                                    </span>
+                                                    {q.appointedDate && (
+                                                        <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                                                            <i className="fa-regular fa-calendar-check text-[10px]"></i>
+                                                            {mounted ? new Date(q.appointedDate).toLocaleDateString("th-TH", { month: "short", day: "numeric" }) : ""}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3.5 hidden md:table-cell">
                                                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${q.type === "test"

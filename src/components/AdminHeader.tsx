@@ -78,18 +78,18 @@ export default function AdminHeader() {
     })() : null;
 
     return (
-        <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-sm transition-all">
-            <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-xs transition-all">
+            <div className="px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4">
                 
                 {/* 🧭 Left Column: Breadcrumb & Title */}
-                <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-base font-black shadow-md shadow-indigo-500/20 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs sm:text-base font-black shadow-xs sm:shadow-md shadow-indigo-500/20 shrink-0">
                         <i className={`fa-solid ${currentPage.icon}`}></i>
                     </div>
 
                     <div className="min-w-0">
-                        {/* Breadcrumbs */}
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
+                        {/* Breadcrumbs (Hidden on tiny mobile screens to save vertical height) */}
+                        <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
                             <Link href="/admin" className="hover:text-indigo-600 transition-colors flex items-center gap-1">
                                 <i className="fa-solid fa-house text-[10px]"></i>
                                 <span>หน้าหลัก</span>
@@ -99,14 +99,14 @@ export default function AdminHeader() {
                         </div>
 
                         {/* Page Title */}
-                        <h1 className="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-tight truncate">
+                        <h1 className="text-xs sm:text-lg font-black text-slate-800 tracking-tight leading-tight truncate">
                             {currentPage.label}
                         </h1>
                     </div>
                 </div>
 
                 {/* ⚡ Right Column: System Status, Cmd+K, Clock & Profile */}
-                <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                     
                     {/* 🟢 Live System Status Badge (Hidden on small mobile) */}
                     <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-700">
@@ -142,8 +142,8 @@ export default function AdminHeader() {
                     <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
 
                     {/* 👤 Officer Profile Pill */}
-                    <div className="flex items-center gap-2.5 pl-1">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden border border-white shrink-0">
+                    <div className="flex items-center gap-2 pl-1">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden border border-white shrink-0">
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt={userDisplayName} className="w-full h-full object-cover" />
                             ) : (

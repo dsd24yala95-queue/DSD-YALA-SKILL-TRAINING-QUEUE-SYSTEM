@@ -413,6 +413,12 @@ export default function AdminMembersPage() {
                                                 <div className="min-w-0">
                                                     <p className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">{formatName(m)}</p>
                                                     <p className="text-xs font-mono text-slate-500 truncate w-36 md:w-auto mt-0.5">{m.id}</p>
+                                                    {/* Mobile Contact Subtitle (Visible on < sm screens) */}
+                                                    {m.reg_telephone && (
+                                                        <p className="sm:hidden text-xs text-indigo-600 font-bold mt-1 flex items-center gap-1">
+                                                            <i className="fa-solid fa-phone text-[10px]"></i> {m.reg_telephone}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>

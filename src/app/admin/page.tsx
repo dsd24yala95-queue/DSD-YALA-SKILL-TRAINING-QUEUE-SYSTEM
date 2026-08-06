@@ -112,13 +112,13 @@ export default function AdminDashboard() {
     const workSectionLabels = statsData?.workSectionCounts || {};
 
     return (
-        <div className="p-4 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
+        <div className="p-3.5 sm:p-6 bg-[#f8fafc] min-h-screen font-sans">
             {/* Dashboard Sub-Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-slate-200/60 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 pb-4 border-b border-slate-200/60 gap-3">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
+                    <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight flex flex-wrap items-center gap-2">
                         <span>ภาพรวมสถิติระบบคิว & การวิเคราะห์กลุ่มเป้าหมาย</span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold">
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-[11px] font-bold">
                             DSD 50-Field Schema
                         </span>
                     </h2>
@@ -126,17 +126,17 @@ export default function AdminDashboard() {
                         สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา (สพร.24 ยะลา) — ข้อมูลอัปเดตแบบเรียลไทม์
                     </p>
                 </div>
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                     <Link
                         href="/admin/queue"
-                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
+                        className="flex-1 sm:flex-initial px-3.5 py-2 sm:px-4 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-1.5"
                     >
                         <i className="fa-solid fa-list-check"></i>
                         <span>จัดการคิวประจำวัน</span>
                     </Link>
                     <Link
                         href="/admin/walkin"
-                        className="px-4 py-2.5 bg-white border border-slate-200/80 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2"
+                        className="flex-1 sm:flex-initial px-3.5 py-2 sm:px-4 sm:py-2.5 bg-white border border-slate-200/80 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
                     >
                         <i className="fa-solid fa-user-plus text-indigo-500"></i>
                         <span>Walk-in</span>
@@ -152,24 +152,24 @@ export default function AdminDashboard() {
             ) : (
                 <>
                     {/* Key Stats Metric Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5 mb-6 sm:mb-8">
                         {statCards.map((stat, i) => (
                             <motion.div
                                 key={i}
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }}
-                                className="bg-white rounded-3xl border border-slate-100/80 p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-sm relative overflow-hidden group"
+                                className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100/80 p-4 sm:p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-xs relative overflow-hidden group"
                             >
                                 <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-md shadow-indigo-500/10`}>
-                                        <i className={`fa-solid ${stat.icon} text-white text-base`}></i>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-md shadow-indigo-500/10`}>
+                                        <i className={`fa-solid ${stat.icon} text-white text-xs sm:text-base`}></i>
                                     </div>
-                                    <span className="text-xs font-bold text-slate-500 uppercase bg-slate-100 px-2.5 py-1 rounded-md">อัปเดตเรียลไทม์</span>
+                                    <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded-md">เรียลไทม์</span>
                                 </div>
-                                <div className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-none mb-1.5">{stat.value}</div>
-                                <div className="text-sm font-bold text-slate-500">{stat.label}</div>
+                                <div className="text-xl sm:text-4xl font-black text-slate-800 tracking-tight leading-none mb-1">{stat.value}</div>
+                                <div className="text-xs sm:text-sm font-bold text-slate-500 truncate">{stat.label}</div>
                             </motion.div>
                         ))}
                     </div>
