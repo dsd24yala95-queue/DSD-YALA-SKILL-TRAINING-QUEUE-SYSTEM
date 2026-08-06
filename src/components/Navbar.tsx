@@ -20,7 +20,8 @@ export default function Navbar() {
     const [mounted, setMounted] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const { user, logout } = useAuth();
+    const [unreadCount, setUnreadCount] = useState(0);
+    const { user, profile, logout } = useAuth();
 
     const isHome = pathname === "/";
 
@@ -34,6 +35,34 @@ export default function Navbar() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Fetch real unread notifications
+    useEffect(() => {
+        const uid = profile?.uid || user?.id;
+        if (!uid) {
+            setUnreadCount(0);
+            return;
+        }
+
+        const fetchNotifications = async () => {
+            try {
+                const res = await fetch(`/api/notifications?userId=${uid}&_t=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) {
+                        const count = data.filter((n: any) => !n.read).length;
+                        setUnreadCount(count);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch unread notifications", error);
+            }
+        };
+
+        fetchNotifications();
+        const intervalId = setInterval(fetchNotifications, 10000);
+        return () => clearInterval(intervalId);
+    }, [profile?.uid, user?.id]);
+
     const isLinkActive = (href: string) => {
         if (href === "/") return pathname === href;
         return pathname.startsWith(href.split('?')[0]) && href !== "/";
@@ -42,11 +71,9 @@ export default function Navbar() {
     return (
         <>
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                isHome
-                    ? scrolled
-                        ? "bg-[#0B1528]/90 backdrop-blur-xl border-b border-white/10 text-white shadow-xl"
-                        : "bg-gradient-to-b from-[#0F172A]/90 via-[#0F172A]/50 to-transparent text-white"
-                    : "bg-white border-b border-slate-100 shadow-sm text-slate-700"
+                isHome && !scrolled
+                    ? "bg-gradient-to-b from-[#0F172A]/90 via-[#0F172A]/50 to-transparent text-white"
+                    : "bg-[#0B1528]/95 backdrop-blur-xl border-b border-white/10 text-white shadow-xl"
             }`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
@@ -56,10 +83,10 @@ export default function Navbar() {
                                 <Image src="/logo-seal.png" alt="Seal Logo" width={36} height={36} className="object-contain" />
                             </div>
                             <div className="flex flex-col">
-                                <h1 className={`text-sm sm:text-base font-black uppercase tracking-wider leading-tight ${isHome ? "text-white" : "text-[#0B3C74]"}`}>
-                                    {isHome ? "DSD YALA" : "สพร.24 ยะลา"}
+                                <h1 className="text-sm sm:text-base font-black uppercase tracking-wider leading-tight text-white">
+                                    DSD YALA
                                 </h1>
-                                <p className={`text-[9px] sm:text-[10px] font-semibold tracking-widest leading-tight ${isHome ? "text-slate-300" : "text-slate-500"}`}>
+                                <p className="text-[9px] sm:text-[10px] font-semibold tracking-widest leading-tight text-slate-300">
                                     SKILL QUEUE SYSTEM
                                 </p>
                             </div>
@@ -75,12 +102,8 @@ export default function Navbar() {
                                         href={link.href}
                                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
                                             active
-                                                ? isHome
-                                                    ? "bg-white/20 text-white backdrop-blur-md"
-                                                    : "bg-slate-100 text-[#0B3C74]"
-                                                : isHome
-                                                    ? "text-slate-300 hover:bg-white/10 hover:text-white"
-                                                    : "text-slate-500 hover:bg-slate-50 hover:text-[#0B3C74]"
+                                                ? "bg-white/20 text-white backdrop-blur-md"
+                                                : "text-slate-300 hover:bg-white/10 hover:text-white"
                                         }`}
                                     >
                                         {link.label}
@@ -89,31 +112,25 @@ export default function Navbar() {
                             })}
                         </div>
 
-                        {/* Mobile Header Buttons (Notification Bell + Glassmorphic Menu) matching Image 2 */}
+                        {/* Mobile Header Buttons (Notification Bell + Glassmorphic Menu) */}
                         <div className="flex items-center md:hidden gap-3">
                             {/* Notification Bell Icon */}
                             <Link
-                                href={user ? "/notifications" : "/login"}
-                                className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                                    isHome
-                                        ? "bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md shadow-md"
-                                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                                }`}
+                                href={user || profile ? "/notifications" : "/login"}
+                                className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md shadow-md"
                                 aria-label="Notifications"
                             >
                                 <i className="fa-regular fa-bell text-lg"></i>
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white font-black text-[10px] rounded-full flex items-center justify-center border-2 border-[#0B1528] shadow-sm animate-pulse">
-                                    3
-                                </span>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white font-black text-[10px] rounded-full flex items-center justify-center border-2 border-[#0B1528] shadow-sm animate-pulse">
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                    </span>
+                                )}
                             </Link>
 
                             {/* Glassmorphic Hamburger Button */}
                             <button
-                                className={`w-11 h-11 flex items-center justify-center rounded-2xl transition-all ${
-                                    isHome
-                                        ? "bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md shadow-md"
-                                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
-                                }`}
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl transition-all bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md shadow-md"
                                 onClick={() => setMobileOpen(!mobileOpen)}
                                 aria-label="Toggle menu"
                             >
@@ -123,17 +140,13 @@ export default function Navbar() {
 
                         {/* Right Actions (Desktop) */}
                         <div className="hidden md:flex items-center justify-end gap-3 w-1/4">
-                            {mounted && user && <NotificationsMenu />}
+                            {mounted && (user || profile) && <NotificationsMenu />}
 
-                            {mounted && user ? (
+                            {mounted && (user || profile) ? (
                                 <div className="flex items-center gap-2">
                                     <Link
                                         href="/profile"
-                                        className={`px-4 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
-                                            isHome
-                                                ? "bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20"
-                                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                        }`}
+                                        className="px-4 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20"
                                     >
                                         <i className="fa-solid fa-user"></i> โปรไฟล์
                                     </Link>
@@ -159,29 +172,21 @@ export default function Navbar() {
 
             {/* Mobile Menu Dropdown */}
             {mobileOpen && (
-                <div className={`fixed top-20 left-0 right-0 z-40 md:hidden shadow-2xl transition-all ${
-                    isHome 
-                        ? "bg-[#0B1528]/95 backdrop-blur-2xl border-b border-white/10 text-white" 
-                        : "bg-white border-b border-slate-100 text-slate-700"
-                }`}>
+                <div className="fixed top-20 left-0 right-0 z-40 md:hidden shadow-2xl transition-all bg-[#0B1528]/95 backdrop-blur-2xl border-b border-white/10 text-white">
                     <div className="flex flex-col p-4 gap-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.label}
                                 href={link.href}
                                 onClick={() => setMobileOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
-                                    isHome 
-                                        ? "text-slate-200 hover:bg-white/10 hover:text-white" 
-                                        : "text-slate-700 hover:bg-slate-50"
-                                }`}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all text-slate-200 hover:bg-white/10 hover:text-white"
                             >
-                                <i className={`fa-solid ${link.icon} w-5 text-center ${isHome ? "text-blue-400" : "text-[#0B3C74]"}`}></i>
+                                <i className={`fa-solid ${link.icon} w-5 text-center text-blue-400`}></i>
                                 {link.label}
                             </Link>
                         ))}
                         <div className="border-t border-slate-700/50 mt-2 pt-4">
-                            {mounted && user ? (
+                            {mounted && (user || profile) ? (
                                 <div className="flex gap-2">
                                     <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 text-white font-bold text-sm hover:bg-white/20">
                                         <i className="fa-solid fa-user text-blue-400"></i> โปรไฟล์
