@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import MapLocationPickerModal from "@/components/MapLocationPickerModal";
 import ApplicantListModal from "@/components/admin/ApplicantListModal";
+import { formatDateRangeTh } from "@/lib/dateFormatter";
 
 interface MasterCourse {
     id: string;
@@ -137,9 +138,7 @@ export default function AdminTrainingPage() {
     };
 
     const formatDateRange = (startDate?: string, endDate?: string) => {
-        if (!startDate && !endDate) return "—";
-        if (startDate && endDate) return `${startDate} ถึง ${endDate}`;
-        return startDate || endDate || "—";
+        return formatDateRangeTh(startDate, endDate);
     };
 
     const filteredCourses = courses.filter((c) => {
