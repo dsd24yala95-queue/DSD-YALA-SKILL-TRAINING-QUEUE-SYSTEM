@@ -282,11 +282,29 @@ export default function Home() {
                     <motion.div 
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        className="fixed z-[9999] bottom-20 md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 flex items-center justify-between gap-3"
+                        className="fixed z-[9999] bottom-20 md:bottom-6 right-3 md:right-6 flex items-center justify-end"
                     >
                         {/* Live Queue Container Box */}
-                        <div className="bg-[#0B1528]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-4 sm:p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex-1 max-w-md">
-                            <div className="flex items-center justify-between mb-3 text-xs">
+                        <div className="relative bg-[#0B1528]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-4 sm:p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] w-full max-w-[320px] sm:max-w-sm">
+                            {/* Close & Minimize buttons on top right */}
+                            <div className="absolute top-3.5 right-3.5 flex items-center gap-1 z-10">
+                                <button 
+                                    onClick={() => setIsWidgetMinimized(true)}
+                                    className="w-6 h-6 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
+                                    title="ย่อขนาด"
+                                >
+                                    <i className="fa-solid fa-minus text-xs"></i>
+                                </button>
+                                <button 
+                                    onClick={() => setShowLiveQueue(false)}
+                                    className="w-6 h-6 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
+                                    title="ปิด"
+                                >
+                                    <i className="fa-solid fa-xmark text-xs"></i>
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between mb-3 text-xs pr-14">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_#34d399]"></div>
                                     <span className="font-extrabold text-emerald-400 tracking-wider">LIVE QUEUE</span>
@@ -324,15 +342,6 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Floating Action Button: ดูคิวทั้งหมด */}
-                        <Link
-                            href="/booking"
-                            className="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#3B82F6] hover:to-[#2563EB] text-white px-5 py-4 sm:py-5 rounded-3xl font-extrabold text-xs sm:text-sm shadow-xl shadow-blue-600/30 flex items-center gap-2.5 transition-all duration-300 active:scale-95 border border-blue-400/40 shrink-0"
-                        >
-                            <i className="fa-solid fa-ticket text-lg text-amber-300"></i>
-                            <span className="whitespace-nowrap">ดูคิวทั้งหมด</span>
-                        </Link>
                     </motion.div>
                 )
             )}
