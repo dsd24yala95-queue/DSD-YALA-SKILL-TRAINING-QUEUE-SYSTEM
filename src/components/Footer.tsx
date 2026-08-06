@@ -81,8 +81,13 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom Copyright */}
-                <div className="pt-8 border-t border-white/10 text-center text-xs text-blue-200/50">
-                    <p>© 2024 สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา | สงวนลิขสิทธิ์</p>
+                <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-blue-200/60 font-medium">
+                    <p>© 2024 - 2026 สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา | สงวนลิขสิทธิ์</p>
+                    <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full bg-blue-900/80 border border-blue-400/30 text-blue-200 text-[10px] font-mono font-bold tracking-wide">
+                            PWA v1.0
+                        </span>
+                    </div>
                 </div>
             </div>
         </footer>

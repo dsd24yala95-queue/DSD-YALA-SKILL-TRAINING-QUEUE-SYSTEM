@@ -97,7 +97,10 @@ export default function AdminSidebar() {
                         <span className="text-white font-bold text-xs">ส</span>
                     </div>
                     <div>
-                        <h2 className="text-white font-bold text-xs leading-tight">DSD YALA ADMIN</h2>
+                        <div className="flex items-center gap-1.5">
+                            <h2 className="text-white font-bold text-xs leading-tight">DSD YALA ADMIN</h2>
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">v1.0</span>
+                        </div>
                         <p className="text-[10px] text-indigo-300 font-medium">{currentItem?.label || "ระบบหลังบ้าน"}</p>
                     </div>
                 </Link>
@@ -217,8 +220,11 @@ export default function AdminSidebar() {
                                 exit={{ opacity: 0, x: -10 }}
                                 className="whitespace-nowrap"
                             >
-                                <h2 className="text-white font-black text-sm tracking-tight leading-none">DSD YALA</h2>
-                                <p className="text-[10px] text-indigo-300 font-semibold mt-1">ระบบจัดการหลังบ้าน</p>
+                                <div className="flex items-center gap-1.5">
+                                    <h2 className="text-white font-black text-sm tracking-tight leading-none">DSD YALA</h2>
+                                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">v1.0</span>
+                                </div>
+                                <p className="text-[10px] text-indigo-300 font-semibold mt-1">ระบบจัดการหลังบ้าน (PWA)</p>
                             </motion.div>
                         )}
                     </Link>

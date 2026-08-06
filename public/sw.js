@@ -1,7 +1,7 @@
 // public/sw.js
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js');
 
-const CACHE_NAME = 'dsd-yala-pwa-v1';
+const CACHE_NAME = 'dsd-yala-pwa-v1.0';
 const OFFLINE_URL = '/offline';
 
 // Configure Workbox
