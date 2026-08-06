@@ -51,7 +51,7 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white font-sans flex flex-col">
+        <div className="min-h-screen bg-white font-sans flex flex-col pb-20 md:pb-0">
             
             {/* --- HERO SECTION --- */}
             <div className="relative bg-[#0F172A] overflow-hidden min-h-[90vh] md:min-h-[85vh] flex items-center pt-10">
@@ -155,8 +155,8 @@ export default function Home() {
             </div>
 
             {/* --- STATS BANNER (Floating Pill) --- */}
-            <div className="relative z-30 flex justify-center -mt-24 px-4">
-                <div className="bg-white rounded-[2rem] md:rounded-full shadow-2xl shadow-slate-200/50 p-6 md:p-8 w-full max-w-5xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+            <div className="relative z-30 flex justify-center -mt-8 md:-mt-24 px-4">
+                <div className="bg-white rounded-[2rem] md:rounded-full shadow-2xl shadow-slate-200/50 p-6 md:p-8 w-full max-w-5xl border border-slate-100 grid grid-cols-2 md:flex md:flex-row items-center justify-between gap-6 md:gap-4 divide-y-0 md:divide-y-0 md:divide-x divide-slate-100">
                     
                     <div className="flex flex-col items-center justify-center w-full pt-4 md:pt-0 first:pt-0">
                         <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xl mb-3">
@@ -209,60 +209,60 @@ export default function Home() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         {/* Card 1: ฝึกอบรม -> Login */}
-                        <Link href="/login" className="bg-white rounded-3xl p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-                            <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl mb-6 shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                        <Link href="/login" className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-lg md:text-2xl mb-4 md:mb-6 shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
                                 <i className="fa-solid fa-graduation-cap"></i>
                             </div>
-                            <h3 className="font-black text-xl text-slate-800 mb-3 flex items-center justify-between">
+                            <h3 className="font-black text-base md:text-xl text-slate-800 mb-2 md:mb-3 flex items-center justify-between">
                                 ฝึกอบรม
-                                <i className="fa-solid fa-arrow-right text-sm text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all"></i>
+                                <i className="fa-solid fa-arrow-right text-xs md:text-sm text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all"></i>
                             </h3>
-                            <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
-                                ค้นหาหลักสูตรและสมัครเข้าร่วมการฝึกอบรมพัฒนาฝีมือ
+                            <p className="text-slate-500 text-xs md:text-sm leading-relaxed mb-2 md:mb-6 flex-1">
+                                ค้นหาหลักสูตรและสมัครเข้าร่วมฝึกอบรม
                             </p>
                         </Link>
 
                         {/* Card 2: ทดสอบมาตรฐาน -> Login */}
-                        <Link href="/login" className="bg-white rounded-3xl p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-                            <div className="w-14 h-14 rounded-2xl bg-blue-500 text-white flex items-center justify-center text-2xl mb-6 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                        <Link href="/login" className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-blue-500 text-white flex items-center justify-center text-lg md:text-2xl mb-4 md:mb-6 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
                                 <i className="fa-solid fa-clipboard-check"></i>
                             </div>
-                            <h3 className="font-black text-xl text-slate-800 mb-3 flex items-center justify-between">
+                            <h3 className="font-black text-base md:text-xl text-slate-800 mb-2 md:mb-3 flex items-center justify-between">
                                 ทดสอบมาตรฐาน
-                                <i className="fa-solid fa-arrow-right text-sm text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
+                                <i className="fa-solid fa-arrow-right text-xs md:text-sm text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
                             </h3>
-                            <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
-                                ตรวจสอบและจองคิวการทดสอบมาตรฐานฝีมือแรงงาน
+                            <p className="text-slate-500 text-xs md:text-sm leading-relaxed mb-2 md:mb-6 flex-1">
+                                ตรวจสอบและจองคิวการทดสอบมาตรฐาน
                             </p>
                         </Link>
 
                         {/* Card 3: ข่าวสาร -> /news */}
-                        <Link href="/news" className="bg-white rounded-3xl p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-                            <div className="w-14 h-14 rounded-2xl bg-purple-500 text-white flex items-center justify-center text-2xl mb-6 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
+                        <Link href="/news" className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-purple-500 text-white flex items-center justify-center text-lg md:text-2xl mb-4 md:mb-6 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
                                 <i className="fa-regular fa-newspaper"></i>
                             </div>
-                            <h3 className="font-black text-xl text-slate-800 mb-3 flex items-center justify-between">
+                            <h3 className="font-black text-base md:text-xl text-slate-800 mb-2 md:mb-3 flex items-center justify-between">
                                 ข่าวสาร
-                                <i className="fa-solid fa-arrow-right text-sm text-slate-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all"></i>
+                                <i className="fa-solid fa-arrow-right text-xs md:text-sm text-slate-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all"></i>
                             </h3>
-                            <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
-                                ติดตามข่าวสารและประกาศสำคัญจาก สพร.24 ยะลา
+                            <p className="text-slate-500 text-xs md:text-sm leading-relaxed mb-2 md:mb-6 flex-1">
+                                ติดตามข่าวสารประกาศสำคัญ สพร.24
                             </p>
                         </Link>
 
                         {/* Card 4: ติดต่อเรา -> /contact */}
-                        <Link href="/contact" className="bg-white rounded-3xl p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
-                            <div className="w-14 h-14 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl mb-6 shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
+                        <Link href="/contact" className="bg-white rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-orange-500 text-white flex items-center justify-center text-lg md:text-2xl mb-4 md:mb-6 shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
                                 <i className="fa-solid fa-headset"></i>
                             </div>
-                            <h3 className="font-black text-xl text-slate-800 mb-3 flex items-center justify-between">
+                            <h3 className="font-black text-base md:text-xl text-slate-800 mb-2 md:mb-3 flex items-center justify-between">
                                 ติดต่อเรา
-                                <i className="fa-solid fa-arrow-right text-sm text-slate-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all"></i>
+                                <i className="fa-solid fa-arrow-right text-xs md:text-sm text-slate-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all"></i>
                             </h3>
-                            <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
-                                ช่องทางการติดต่อและสอบถามข้อมูลเพิ่มเติม
+                            <p className="text-slate-500 text-xs md:text-sm leading-relaxed mb-2 md:mb-6 flex-1">
+                                ช่องทางการติดต่อสอบถามข้อมูล
                             </p>
                         </Link>
                     </div>
@@ -273,7 +273,7 @@ export default function Home() {
             {showLiveQueue && (
                 <motion.div 
                     drag
-                    className="fixed z-[9999] bottom-6 right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] w-full max-w-[320px] cursor-grab active:cursor-grabbing"
+                    className="fixed z-[9999] bottom-20 md:bottom-6 right-3 md:right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-5 md:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] w-[calc(100%-1.5rem)] max-w-[290px] md:max-w-[320px] cursor-grab active:cursor-grabbing"
                 >
                     {/* Bell Icon overlapping top right */}
                     <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#FBBF24] rounded-full flex items-center justify-center shadow-lg text-[#0F172A] text-xl z-[10000] animate-bounce shadow-[#FBBF24]/40">
