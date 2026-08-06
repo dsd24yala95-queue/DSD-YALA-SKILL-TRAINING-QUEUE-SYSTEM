@@ -36,15 +36,15 @@ export default function Navbar() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Logo - Left */}
-                        <Link href="/" className="flex items-center gap-3 group w-1/4">
-                            <div className="w-10 h-10 flex items-center justify-center rounded overflow-hidden">
+                        <Link href="/" className="flex items-center gap-2.5 group">
+                            <div className="w-10 h-10 flex items-center justify-center rounded overflow-hidden flex-shrink-0">
                                 <Image src="/logo-seal.png" alt="Seal Logo" width={40} height={40} className="object-contain" />
                             </div>
-                            <div className="hidden sm:block">
-                                <h1 className="text-sm font-black uppercase tracking-wider text-[#0B3C74]">
+                            <div className="flex flex-col">
+                                <h1 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#0B3C74] leading-tight">
                                     สพร.24 ยะลา
                                 </h1>
-                                <p className="text-[10px] font-semibold tracking-widest text-slate-500">
+                                <p className="text-[9px] sm:text-[10px] font-semibold tracking-widest text-slate-500 leading-tight">
                                     SKILL QUEUE SYSTEM
                                 </p>
                             </div>

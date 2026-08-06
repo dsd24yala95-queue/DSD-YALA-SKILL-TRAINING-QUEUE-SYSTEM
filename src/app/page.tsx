@@ -10,6 +10,7 @@ export default function Home() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [showLiveQueue, setShowLiveQueue] = useState(true);
+    const [isWidgetMinimized, setIsWidgetMinimized] = useState(false);
 
     const [queueData, setQueueData] = useState({ count: 0, waitTime: 0 });
     const [systemStats, setSystemStats] = useState({ totalBookings: 0, completedTests: 0, activeCourses: 0, totalMembers: 0 });
@@ -271,49 +272,71 @@ export default function Home() {
 
             {/* --- FLOATING LIVE QUEUE WIDGET (Top Stacking Layer z-[9999]) --- */}
             {showLiveQueue && (
-                <motion.div 
-                    drag
-                    className="fixed z-[9999] bottom-20 md:bottom-6 right-3 md:right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-5 md:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] w-[calc(100%-1.5rem)] max-w-[290px] md:max-w-[320px] cursor-grab active:cursor-grabbing"
-                >
-                    {/* Bell Icon overlapping top right */}
-                    <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#FBBF24] rounded-full flex items-center justify-center shadow-lg text-[#0F172A] text-xl z-[10000] animate-bounce shadow-[#FBBF24]/40">
-                        <i className="fa-solid fa-bell"></i>
-                    </div>
-
-                    <button 
-                        onClick={() => setShowLiveQueue(false)}
-                        className="absolute top-4 right-4 w-8 h-8 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all z-[10000]"
-                        aria-label="Close"
+                isWidgetMinimized ? (
+                    <motion.button
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        onClick={() => setIsWidgetMinimized(false)}
+                        className="fixed z-[9999] bottom-20 md:bottom-6 right-4 bg-[#1e293b]/95 backdrop-blur-xl border border-white/20 text-white px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 group hover:bg-[#0f172a] transition-all"
                     >
-                        <i className="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                    
-                    <div className="flex items-center justify-between mb-6 pr-8 cursor-move">
-                        <div className="flex items-center gap-3">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
-                            <span className="text-sm font-bold text-emerald-400 uppercase tracking-widest">LIVE QUEUE</span>
+                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
+                        <span className="text-xs font-bold text-emerald-400 tracking-wider">LIVE QUEUE ({queueData.count} คิว)</span>
+                        <i className="fa-solid fa-chevron-up text-xs text-slate-400 group-hover:text-white transition-transform"></i>
+                    </motion.button>
+                ) : (
+                    <motion.div 
+                        drag
+                        className="fixed z-[9999] bottom-20 md:bottom-6 right-3 md:right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-5 md:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.6)] w-[calc(100%-1.5rem)] max-w-[290px] md:max-w-[320px] cursor-grab active:cursor-grabbing"
+                    >
+                        {/* Bell Icon overlapping top right */}
+                        <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#FBBF24] rounded-full flex items-center justify-center shadow-lg text-[#0F172A] text-xl z-[10000] animate-bounce shadow-[#FBBF24]/40">
+                            <i className="fa-solid fa-bell"></i>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-6 divide-x divide-white/10">
-                        <div>
-                            <div className="text-xs text-slate-400 mb-2 font-medium">คิวรอทดสอบ</div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-black text-white">{queueData.count}</span>
-                                <span className="text-sm text-slate-400">คน</span>
+
+                        <div className="absolute top-3.5 right-3.5 flex items-center gap-1 z-[10000]">
+                            <button 
+                                onClick={() => setIsWidgetMinimized(true)}
+                                className="w-7 h-7 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
+                                title="ย่อขนาด"
+                            >
+                                <i className="fa-solid fa-minus text-xs"></i>
+                            </button>
+                            <button 
+                                onClick={() => setShowLiveQueue(false)}
+                                className="w-7 h-7 text-slate-400 rounded-full flex items-center justify-center hover:bg-white/10 hover:text-white transition-all"
+                                title="ปิด"
+                            >
+                                <i className="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                        </div>
+                        
+                        <div className="flex items-center justify-between mb-6 pr-12 cursor-move">
+                            <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                                <span className="text-sm font-bold text-emerald-400 uppercase tracking-widest">LIVE QUEUE</span>
                             </div>
                         </div>
-                        <div className="pl-6">
-                            <div className="text-xs text-slate-400 mb-2 font-medium">เวลาคิวเฉลี่ย</div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-black text-white">{queueData.waitTime}</span>
-                                <span className="text-sm text-slate-400">นาที</span>
+                        <div className="grid grid-cols-2 gap-6 divide-x divide-white/10">
+                            <div>
+                                <div className="text-xs text-slate-400 mb-2 font-medium">คิวรอทดสอบ</div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black text-white">{queueData.count}</span>
+                                    <span className="text-sm text-slate-400">คน</span>
+                                </div>
+                            </div>
+                            <div className="pl-6">
+                                <div className="text-xs text-slate-400 mb-2 font-medium">เวลาคิวเฉลี่ย</div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black text-white">{queueData.waitTime}</span>
+                                    <span className="text-sm text-slate-400">นาที</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="mt-6 pt-4 border-t border-white/10 text-right">
-                        <span className="text-[10px] text-slate-400 font-medium tracking-widest">สพร.24 ยะลา</span>
-                    </div>
-                </motion.div>
+                        <div className="mt-6 pt-4 border-t border-white/10 text-right">
+                            <span className="text-[10px] text-slate-400 font-medium tracking-widest">สพร.24 ยะลา</span>
+                        </div>
+                    </motion.div>
+                )
             )}
         </div>
     );
