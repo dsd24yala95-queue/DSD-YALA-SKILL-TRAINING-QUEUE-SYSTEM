@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "หน้าแรก", icon: "fa-house" },
-  { href: "/training", label: "หลักสูตร", icon: "fa-graduation-cap" },
+  { href: "/training", label: "หลักสูตรฝึกอบรม", icon: "fa-graduation-cap" },
   { href: "/testing", label: "สาขาทดสอบ", icon: "fa-building-columns" },
   { href: "/notifications", label: "แจ้งเตือน", icon: "fa-bell", isNotifications: true },
   { href: "/profile", label: "โปรไฟล์", icon: "fa-user" }
