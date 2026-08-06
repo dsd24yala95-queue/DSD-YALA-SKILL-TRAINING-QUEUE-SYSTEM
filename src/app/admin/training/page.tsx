@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import MapLocationPickerModal from "@/components/MapLocationPickerModal";
+import ApplicantListModal from "@/components/admin/ApplicantListModal";
 
 interface MasterCourse {
     id: string;
@@ -42,6 +43,7 @@ export default function AdminTrainingPage() {
     const [form, setForm] = useState<any>({ ...emptyCourse });
     const [saving, setSaving] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [applicantModalTarget, setApplicantModalTarget] = useState<{ id: string; name: string } | null>(null);
 
     const loadCourses = useCallback(async () => {
         setLoading(true);
@@ -295,16 +297,15 @@ export default function AdminTrainingPage() {
                                 </div>
 
                                 <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50">
-                                    <a
-                                        href={`/api/admin/export-json?courseId=${c.id}&courseName=${encodeURIComponent(c.courseName)}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="py-2 px-3 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-all flex items-center gap-1 border border-indigo-200/60"
-                                        title="ดาวน์โหลดรายชื่อผู้สมัครเป็น JSON/ใบเซ็นชื่อ"
+                                    <button
+                                        type="button"
+                                        onClick={() => setApplicantModalTarget({ id: c.id, name: c.courseName })}
+                                        className="py-2 px-3 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-200/60 shadow-sm"
+                                        title="ดูรายชื่อผู้สมัครและพิมพ์ใบเซ็นชื่อ"
                                     >
-                                        <i className="fa-solid fa-file-export text-indigo-600"></i>
-                                        <span>ใบเซ็นชื่อ</span>
-                                    </a>
+                                        <i className="fa-solid fa-[#6366F1] fa-users text-indigo-600"></i>
+                                        <span>ใบเซ็นชื่อ / รายชื่อ</span>
+                                    </button>
                                     <button onClick={() => openEdit(c)} className="flex-1 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                                         <i className="fa-solid fa-pen mr-1"></i> แก้ไข
                                     </button>
@@ -490,6 +491,15 @@ export default function AdminTrainingPage() {
                 initialCoords={form.LocationGPS}
                 onClose={() => setMapPickerOpen(false)}
                 onSelectCoords={(coords) => setForm((prev: any) => ({ ...prev, LocationGPS: coords }))}
+            />
+
+            {/* Applicant List Modal */}
+            <ApplicantListModal
+                isOpen={!!applicantModalTarget}
+                onClose={() => setApplicantModalTarget(null)}
+                itemId={applicantModalTarget?.id || ""}
+                itemName={applicantModalTarget?.name || ""}
+                itemType="training"
             />
         </div>
     );

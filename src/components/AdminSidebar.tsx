@@ -44,6 +44,13 @@ export default function AdminSidebar() {
         return () => window.removeEventListener("keydown", handleGlobalKeyDown);
     }, []);
 
+    // Listen for custom open drawer event from AdminBottomNav
+    useEffect(() => {
+        const handleOpenDrawer = () => setMobileOpen(true);
+        window.addEventListener("open-admin-drawer", handleOpenDrawer);
+        return () => window.removeEventListener("open-admin-drawer", handleOpenDrawer);
+    }, []);
+
     // Restore collapsed preference from localStorage
     useEffect(() => {
         const saved = localStorage.getItem("dsd_admin_sidebar_collapsed");
