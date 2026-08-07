@@ -90,7 +90,7 @@ export default function LineConnectModal({
                         </div>
                         <div>
                             <h2 className="text-lg font-black text-white leading-tight">เชื่อมต่อ LINE Official Account</h2>
-                            <p className="text-xs text-emerald-400 font-semibold mt-0.5">สพร.24 ยะลา (DSD Yala)</p>
+                            <p className="text-xs text-emerald-400 font-semibold mt-0.5">สพร.24 ยะลา (@522kafif)</p>
                         </div>
                     </div>
 
@@ -108,7 +108,7 @@ export default function LineConnectModal({
                                         1
                                     </span>
                                     <p className="text-slate-200 pt-0.5">
-                                        กดปุ่ม <strong className="text-[#06C755]">"เพิ่มเพื่อน LINE OA"</strong> หรือ สแกน QR Code ด้านล่าง
+                                        แอดไลน์ <strong className="text-[#06C755] font-mono">@522kafif</strong> หรือ กดปุ่ม <strong className="text-[#06C755]">"เพิ่มเพื่อน LINE OA"</strong> ด้านล่าง
                                     </p>
                                 </div>
 
@@ -151,15 +151,15 @@ export default function LineConnectModal({
                             </button>
                         </div>
 
-                        {/* External LINE Add Friend Link */}
+                        {/* External LINE Add Friend Link (@522kafif) */}
                         <a
-                            href="https://line.me/R/ti/p/@dsdyala"
+                            href="https://line.me/R/ti/p/@522kafif"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full py-3.5 rounded-2xl bg-[#06C755] hover:bg-[#05b34c] text-white font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#06C755]/30 active:scale-95 border border-emerald-400/40"
                         >
                             <i className="fa-brands fa-line text-xl"></i>
-                            <span>เพิ่มเพื่อน LINE OA สพร.24 ยะลา</span>
+                            <span>เพิ่มเพื่อน LINE OA (@522kafif)</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-xs opacity-80"></i>
                         </a>
 
