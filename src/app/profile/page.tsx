@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { parseProfileJson } from "@/lib/jsonEngine";
 import { toast } from "sonner";
+import LineConnectModal from "@/components/LineConnectModal";
 
 const educationLevels: { [key: string]: string } = {
     "00": "ต่ำกว่าประถมศึกษา",
@@ -63,6 +64,48 @@ export default function ProfilePage() {
     const [notiLoading, setNotiLoading] = useState(false);
     const [calendarLoading, setCalendarLoading] = useState<string | null>(null);
     const [clearingCache, setClearingCache] = useState(false);
+
+    // LINE OA State
+    const [lineStatus, setLineStatus] = useState<{ isLinked: boolean; lineUserId: string | null } | null>(null);
+    const [showLineModal, setShowLineModal] = useState(false);
+    const [unlinkingLine, setUnlinkingLine] = useState(false);
+
+    const fetchLineStatus = async () => {
+        const uid = profile?.uid || user?.id;
+        if (!uid) return;
+        try {
+            const res = await fetch(`/api/users/line-status?userId=${uid}&_t=${Date.now()}`);
+            if (res.ok) {
+                const data = await res.json();
+                setLineStatus(data);
+            }
+        } catch (err) {
+            console.error("Error fetching LINE status:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchLineStatus();
+    }, [profile?.uid, user?.id]);
+
+    const handleUnlinkLine = async () => {
+        if (!confirm("คุณต้องการยกเลิกการเชื่อมต่อ LINE OA ใช่หรือไม่?")) return;
+        setUnlinkingLine(true);
+        try {
+            const uid = profile?.uid || user?.id;
+            const res = await fetch(`/api/users/line-status?userId=${uid}`, { method: "DELETE" });
+            if (res.ok) {
+                toast.success("ยกเลิกการเชื่อมต่อ LINE OA เรียบร้อยแล้ว");
+                fetchLineStatus();
+            } else {
+                toast.error("ไม่สามารถยกเลิกการเชื่อมต่อได้");
+            }
+        } catch (e) {
+            toast.error("เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ");
+        } finally {
+            setUnlinkingLine(false);
+        }
+    };
 
     const handleClearPwaCache = async () => {
         setClearingCache(true);
@@ -348,6 +391,53 @@ export default function ProfilePage() {
                             </button>
                         </div>
 
+                        {/* LINE OA Connection Status Card */}
+                        <div className={`rounded-3xl p-4 mt-4 border backdrop-blur-md transition-all ${
+                            lineStatus?.isLinked
+                                ? "bg-emerald-950/30 border-emerald-500/30 text-white"
+                                : "bg-gradient-to-br from-[#06C755]/10 to-[#0F172A] border-[#06C755]/30 text-white"
+                        }`}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shrink-0 ${
+                                    lineStatus?.isLinked ? "bg-[#06C755] text-white shadow-lg shadow-[#06C755]/30" : "bg-slate-800 text-slate-400"
+                                }`}>
+                                    <i className="fa-brands fa-line"></i>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`w-2 h-2 rounded-full ${lineStatus?.isLinked ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`}></span>
+                                        <h3 className="font-extrabold text-xs sm:text-sm text-white">
+                                            {lineStatus?.isLinked ? "เชื่อมต่อ LINE OA แล้ว" : "ยังไม่ได้เชื่อมต่อ LINE OA"}
+                                        </h3>
+                                    </div>
+                                    <p className="text-[11px] text-blue-200/60 mt-0.5 leading-tight">
+                                        {lineStatus?.isLinked
+                                            ? "พร้อมรับการแจ้งเตือนคิวและผลผ่าน LINE"
+                                            : "รับการแจ้งเตือนเตือนคิวผ่าน LINE ฟรี"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {lineStatus?.isLinked ? (
+                                <button
+                                    onClick={handleUnlinkLine}
+                                    disabled={unlinkingLine}
+                                    className="w-full py-2 rounded-xl bg-white/5 hover:bg-red-500/20 border border-red-500/20 text-red-300 font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                                >
+                                    <i className="fa-solid fa-link-slash"></i>
+                                    {unlinkingLine ? "กำลังยกเลิก..." : "ยกเลิกการเชื่อมต่อ LINE"}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setShowLineModal(true)}
+                                    className="w-full py-2.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white font-extrabold text-xs transition-all shadow-md shadow-[#06C755]/20 flex items-center justify-center gap-2 active:scale-95 border border-emerald-400/30"
+                                >
+                                    <i className="fa-brands fa-line text-base"></i>
+                                    <span>💬 เชื่อมต่อ LINE OA ตอนนี้</span>
+                                </button>
+                            )}
+                        </div>
+
                         {/* Action Buttons */}
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-4 mt-4 space-y-3 backdrop-blur-md">
                              <Link href="/profile/edit" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/25 transition-all text-xs sm:text-sm">
@@ -404,6 +494,34 @@ export default function ProfilePage() {
                                                 <span className="font-bold text-white text-sm sm:text-base">{field.value}</span>
                                             </div>
                                         ))}
+
+                                        {/* LINE OA Connection Field */}
+                                        <div className="flex flex-col justify-between gap-2 p-3.5 rounded-2xl bg-[#06C755]/10 border border-[#06C755]/20 hover:border-[#06C755]/40 transition-all">
+                                            <div>
+                                                <span className="text-emerald-300/70 text-xs font-semibold flex items-center gap-1.5">
+                                                    <i className="fa-brands fa-line text-[#06C755]"></i> สถานะ LINE OA
+                                                </span>
+                                                <div className="mt-1 font-bold text-white text-sm flex items-center gap-2">
+                                                    {lineStatus?.isLinked ? (
+                                                        <span className="text-emerald-400 flex items-center gap-1.5">
+                                                            <i className="fa-solid fa-circle-check"></i> เชื่อมต่อแล้ว
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-amber-300 flex items-center gap-1.5">
+                                                            <i className="fa-solid fa-triangle-exclamation"></i> ยังไม่ได้เชื่อมต่อ
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {!lineStatus?.isLinked && (
+                                                <button
+                                                    onClick={() => setShowLineModal(true)}
+                                                    className="px-3 py-1.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold transition-all shadow-sm w-max"
+                                                >
+                                                    💬 กดเพื่อเชื่อมต่อ
+                                                </button>
+                                            )}
+                                        </div>
 
                                         {/* Full width Address */}
                                         <div className="sm:col-span-2 flex flex-col gap-1 p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
@@ -547,6 +665,15 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </motion.div>
+
+            {/* Line Connect Modal */}
+            <LineConnectModal
+                isOpen={showLineModal}
+                onClose={() => setShowLineModal(false)}
+                phoneNumber={phone}
+                userId={profile?.uid || user?.id}
+                onStatusRefresh={fetchLineStatus}
+            />
         </div>
     );
 }
