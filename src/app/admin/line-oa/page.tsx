@@ -38,11 +38,35 @@ interface AutoReplySettings {
     fallbackMessage: string;
 }
 
+interface LineChatMessageItem {
+    id: string;
+    sessionId: string;
+    sender: string;
+    senderName: string | null;
+    message: string;
+    messageType: string;
+    read: boolean;
+    createdAt: string;
+}
+
+interface LineChatSessionItem {
+    id: string;
+    lineUserId: string;
+    userName: string | null;
+    userPhone: string | null;
+    lastMessage: string | null;
+    lastMessageAt: string;
+    unreadCount: number;
+    status: string;
+    messages: LineChatMessageItem[];
+}
+
 // ===== Tab ID =====
-type TabId = "dashboard" | "broadcast" | "logs" | "settings";
+type TabId = "dashboard" | "chat" | "broadcast" | "logs" | "settings";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
     { id: "dashboard", label: "สถานะการเชื่อมต่อ", icon: "fa-chart-pie" },
+    { id: "chat", label: "สนทนาแชท (Live Chat)", icon: "fa-comments" },
     { id: "broadcast", label: "ส่งข้อความประกาศ", icon: "fa-bullhorn" },
     { id: "logs", label: "ประวัติแจ้งเตือน", icon: "fa-clock-rotate-left" },
     { id: "settings", label: "ตั้งค่า Auto-Reply", icon: "fa-gear" },
@@ -104,6 +128,49 @@ export default function AdminLineOAPage() {
     const [searchLogs, setSearchLogs] = useState("");
     const [filterLogType, setFilterLogType] = useState("all");
 
+    // ===== Chat State =====
+    const [chatSessions, setChatSessions] = useState<LineChatSessionItem[]>([]);
+    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+    const [replyInput, setReplyInput] = useState("");
+    const [sendingReply, setSendingReply] = useState(false);
+
+    const fetchChatSessions = useCallback(async () => {
+        try {
+            const res = await fetch("/api/admin/line-oa/chat");
+            if (!res.ok) return;
+            const data = await res.json();
+            setChatSessions(data.sessions || []);
+            if (data.sessions && data.sessions.length > 0 && !selectedSessionId) {
+                setSelectedSessionId(data.sessions[0].id);
+            }
+        } catch (error) {
+            console.error("Failed to load chat sessions:", error);
+        }
+    }, [selectedSessionId]);
+
+    const handleSendAdminReply = async () => {
+        if (!selectedSessionId || !replyInput.trim()) return;
+        setSendingReply(true);
+        try {
+            const res = await fetch("/api/admin/line-oa/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sessionId: selectedSessionId, message: replyInput.trim() }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || "Failed to send reply");
+            }
+            setReplyInput("");
+            await fetchChatSessions();
+            toast.success("ส่งข้อความตอบกลับไปยัง LINE แล้ว!");
+        } catch (error: any) {
+            toast.error(error.message || "ไม่สามารถส่งข้อความได้");
+        } finally {
+            setSendingReply(false);
+        }
+    };
+
     // ===== Settings State =====
     const [autoReply, setAutoReply] = useState<AutoReplySettings>({
         welcomeMessage: "ระบบจองคิว สพร.24 ยะลา ยินดีต้อนรับครับ",
@@ -136,7 +203,18 @@ export default function AdminLineOAPage() {
         }
     }, []);
 
-    useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
+    useEffect(() => {
+        fetchDashboard();
+        fetchChatSessions();
+    }, [fetchDashboard, fetchChatSessions]);
+
+    useEffect(() => {
+        if (activeTab === "chat") {
+            fetchChatSessions();
+            const interval = setInterval(fetchChatSessions, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [activeTab, fetchChatSessions]);
 
     // ===== Unlink Handler =====
     const handleUnlink = async (userId: string, name: string) => {
@@ -506,6 +584,170 @@ export default function AdminLineOAPage() {
                                             })}
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* ===== TAB: Live Chat ===== */}
+                    {activeTab === "chat" && (
+                        <motion.div key="chat" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden min-h-[580px] flex flex-col md:flex-row">
+                                {/* Sidebar: Session List */}
+                                <div className="w-full md:w-80 border-r border-slate-100 flex flex-col bg-slate-50/50">
+                                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <i className="fa-solid fa-comments text-[#06C755]"></i>
+                                            <h3 className="text-xs font-black text-slate-800">รายการสนทนา ({chatSessions.length})</h3>
+                                        </div>
+                                        <button onClick={fetchChatSessions} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                                            <i className="fa-solid fa-rotate-right text-xs"></i>
+                                        </button>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[520px]">
+                                        {chatSessions.length === 0 ? (
+                                            <div className="p-8 text-center text-slate-400 text-xs">
+                                                <i className="fa-solid fa-inbox text-3xl mb-2 text-slate-300 block"></i>
+                                                ยังไม่มีรายการสนทนาจากผู้ใช้ LINE
+                                            </div>
+                                        ) : (
+                                            chatSessions.map((session) => {
+                                                const isSelected = session.id === selectedSessionId;
+                                                return (
+                                                    <button
+                                                        key={session.id}
+                                                        onClick={() => setSelectedSessionId(session.id)}
+                                                        className={`w-full p-3.5 text-left flex items-start gap-3 transition-all ${isSelected ? "bg-white border-l-4 border-l-[#06C755] shadow-sm" : "hover:bg-slate-100/60"}`}
+                                                    >
+                                                        <div className="relative">
+                                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-[#06C755] font-bold flex items-center justify-center text-sm border border-emerald-500/20">
+                                                                <i className="fa-solid fa-user"></i>
+                                                            </div>
+                                                            {session.status === "active" ? (
+                                                                <span className="w-3 h-3 bg-emerald-500 border-2 border-white rounded-full absolute bottom-0 right-0"></span>
+                                                            ) : (
+                                                                <span className="w-3 h-3 bg-slate-300 border-2 border-white rounded-full absolute bottom-0 right-0"></span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between">
+                                                                <h4 className="text-xs font-extrabold text-slate-800 truncate">{session.userName || "สมาชิก LINE"}</h4>
+                                                                <span className="text-[9px] text-slate-400">
+                                                                    {new Date(session.lastMessageAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
+                                                                </span>
+                                                            </div>
+                                                            {session.userPhone && (
+                                                                <p className="text-[10px] text-emerald-600 font-bold">{session.userPhone}</p>
+                                                            )}
+                                                            <p className="text-[11px] text-slate-500 truncate mt-0.5">{session.lastMessage || "ไม่มีข้อความ"}</p>
+                                                        </div>
+                                                        {session.unreadCount > 0 && (
+                                                            <span className="px-1.5 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold">
+                                                                {session.unreadCount}
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Main Chat Conversation */}
+                                <div className="flex-1 flex flex-col bg-white">
+                                    {(() => {
+                                        const currentSession = chatSessions.find((s) => s.id === selectedSessionId);
+                                        if (!currentSession) {
+                                            return (
+                                                <div className="flex-1 flex flex-col items-center justify-center p-8 text-slate-400">
+                                                    <i className="fa-regular fa-comments text-5xl mb-3 text-slate-200"></i>
+                                                    <p className="text-xs font-bold">กรุณาเลือกรายการสนทนาทางซ้ายมือ</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <>
+                                                {/* Chat Header */}
+                                                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-[#06C755] font-bold flex items-center justify-center border border-emerald-500/20">
+                                                            <i className="fa-solid fa-user"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-sm font-extrabold text-slate-800">{currentSession.userName || "สมาชิก LINE"}</h3>
+                                                            <p className="text-[10px] text-slate-400 flex items-center gap-2">
+                                                                {currentSession.userPhone && <span>📞 {currentSession.userPhone}</span>}
+                                                                <span className="font-mono text-[9px]">ID: {currentSession.lineUserId.slice(0, 12)}...</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${currentSession.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                                                        {currentSession.status === "active" ? "🟢 ใช้งานปกติ" : "⚪ เลิกติดตาม"}
+                                                    </span>
+                                                </div>
+
+                                                {/* Chat Messages Body */}
+                                                <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/20 min-h-[320px] max-h-[420px]">
+                                                    {currentSession.messages.length === 0 ? (
+                                                        <div className="text-center py-10 text-slate-400 text-xs">ยังไม่มีประวัติการสนทนา</div>
+                                                    ) : (
+                                                        currentSession.messages.map((msg) => {
+                                                            const isAdmin = msg.sender === "admin";
+                                                            return (
+                                                                <div key={msg.id} className={`flex flex-col ${isAdmin ? "items-end" : "items-start"}`}>
+                                                                    <div className="text-[9px] text-slate-400 mb-0.5 px-1 font-semibold">
+                                                                        {msg.senderName || (isAdmin ? "เจ้าหน้าที่" : "สมาชิก")}
+                                                                    </div>
+                                                                    <div
+                                                                        className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed ${
+                                                                            isAdmin
+                                                                                ? "bg-[#06C755] text-white rounded-br-none shadow-md shadow-green-500/10 font-sans font-medium"
+                                                                                : "bg-white text-slate-800 border border-slate-200/80 rounded-bl-none shadow-sm font-sans font-medium"
+                                                                        }`}
+                                                                    >
+                                                                        {msg.message}
+                                                                    </div>
+                                                                    <div className="text-[9px] text-slate-400 mt-0.5 px-1">
+                                                                        {new Date(msg.createdAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+
+                                                {/* Input Form */}
+                                                <div className="p-3 border-t border-slate-100 bg-white">
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="พิมพ์ข้อความตอบกลับสมาชิก LINE OA..."
+                                                            value={replyInput}
+                                                            onChange={(e) => setReplyInput(e.target.value)}
+                                                            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendAdminReply()}
+                                                            className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-slate-50"
+                                                        />
+                                                        <button
+                                                            onClick={handleSendAdminReply}
+                                                            disabled={sendingReply || !replyInput.trim()}
+                                                            className="px-5 py-2.5 rounded-2xl bg-[#06C755] hover:bg-green-600 text-white text-xs font-bold shadow-md shadow-green-500/20 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                                                        >
+                                                            {sendingReply ? (
+                                                                <span className="loading loading-spinner loading-xs"></span>
+                                                            ) : (
+                                                                <>
+                                                                    <i className="fa-solid fa-paper-plane"></i>
+                                                                    <span>ส่งข้อความ</span>
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </motion.div>

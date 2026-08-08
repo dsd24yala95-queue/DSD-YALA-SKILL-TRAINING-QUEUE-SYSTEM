@@ -91,3 +91,30 @@ model SystemSetting {
   key   String @unique
   value String
 }
+
+model LineChatSession {
+  id            String            @id @default(uuid())
+  lineUserId    String            @unique
+  userName      String?
+  userPhone     String?
+  lastMessage   String?
+  lastMessageAt DateTime          @default(now())
+  unreadCount   Int               @default(0)
+  status        String            @default("active") // "active", "archived", "unfollowed"
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  messages      LineChatMessage[]
+}
+
+model LineChatMessage {
+  id            String          @id @default(uuid())
+  sessionId     String
+  session       LineChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender        String          // "user" or "admin"
+  senderName    String?
+  message       String
+  messageType   String          @default("text") // "text", "image", "sticker", "file"
+  read          Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+}
