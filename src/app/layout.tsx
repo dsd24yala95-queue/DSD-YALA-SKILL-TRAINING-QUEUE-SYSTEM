@@ -9,6 +9,7 @@ import LayoutContent from "@/components/LayoutContent";
 import AuthProviderWrapper from "@/components/AuthProviderWrapper";
 import QueueAlertModal from "@/components/QueueAlertModal";
 import { Toaster } from "sonner";
+import ImmigrationCheckpointGuard from "@/components/ImmigrationCheckpointGuard";
 
 export const metadata: Metadata = {
   title: "สพร.24 ยะลา — ระบบรับสมัครและจองคิวพัฒนาฝีมือแรงงาน",
@@ -74,10 +75,12 @@ export default function RootLayout({
         <IosPwaGuideModal />
         <OfflineDetector />
         <AuthProviderWrapper>
-          <QueueAlertModal />
-          <LayoutContent>
-            {children}
-          </LayoutContent>
+          <ImmigrationCheckpointGuard>
+            <QueueAlertModal />
+            <LayoutContent>
+              {children}
+            </LayoutContent>
+          </ImmigrationCheckpointGuard>
         </AuthProviderWrapper>
         <Toaster position="top-center" richColors />
       </body>
