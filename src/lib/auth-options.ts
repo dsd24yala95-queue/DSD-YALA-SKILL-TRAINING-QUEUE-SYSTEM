@@ -35,20 +35,14 @@ export const authOptions: AuthOptions = {
                     });
 
                     if (!user) {
-                        const tempPhone = "08" + Math.floor(10000000 + Math.random() * 90000000);
                         user = await prisma.user.create({
                             data: {
                                 idCard: pid,
                                 fullName: fullName,
-                                phoneNumber: tempPhone,
+                                phoneNumber: null,
                                 passwordHash: "THAID_AUTH_OAUTH",
                                 role: "member",
                             }
-                        });
-                        // Clear phone number so ImmigrationCheckpointGuard detects incomplete profile and redirects to /register/complete-profile!
-                        user = await prisma.user.update({
-                            where: { id: user.id },
-                            data: { phoneNumber: "" }
                         });
                     }
 
