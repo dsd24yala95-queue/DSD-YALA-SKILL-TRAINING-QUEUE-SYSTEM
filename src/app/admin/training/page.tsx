@@ -28,7 +28,7 @@ const emptyCourse: Omit<MasterCourse, "id"> = {
     Date: "",
     DateEnd: "",
     LocationName: "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา",
-    LocationGPS: "6.541094, 101.280388",
+    LocationGPS: "https://maps.app.goo.gl/brFvnbXxdL2M5cdk9",
     status: "active",
 };
 
@@ -470,7 +470,7 @@ export default function AdminTrainingPage() {
                                     <div className="flex gap-2 mb-1.5">
                                         <input
                                             type="text"
-                                            placeholder="เช่น 6.541094, 101.280388"
+                                            placeholder="เช่น https://maps.app.goo.gl/brFvnbXxdL2M5cdk9 หรือ 6.541094, 101.280388"
                                             value={form.LocationGPS || ""}
                                             onChange={(e) => setForm({ ...form, LocationGPS: e.target.value })}
                                             className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 font-mono text-xs"
@@ -488,7 +488,7 @@ export default function AdminTrainingPage() {
                                     <div className="flex flex-wrap gap-1.5">
                                         <button
                                             type="button"
-                                            onClick={() => setForm({ ...form, LocationGPS: "6.541094, 101.280388" })}
+                                            onClick={() => setForm({ ...form, LocationGPS: "https://maps.app.goo.gl/brFvnbXxdL2M5cdk9" })}
                                             className="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-[10px] font-bold border border-indigo-200/60 transition-all flex items-center gap-1"
                                         >
                                             <i className="fa-solid fa-building text-indigo-500"></i>
