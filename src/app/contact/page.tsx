@@ -126,7 +126,7 @@ export default function ContactPage() {
                             <h3 className="text-base font-extrabold text-slate-800">ช่องทางออนไลน์</h3>
                             <div className="flex flex-col gap-2">
                                 <a
-                                    href="https://facebook.com"
+                                    href="https://www.facebook.com/profile.php?id=100069260137622"
                                     target="_blank"
                                     rel="noreferrer"
                                     className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-blue-50 hover:border-blue-200 transition-all group"
@@ -138,16 +138,28 @@ export default function ContactPage() {
                                     <i className="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-blue-500"></i>
                                 </a>
                                 <a
-                                    href="https://line.me"
+                                    href="https://line.me/R/ti/p/@522kafif"
                                     target="_blank"
                                     rel="noreferrer"
                                     className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 transition-all group"
                                 >
                                     <div className="flex items-center gap-3">
                                         <i className="fa-brands fa-line text-emerald-500 text-lg"></i>
-                                        <span className="text-xs font-bold text-slate-700">LINE Official Account</span>
+                                        <span className="text-xs font-bold text-slate-700">LINE Official Account (@522kafif)</span>
                                     </div>
                                     <i className="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-emerald-500"></i>
+                                </a>
+                                <a
+                                    href="https://www.youtube.com/@สพร24ยะลา"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 transition-all group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-brands fa-youtube text-rose-600 text-lg"></i>
+                                        <span className="text-xs font-bold text-slate-700">YouTube สพร.24 ยะลา</span>
+                                    </div>
+                                    <i className="fa-solid fa-chevron-right text-xs text-slate-300 group-hover:text-rose-500"></i>
                                 </a>
                             </div>
                         </motion.div>

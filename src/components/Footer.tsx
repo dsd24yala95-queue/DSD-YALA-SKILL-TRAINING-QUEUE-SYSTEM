@@ -66,13 +66,31 @@ export default function Footer() {
                             ติดตามเรา
                         </h3>
                         <div className="flex items-center gap-3">
-                            <a href="#" className="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+                            <a
+                                href="https://www.facebook.com/profile.php?id=100069260137622"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                                title="Facebook สพร.24 ยะลา"
+                            >
                                 <i className="fa-brands fa-facebook-f text-lg"></i>
                             </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-[#00B900] flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+                            <a
+                                href="https://line.me/R/ti/p/@522kafif"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-10 h-10 rounded-full bg-[#00B900] flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                                title="LINE Official Account (@522kafif)"
+                            >
                                 <i className="fa-brands fa-line text-lg"></i>
                             </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-[#FF0000] flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+                            <a
+                                href="https://www.youtube.com/@สพร24ยะลา"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-10 h-10 rounded-full bg-[#FF0000] flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                                title="YouTube สพร.24 ยะลา"
+                            >
                                 <i className="fa-brands fa-youtube text-lg"></i>
                             </a>
                         </div>
