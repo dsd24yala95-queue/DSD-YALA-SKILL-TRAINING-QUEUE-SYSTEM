@@ -25,6 +25,8 @@ export default function ImmigrationCheckpointGuard({ children }: { children: Rea
             if (!isStaff && pathname !== "/register/complete-profile") {
                 const isProtectedRoute = PROTECTED_MEMBER_ROUTES.some(r => pathname.startsWith(r));
 
+                const hasPhone = Boolean(profile.phoneNumber && profile.phoneNumber.trim());
+
                 // Require phone number to proceed (profile image is optional / can upload later)
                 if (isProtectedRoute && !hasPhone) {
                     router.push("/register/complete-profile");
