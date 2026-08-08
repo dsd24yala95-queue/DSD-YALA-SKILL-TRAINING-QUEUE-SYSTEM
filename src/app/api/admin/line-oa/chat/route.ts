@@ -8,6 +8,30 @@ export async function GET() {
         const { errorResponse } = await checkStaffAuth();
         if (errorResponse) return errorResponse;
 
+        // Auto-sync existing linked Users into LineChatSession
+        const linkedUsers = await prisma.user.findMany({
+            where: { lineUserId: { not: null } }
+        });
+
+        for (const u of linkedUsers) {
+            if (u.lineUserId) {
+                await prisma.lineChatSession.upsert({
+                    where: { lineUserId: u.lineUserId },
+                    update: {
+                        userName: u.fullName || "ผู้ใช้งาน",
+                        userPhone: u.phoneNumber,
+                    },
+                    create: {
+                        lineUserId: u.lineUserId,
+                        userName: u.fullName || "ผู้ใช้งาน",
+                        userPhone: u.phoneNumber,
+                        lastMessage: "ผูกบัญชี LINE แล้ว",
+                        status: "active"
+                    }
+                });
+            }
+        }
+
         const sessions = await prisma.lineChatSession.findMany({
             orderBy: { lastMessageAt: "desc" },
             include: {
