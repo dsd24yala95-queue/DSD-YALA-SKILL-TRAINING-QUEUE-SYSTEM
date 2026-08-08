@@ -11,29 +11,6 @@ const PROTECTED_MEMBER_ROUTES = [
 ];
 
 export default function ImmigrationCheckpointGuard({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
-    const router = useRouter();
-    const { user, profile, loading } = useAuth();
-
-    useEffect(() => {
-        if (loading) return;
-
-        // Only enforce for logged-in members (not staff/admin)
-        if (user && profile) {
-            const isStaff = profile.role === "admin" || profile.role === "superadmin" || profile.role === "officer";
-
-            if (!isStaff && pathname !== "/register/complete-profile") {
-                const isProtectedRoute = PROTECTED_MEMBER_ROUTES.some(r => pathname.startsWith(r));
-
-                const hasPhone = Boolean(profile.phoneNumber && profile.phoneNumber.trim());
-
-                // Require phone number to proceed (profile image is optional / can upload later)
-                if (isProtectedRoute && !hasPhone) {
-                    router.push("/register/complete-profile");
-                }
-            }
-        }
-    }, [user, profile, loading, pathname, router]);
-
+    // Checkpoint guard temporarily disabled for standard logins
     return <>{children}</>;
 }

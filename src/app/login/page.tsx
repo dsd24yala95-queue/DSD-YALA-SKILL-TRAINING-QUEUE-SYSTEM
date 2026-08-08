@@ -124,10 +124,11 @@ export default function LoginPage() {
                             <i className="fa-solid fa-mobile-screen-button text-white text-2xl animate-pulse"></i>
                         </div>
                         <h1 className="text-2xl font-extrabold text-white font-sans">เข้าสู่ระบบใช้งาน</h1>
-                        <p className="text-xs text-blue-200/60 mt-1">เลือกช่องทางเข้าสู่ระบบเพื่อใช้งานบริการจองคิว</p>
+                        <p className="text-xs text-blue-200/60 mt-1">กรอกเบอร์โทรศัพท์มือถือของท่านเพื่อเข้าสู่ระบบ</p>
                     </div>
 
-                    {/* ThaID OAuth Button */}
+                    {/* ThaID OAuth Button (Temporarily Disabled - Ready for future update) */}
+                    {/* 
                     <div className="mb-5">
                         <button
                             type="button"
@@ -157,6 +158,7 @@ export default function LoginPage() {
                         </div>
                         <span className="relative bg-[#001D40]/80 px-3 text-[10px] text-blue-200/50 uppercase tracking-widest font-semibold">หรือเข้าสู่ระบบด้วยเบอร์โทรศัพท์</span>
                     </div>
+                    */}
 
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div className="form-control">
