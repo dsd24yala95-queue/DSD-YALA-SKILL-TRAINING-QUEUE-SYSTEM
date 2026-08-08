@@ -7,7 +7,28 @@ export async function GET() {
         const courses = await prisma.masterCourse.findMany({
             orderBy: { createdAt: "desc" }
         });
-        return NextResponse.json(courses);
+
+        // Compute real-time currentQueue count for each course from active bookings
+        const coursesWithCount = await Promise.all(
+            courses.map(async (c) => {
+                const count = await prisma.queueBooking.count({
+                    where: {
+                        bookingType: "training",
+                        status: { not: "cancelled" },
+                        OR: [
+                            { itemId: c.id },
+                            { itemName: { equals: c.courseName, mode: "insensitive" } }
+                        ]
+                    }
+                });
+                return {
+                    ...c,
+                    currentQueue: count
+                };
+            })
+        );
+
+        return NextResponse.json(coursesWithCount);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

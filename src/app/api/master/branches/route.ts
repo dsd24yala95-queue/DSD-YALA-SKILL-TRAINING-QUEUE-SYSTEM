@@ -7,7 +7,28 @@ export async function GET() {
         const branches = await prisma.masterBranch.findMany({
             orderBy: { createdAt: "desc" }
         });
-        return NextResponse.json(branches);
+
+        // Compute real-time currentQueue count for each branch from active bookings
+        const branchesWithCount = await Promise.all(
+            branches.map(async (b) => {
+                const count = await prisma.queueBooking.count({
+                    where: {
+                        bookingType: "test",
+                        status: { not: "cancelled" },
+                        OR: [
+                            { itemId: b.id },
+                            { itemName: { equals: b.branchName, mode: "insensitive" } }
+                        ]
+                    }
+                });
+                return {
+                    ...b,
+                    currentQueue: count
+                };
+            })
+        );
+
+        return NextResponse.json(branchesWithCount);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
