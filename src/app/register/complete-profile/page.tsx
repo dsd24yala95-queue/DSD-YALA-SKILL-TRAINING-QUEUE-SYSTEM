@@ -85,11 +85,6 @@ export default function CompleteProfilePage() {
             return;
         }
 
-        if (!avatarUrl) {
-            toast.error("กรุณาอัปโหลดรูปถ่ายโปรไฟล์หน้าตรงของคุณก่อนดำเนินการต่อ");
-            return;
-        }
-
         const toastId = toast.loading("กำลังบันทึกข้อมูลโปรไฟล์...");
         try {
             setSubmitting(true);
@@ -194,8 +189,8 @@ export default function CompleteProfilePage() {
 
                     {/* Avatar Upload Section */}
                     <div className="flex flex-col items-center justify-center space-y-3">
-                        <label className="text-xs font-bold text-blue-200/90 block">
-                            รูปถ่ายโปรไฟล์หน้าตรง <span className="text-red-400">*</span>
+                        <label className="text-xs font-bold text-blue-200/90 block text-center">
+                            รูปถ่ายโปรไฟล์หน้าตรง <span className="text-blue-200/60 font-normal">(ไม่บังคับ - สามารถอัปโหลดภายหลังได้)</span>
                         </label>
 
                         <div className="relative group cursor-pointer">

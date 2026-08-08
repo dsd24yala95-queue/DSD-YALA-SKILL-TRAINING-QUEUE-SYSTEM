@@ -24,17 +24,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก (เช่น 0812345678)" }, { status: 400 });
         }
 
-        if (!profileImage || typeof profileImage !== "string" || !profileImage.trim()) {
-            return NextResponse.json({ error: "กรุณาอัปโหลดรูปถ่ายโปรไฟล์หน้าตรงของคุณ" }, { status: 400 });
+        const updateData: any = {
+            phoneNumber: cleanedPhone,
+        };
+
+        if (profileImage && typeof profileImage === "string" && profileImage.trim()) {
+            updateData.profileImage = profileImage.trim();
         }
 
         // Update User Profile in Prisma DB
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: {
-                phoneNumber: cleanedPhone,
-                profileImage: profileImage.trim(),
-            },
+            data: updateData,
             select: {
                 id: true,
                 fullName: true,
