@@ -57,6 +57,7 @@ export const authOptions: AuthOptions = {
                         phoneNumber: user.phoneNumber,
                         email: user.email,
                         name: user.fullName || pid,
+                        idCard: user.idCard || pid,
                         role: user.role,
                         department: user.department,
                         mustChangePassword: user.mustChangePassword,
@@ -93,6 +94,7 @@ export const authOptions: AuthOptions = {
                     phoneNumber: user.phoneNumber,
                     email: user.email,
                     name: user.fullName || user.phoneNumber,
+                    idCard: user.idCard,
                     role: user.role,
                     department: user.department,
                     mustChangePassword: user.mustChangePassword,
@@ -108,6 +110,7 @@ export const authOptions: AuthOptions = {
                 token.role = (user as any).role;
                 token.department = (user as any).department;
                 token.phoneNumber = (user as any).phoneNumber;
+                token.idCard = (user as any).idCard;
                 token.mustChangePassword = (user as any).mustChangePassword;
                 token.loginAt = Math.floor(Date.now() / 1000); // Unix timestamp (วินาที)
             }
@@ -135,6 +138,7 @@ export const authOptions: AuthOptions = {
                 (session.user as any).role = token.role as string;
                 (session.user as any).department = token.department as string;
                 (session.user as any).phoneNumber = token.phoneNumber;
+                (session.user as any).idCard = token.idCard;
                 (session.user as any).mustChangePassword = Boolean(token.mustChangePassword);
             }
             return session;
