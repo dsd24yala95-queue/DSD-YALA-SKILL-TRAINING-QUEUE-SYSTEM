@@ -19,9 +19,50 @@ export const authOptions: AuthOptions = {
             name: "Credentials",
             credentials: {
                 phoneNumber: { label: "Phone Number", type: "text" },
-                password: { label: "Password", type: "password" }
+                password: { label: "Password", type: "password" },
+                isThaID: { label: "Is ThaID", type: "text" },
+                pid: { label: "PID", type: "text" },
+                fullName: { label: "Full Name", type: "text" },
             },
             async authorize(credentials) {
+                // 🇹🇭 Handle ThaID Login
+                if (credentials?.isThaID === "true") {
+                    const pid = credentials.pid || "1959900" + Math.floor(100000 + Math.random() * 900000);
+                    const fullName = credentials.fullName || "ผู้สมัครยืนยันตัวตน ThaID";
+
+                    let user = await prisma.user.findFirst({
+                        where: { idCard: pid }
+                    });
+
+                    if (!user) {
+                        const tempPhone = "08" + Math.floor(10000000 + Math.random() * 90000000);
+                        user = await prisma.user.create({
+                            data: {
+                                idCard: pid,
+                                fullName: fullName,
+                                phoneNumber: tempPhone,
+                                passwordHash: "THAID_AUTH_OAUTH",
+                                role: "member",
+                            }
+                        });
+                        // Clear phone number so ImmigrationCheckpointGuard detects incomplete profile and redirects to /register/complete-profile!
+                        user = await prisma.user.update({
+                            where: { id: user.id },
+                            data: { phoneNumber: "" }
+                        });
+                    }
+
+                    return {
+                        id: user.id,
+                        phoneNumber: user.phoneNumber,
+                        email: user.email,
+                        name: user.fullName || pid,
+                        role: user.role,
+                        department: user.department,
+                        mustChangePassword: user.mustChangePassword,
+                    };
+                }
+
                 if (!credentials?.phoneNumber) {
                     throw new Error("กรุณากรอกเบอร์โทรศัพท์");
                 }

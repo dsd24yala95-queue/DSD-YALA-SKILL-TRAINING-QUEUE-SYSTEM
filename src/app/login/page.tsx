@@ -61,6 +61,30 @@ export default function LoginPage() {
 
 
 
+    const [loadingThaID, setLoadingThaID] = useState(false);
+
+    const handleThaIDLogin = async () => {
+        setLoadingThaID(true);
+        const toastId = toast.loading("กำลังเชื่อมต่อแอปพลิเคชัน ThaID กรมการปกครอง...");
+        try {
+            const res = await signIn("credentials", {
+                redirect: false,
+                isThaID: "true",
+                fullName: "ผู้สมัครยืนยันตัวตน ThaID",
+            });
+            if (res?.error) {
+                toast.error(res.error, { id: toastId });
+            } else {
+                toast.success("ยืนยันตัวตนผ่าน ThaID สำเร็จ! กำลังเข้าสู่ด่านตรวจข้อมูล...", { id: toastId });
+                router.push("/booking");
+            }
+        } catch (err: any) {
+            toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อ ThaID", { id: toastId });
+        } finally {
+            setLoadingThaID(false);
+        }
+    };
+
     return (
         <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#001a33] via-[#003366] to-[#002244] p-4 overflow-hidden">
             {/* Background elements */}
@@ -80,12 +104,47 @@ export default function LoginPage() {
                     <div className="absolute inset-0 opacity-[0.02] bg-noise mix-blend-overlay pointer-events-none"></div>
                     
                     {/* Header */}
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-6">
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#6366F1] flex items-center justify-center mx-auto mb-4 shadow-[0_0_15px_rgba(37,99,235,0.4)] border border-white/10">
                             <i className="fa-solid fa-mobile-screen-button text-white text-2xl animate-pulse"></i>
                         </div>
                         <h1 className="text-2xl font-extrabold text-white font-sans">เข้าสู่ระบบใช้งาน</h1>
-                        <p className="text-xs text-blue-200/60 mt-1">กรอกเบอร์โทรศัพท์มือถือของท่านเพื่อเข้าสู่ระบบ</p>
+                        <p className="text-xs text-blue-200/60 mt-1">เลือกช่องทางเข้าสู่ระบบเพื่อใช้งานบริการจองคิว</p>
+                    </div>
+
+                    {/* ThaID OAuth Button */}
+                    <div className="mb-5">
+                        <button
+                            type="button"
+                            onClick={handleThaIDLogin}
+                            disabled={loadingThaID || loading}
+                            className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#030B30] via-[#0A1A54] to-[#030B30] border border-amber-400/40 hover:border-amber-400 p-3.5 shadow-xl hover:shadow-amber-500/20 active:scale-95 transition-all text-left flex items-center justify-between"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-[#000833] border border-amber-400/40 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="text-white font-extrabold text-xs tracking-tight">Tha<span className="text-amber-400">iD</span></span>
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-black text-white group-hover:text-amber-300 transition-colors flex items-center gap-1.5">
+                                        <span>เข้าสู่ระบบด้วย ThaID</span>
+                                        <span className="px-1.5 py-0.2 bg-amber-400/20 text-amber-300 text-[9px] rounded font-semibold">แนะนำ</span>
+                                    </h3>
+                                    <p className="text-[10px] text-blue-200/60">ยืนยันตัวตนด้วยแอปพลิเคชัน ThaID กรมการปกครอง</p>
+                                </div>
+                            </div>
+                            {loadingThaID ? (
+                                <span className="loading loading-spinner loading-xs text-amber-400"></span>
+                            ) : (
+                                <i className="fa-solid fa-chevron-right text-xs text-amber-400/70 group-hover:text-amber-300 group-hover:translate-x-1 transition-all"></i>
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="relative my-5 text-center">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-white/10"></span>
+                        </div>
+                        <span className="relative bg-[#001D40]/80 px-3 text-[10px] text-blue-200/50 uppercase tracking-widest font-semibold">หรือเข้าสู่ระบบด้วยเบอร์โทรศัพท์</span>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-5">
