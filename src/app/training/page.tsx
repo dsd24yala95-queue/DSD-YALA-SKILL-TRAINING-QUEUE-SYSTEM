@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { createQueueBooking, getActiveCourses, MasterCourse } from "@/lib/services/db-service";
 import { toast } from "sonner";
+import { formatDateRangeTh } from "@/lib/dateFormatter";
 
 export default function TrainingCoursesPage() {
     const router = useRouter();
@@ -176,25 +177,55 @@ export default function TrainingCoursesPage() {
                                                 </h3>
                                                 <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1">
                                                     <i className="fa-solid fa-building-columns text-[10px] text-emerald-400"></i>
-                                                    สพร.24 ยะลา
+                                                    {course.LocationName || "สพร.24 ยะลา"}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        {/* Seats Progress Bar */}
+                                        {/* Date Range Display */}
+                                        <div className="flex items-center gap-2 text-xs text-slate-300 font-medium mb-3 bg-slate-800/40 px-3 py-2 rounded-xl border border-slate-700/40">
+                                            <i className="fa-regular fa-calendar-days text-emerald-400 text-sm"></i>
+                                            <span>{formatDateRangeTh(course.Date, course.DateEnd)}</span>
+                                        </div>
+
+                                        {/* GPS Location Button */}
+                                        <div className="mb-4">
+                                            <a
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(course.LocationGPS || course.LocationName || "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา")}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-300 hover:text-white border border-emerald-500/20 text-xs font-semibold transition-all active:scale-95"
+                                            >
+                                                <i className="fa-solid fa-map-location-dot text-emerald-400"></i>
+                                                <span>📍 เปิดแผนที่ (GPS)</span>
+                                                <i className="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-70"></i>
+                                            </a>
+                                        </div>
+
+                                        {/* Dynamic Quota Progress Info (Green -> Orange -> Red) */}
                                         <div className="bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700/50 mb-5">
                                             <div className="flex justify-between text-xs font-bold mb-1.5">
                                                 <span className="text-slate-400">จำนวนที่นั่งผู้สมัคร:</span>
-                                                <span className={full ? "text-rose-400" : "text-emerald-400"}>
+                                                <span className={
+                                                    percent >= 100
+                                                        ? "text-rose-400 font-extrabold"
+                                                        : percent >= 70
+                                                            ? "text-amber-400 font-extrabold"
+                                                            : "text-emerald-400 font-extrabold"
+                                                }>
                                                     {course.currentQueue} / {course.maxSeats} คน ({percent}%)
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                                            <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-500 ${
-                                                        full ? "bg-rose-500" : "bg-gradient-to-r from-emerald-400 to-teal-400"
+                                                        percent >= 100
+                                                            ? "bg-gradient-to-r from-red-500 to-rose-600 shadow-[0_0_10px_#ef4444]"
+                                                            : percent >= 70
+                                                                ? "bg-gradient-to-r from-amber-500 to-orange-500 shadow-[0_0_10px_#f59e0b]"
+                                                                : "bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_#10b981]"
                                                     }`}
-                                                    style={{ width: `${percent}%` }}
+                                                    style={{ width: `${Math.max(5, percent)}%` }}
                                                 ></div>
                                             </div>
                                         </div>

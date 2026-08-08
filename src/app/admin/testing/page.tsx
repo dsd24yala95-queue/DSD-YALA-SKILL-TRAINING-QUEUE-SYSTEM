@@ -12,6 +12,7 @@ interface MasterBranch {
     branchName: string;
     levels: string;
     maxQueue: number;
+    currentQueue?: number;
     Date: string;
     DateEnd: string;
     LocationName?: string;
@@ -243,55 +244,95 @@ export default function AdminTestingPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     <AnimatePresence>
-                        {filteredBranches.map((b, i) => (
-                            <motion.div
-                                key={b.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.04 }}
-                                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all group flex flex-col justify-between"
-                            >
-                                <div>
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm text-white text-sm">
-                                            <i className="fa-solid fa-tools"></i>
+                        {filteredBranches.map((b, i) => {
+                            const max = b.maxQueue || 20;
+                            const current = b.currentQueue || 0;
+                            const percent = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
+
+                            return (
+                                <motion.div
+                                    key={b.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.04 }}
+                                    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all group flex flex-col justify-between"
+                                >
+                                    <div>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm text-white text-sm">
+                                                <i className="fa-solid fa-tools"></i>
+                                            </div>
+                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${b.status === "active" ? "bg-emerald-500/10 text-emerald-600 border-emerald-400/20" : "bg-slate-100 text-slate-400 border-slate-200"}`}>
+                                                {b.status === "active" ? "เปิดรับสมัคร" : "ปิดรับสมัคร"}
+                                            </span>
                                         </div>
-                                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${b.status === "active" ? "bg-emerald-500/10 text-emerald-600 border-emerald-400/20" : "bg-slate-100 text-slate-400 border-slate-200"}`}>
-                                            {b.status === "active" ? "เปิดรับสมัคร" : "ปิดรับสมัคร"}
-                                        </span>
+
+                                        <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-snug mb-2">{b.branchName}</h3>
+
+                                        <div className="space-y-2 mt-3">
+                                            {/* Thai Date Range */}
+                                            <p className="text-xs font-semibold text-slate-600 flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                                                <i className="fa-regular fa-calendar-days text-indigo-500 shrink-0"></i>
+                                                <span>{formatDateRangeTh(b.Date, b.DateEnd)}</span>
+                                            </p>
+
+                                            <p className="text-[11px] text-slate-500 flex items-center gap-2">
+                                                <i className="fa-solid fa-layer-group w-4 text-blue-400"></i>
+                                                <span>ระดับทักษะ {b.levels}</span>
+                                            </p>
+
+                                            {b.LocationName && (
+                                                <p className="text-[11px] text-slate-500 truncate flex items-center gap-2">
+                                                    <i className="fa-solid fa-location-dot w-4 text-rose-400"></i>
+                                                    <span className="truncate">{b.LocationName}</span>
+                                                </p>
+                                            )}
+
+                                            {/* GPS Map Button */}
+                                            <div>
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.LocationGPS || b.LocationName || "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา")}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 text-[11px] font-bold transition-all"
+                                                >
+                                                    <i className="fa-solid fa-map-location-dot text-indigo-500"></i>
+                                                    <span>📍 เปิดแผนที่ (GPS)</span>
+                                                    <i className="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
+                                                </a>
+                                            </div>
+
+                                            {/* Dynamic Capacity Progress Bar (Green -> Orange -> Red) */}
+                                            <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 mt-2">
+                                                <div className="flex justify-between text-[11px] font-bold mb-1">
+                                                    <span className="text-slate-500">ผู้สมัครทดสอบ:</span>
+                                                    <span className={
+                                                        percent >= 100
+                                                            ? "text-rose-600 font-extrabold"
+                                                            : percent >= 70
+                                                                ? "text-amber-600 font-extrabold"
+                                                                : "text-emerald-600 font-extrabold"
+                                                    }>
+                                                        {current} / {max} คน ({percent}%)
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-500 ${
+                                                            percent >= 100
+                                                                ? "bg-gradient-to-r from-red-500 to-rose-600"
+                                                                : percent >= 70
+                                                                    ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                                                    : "bg-gradient-to-r from-emerald-500 to-teal-400"
+                                                        }`}
+                                                        style={{ width: `${Math.max(5, percent)}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-snug mb-2">{b.branchName}</h3>
-
-                                    <div className="space-y-1.5 mt-3">
-                                        <p className="text-xs font-semibold text-slate-600 flex items-center gap-2">
-                                            <i className="fa-regular fa-calendar text-indigo-500 shrink-0"></i>
-                                            <span>{formatDateRange(b.Date, b.DateEnd)}</span>
-                                        </p>
-                                        <p className="text-[11px] text-slate-500 flex items-center gap-2">
-                                            <i className="fa-solid fa-layer-group w-4 text-blue-400"></i>
-                                            <span>ระดับทักษะ {b.levels}</span>
-                                        </p>
-                                        <p className="text-[11px] text-slate-500 flex items-center gap-2">
-                                            <i className="fa-solid fa-users w-4 text-indigo-400"></i>
-                                            <span>คิวสูงสุด {b.maxQueue} คิว/วัน</span>
-                                        </p>
-                                        {b.LocationName && (
-                                            <p className="text-[11px] text-slate-500 truncate flex items-center gap-2">
-                                                <i className="fa-solid fa-location-dot w-4 text-rose-400"></i>
-                                                <span className="truncate">{b.LocationName}</span>
-                                            </p>
-                                        )}
-                                        {b.LocationGPS && (
-                                            <p className="text-[11px] text-slate-500 font-mono flex items-center gap-2 truncate">
-                                                <i className="fa-solid fa-map-pin w-4 text-indigo-500 shrink-0"></i>
-                                                <span>{b.LocationGPS}</span>
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50">
+                                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-50">
                                     <button
                                         type="button"
                                         onClick={() => setApplicantModalTarget({ id: b.id, name: b.branchName })}
@@ -314,9 +355,10 @@ export default function AdminTestingPage() {
                                             <i className="fa-solid fa-trash"></i>
                                         </button>
                                     )}
-                                </div>
-                            </motion.div>
-                        ))}
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
             )}
