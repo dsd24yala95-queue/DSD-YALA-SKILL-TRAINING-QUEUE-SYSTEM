@@ -73,7 +73,7 @@ export default function ContactPage() {
                                 142 หมู่ 1 ถนนสุขยางค์ ตำบลสะเตงนอก อำเภอเมืองยะลา จังหวัดยะลา 95000
                             </p>
                             <a
-                                href="https://maps.google.com/?q=สถาบันพัฒนาฝีมือแรงงาน+24+ยะลา"
+                                href="https://maps.app.goo.gl/brFvnbXxdL2M5cdk9"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="btn btn-xs bg-orange-500 hover:bg-orange-600 text-white border-0 rounded-xl px-3 py-1 font-bold inline-flex items-center gap-1.5 mt-2"

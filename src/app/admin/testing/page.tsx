@@ -291,7 +291,13 @@ export default function AdminTestingPage() {
                                             {/* GPS Map Button */}
                                             <div>
                                                 <a
-                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.LocationGPS || b.LocationName || "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา")}`}
+                                                    href={
+                                                        b.LocationGPS?.startsWith("http")
+                                                            ? b.LocationGPS
+                                                            : b.LocationGPS
+                                                                ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.LocationGPS)}`
+                                                                : "https://maps.app.goo.gl/brFvnbXxdL2M5cdk9"
+                                                    }
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 text-[11px] font-bold transition-all"

@@ -191,7 +191,13 @@ export default function TrainingCoursesPage() {
                                         {/* GPS Location Button */}
                                         <div className="mb-4">
                                             <a
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(course.LocationGPS || course.LocationName || "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา")}`}
+                                                href={
+                                                    course.LocationGPS?.startsWith("http")
+                                                        ? course.LocationGPS
+                                                        : course.LocationGPS
+                                                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(course.LocationGPS)}`
+                                                            : "https://maps.app.goo.gl/brFvnbXxdL2M5cdk9"
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-300 hover:text-white border border-emerald-500/20 text-xs font-semibold transition-all active:scale-95"

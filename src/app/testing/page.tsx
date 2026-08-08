@@ -189,7 +189,13 @@ export default function SkillTestingPage() {
                                         {/* GPS Location Button */}
                                         <div className="mb-4">
                                             <a
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.LocationGPS || branch.LocationName || "สถาบันพัฒนาฝีมือแรงงาน 24 ยะลา")}`}
+                                                href={
+                                                    branch.LocationGPS?.startsWith("http")
+                                                        ? branch.LocationGPS
+                                                        : branch.LocationGPS
+                                                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.LocationGPS)}`
+                                                            : "https://maps.app.goo.gl/brFvnbXxdL2M5cdk9"
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-blue-300 hover:text-white border border-blue-500/20 text-xs font-semibold transition-all active:scale-95"

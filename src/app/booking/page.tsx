@@ -214,8 +214,12 @@ export default function BookingPage() {
                                                         <span>ระดับ {branch.levels}</span>
                                                         <span>• คิวสูงสุด {branch.maxQueue}</span>
                                                         {branch.LocationName && <span>• {branch.LocationName}</span>}
-                                                        {branch.LocationGPS && (
-                                                            <a href={`https://www.google.com/maps/search/?api=1&query=${branch.LocationGPS}`} target="_blank" rel="noreferrer" className="ml-1 text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 font-semibold" onClick={(e) => e.stopPropagation()}>
+                                                        {branch.LocationGPS ? (
+                                                            <a href={branch.LocationGPS.startsWith("http") ? branch.LocationGPS : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.LocationGPS)}`} target="_blank" rel="noreferrer" className="ml-1 text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 font-semibold" onClick={(e) => e.stopPropagation()}>
+                                                                <i className="fa-solid fa-map-location-dot"></i> แผนที่
+                                                            </a>
+                                                        ) : (
+                                                            <a href="https://maps.app.goo.gl/brFvnbXxdL2M5cdk9" target="_blank" rel="noreferrer" className="ml-1 text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 font-semibold" onClick={(e) => e.stopPropagation()}>
                                                                 <i className="fa-solid fa-map-location-dot"></i> แผนที่
                                                             </a>
                                                         )}
