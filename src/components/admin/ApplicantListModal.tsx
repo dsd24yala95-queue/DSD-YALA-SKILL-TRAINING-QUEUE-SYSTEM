@@ -79,7 +79,7 @@ export default function ApplicantListModal({
                     // Filter by itemId or itemName matching
                     const filtered = data.filter((item: any) => 
                         item.itemId === itemId || 
-                        item.itemName?.toLowerCase().trim() === itemName.toLowerCase().trim()
+                        (item.itemName && itemName && item.itemName.toLowerCase().trim() === itemName.toLowerCase().trim())
                     );
 
                     // Deduplicate applicants by memberName + memberPhone or userId (1 person = 1 row)
@@ -93,11 +93,16 @@ export default function ApplicantListModal({
 
                     setApplicants(Array.from(uniqueMap.values()));
                 } else {
-                    toast.error("ไม่สามารถดึงรายชื่อผู้สมัครได้");
+                    const errData = await res.json().catch(() => ({}));
+                    if (res.status === 401 || res.status === 403) {
+                        toast.error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบแอดมินใหม่อีกครั้ง");
+                    } else {
+                        toast.error(errData.error || "ไม่สามารถดึงรายชื่อผู้สมัครได้");
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching applicants:", error);
-                toast.error("เกิดข้อผิดพลาดในการโหลดข้อมูลรายชื่อ");
+                toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อข้อมูลรายชื่อ");
             } finally {
                 setLoading(false);
             }
