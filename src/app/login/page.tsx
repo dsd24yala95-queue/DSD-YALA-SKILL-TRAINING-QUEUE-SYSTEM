@@ -61,11 +61,25 @@ export default function LoginPage() {
 
 
 
+    const [showThaIDModal, setShowThaIDModal] = useState(false);
     const [loadingThaID, setLoadingThaID] = useState(false);
 
-    const handleThaIDLogin = async () => {
+    const openThaIDApp = () => {
+        // Trigger ThaID mobile app via URI Scheme imauth://
+        window.location.href = "imauth://";
+    };
+
+    const handleThaIDClick = () => {
+        setShowThaIDModal(true);
+        // Automatically attempt opening ThaID app on mobile devices
+        setTimeout(() => {
+            openThaIDApp();
+        }, 300);
+    };
+
+    const handleThaIDConfirmLogin = async () => {
         setLoadingThaID(true);
-        const toastId = toast.loading("กำลังเชื่อมต่อแอปพลิเคชัน ThaID กรมการปกครอง...");
+        const toastId = toast.loading("กำลังยืนยันตัวตนกับ ThaID กรมการปกครอง...");
         try {
             const res = await signIn("credentials", {
                 redirect: false,
@@ -82,6 +96,7 @@ export default function LoginPage() {
             toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อ ThaID", { id: toastId });
         } finally {
             setLoadingThaID(false);
+            setShowThaIDModal(false);
         }
     };
 
@@ -116,7 +131,7 @@ export default function LoginPage() {
                     <div className="mb-5">
                         <button
                             type="button"
-                            onClick={handleThaIDLogin}
+                            onClick={handleThaIDClick}
                             disabled={loadingThaID || loading}
                             className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#030B30] via-[#0A1A54] to-[#030B30] border border-amber-400/40 hover:border-amber-400 p-3.5 shadow-xl hover:shadow-amber-500/20 active:scale-95 transition-all text-left flex items-center justify-between"
                         >
@@ -129,14 +144,10 @@ export default function LoginPage() {
                                         <span>เข้าสู่ระบบด้วย ThaID</span>
                                         <span className="px-1.5 py-0.2 bg-amber-400/20 text-amber-300 text-[9px] rounded font-semibold">แนะนำ</span>
                                     </h3>
-                                    <p className="text-[10px] text-blue-200/60">ยืนยันตัวตนด้วยแอปพลิเคชัน ThaID กรมการปกครอง</p>
+                                    <p className="text-[10px] text-blue-200/60">กดเพื่อเปิดแอปพลิเคชัน ThaID กรมการปกครอง</p>
                                 </div>
                             </div>
-                            {loadingThaID ? (
-                                <span className="loading loading-spinner loading-xs text-amber-400"></span>
-                            ) : (
-                                <i className="fa-solid fa-chevron-right text-xs text-amber-400/70 group-hover:text-amber-300 group-hover:translate-x-1 transition-all"></i>
-                            )}
+                            <i className="fa-solid fa-arrow-up-right-from-square text-xs text-amber-400/80 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all"></i>
                         </button>
                     </div>
 
@@ -225,6 +236,87 @@ export default function LoginPage() {
                     </p>
                 </div>
             </motion.div>
+
+            {/* ThaID Modal dialog for App Switch & Verification */}
+            {showThaIDModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="w-full max-w-sm bg-[#0A1633] border border-amber-400/40 rounded-3xl p-6 text-white text-center space-y-5 shadow-2xl relative"
+                    >
+                        {/* Close button */}
+                        <button
+                            onClick={() => setShowThaIDModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-white text-sm w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"
+                        >
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+
+                        <div className="w-16 h-16 rounded-2xl bg-[#000B3B] border border-amber-400/50 flex items-center justify-center mx-auto shadow-inner">
+                            <span className="text-white font-extrabold text-xl tracking-tight">Tha<span className="text-amber-400">iD</span></span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <h3 className="text-lg font-black text-white">กำลังเชื่อมต่อ ThaID App</h3>
+                            <p className="text-xs text-blue-200/70">
+                                ระบบกำลังส่งคำสั่งเปิดแอปพลิเคชัน <span className="text-amber-300 font-bold">ThaID</span> บนมือถือของคุณ
+                            </p>
+                        </div>
+
+                        <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-2xl text-[11px] text-amber-200 text-left space-y-1">
+                            <p className="font-bold flex items-center gap-1">
+                                <i className="fa-solid fa-mobile-button text-amber-400"></i>
+                                <span>คำแนะนำการใช้งาน:</span>
+                            </p>
+                            <ol className="list-decimal list-inside space-y-0.5 text-[10px] text-amber-100/80">
+                                <li>หากมีแอป ระบบจะเด้งเปิดแอปพลิเคชัน ThaID อัตโนมัติ</li>
+                                <li>กดยืนยันตัวตนในแอปพลิเคชัน ThaID บนโทรศัพท์มือถือ</li>
+                                <li>กลับมาที่หน้านี้แล้วกดปุ่ม "ยืนยันการล็อกอิน" ด้านล่าง</li>
+                            </ol>
+                        </div>
+
+                        <div className="space-y-2.5 pt-1">
+                            <button
+                                type="button"
+                                onClick={openThaIDApp}
+                                className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                <i className="fa-solid fa-mobile-screen text-sm"></i>
+                                <span>เปิดแอปพลิเคชัน ThaID บนมือถือ</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleThaIDConfirmLogin}
+                                disabled={loadingThaID}
+                                className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                {loadingThaID ? (
+                                    <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                    <>
+                                        <i className="fa-solid fa-circle-check text-emerald-400"></i>
+                                        <span>ยืนยันตัวตนสำเร็จและเข้าสู่ระบบ</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/10 text-[10px] text-blue-200/50 flex justify-between items-center">
+                            <span>หากยังไม่มีแอปพลิเคชัน ThaID:</span>
+                            <a
+                                href="https://imauth.bora.dopa.go.th/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-amber-400 font-bold hover:underline"
+                            >
+                                ดาวน์โหลดแอป ThaID ➔
+                            </a>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }
