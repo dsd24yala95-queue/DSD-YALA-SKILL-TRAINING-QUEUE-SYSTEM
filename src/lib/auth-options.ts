@@ -48,7 +48,7 @@ export const authOptions: AuthOptions = {
 
                     return {
                         id: user.id,
-                        phoneNumber: user.phoneNumber,
+                        phoneNumber: user.phoneNumber || "",
                         email: user.email,
                         name: user.fullName || pid,
                         idCard: user.idCard || pid,
@@ -85,7 +85,7 @@ export const authOptions: AuthOptions = {
 
                 return {
                     id: user.id,
-                    phoneNumber: user.phoneNumber,
+                    phoneNumber: user.phoneNumber || "",
                     email: user.email,
                     name: user.fullName || user.phoneNumber,
                     idCard: user.idCard,

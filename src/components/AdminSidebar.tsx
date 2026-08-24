@@ -16,6 +16,8 @@ const menuItems = [
     { href: "/admin/testing", icon: "fa-clipboard-check", label: "การทดสอบมาตรฐาน", category: "main" },
     { href: "/admin/news", icon: "fa-newspaper", label: "จัดการข่าวสาร", category: "main" },
     { href: "/admin/line-oa", icon: "fa-brands fa-line", label: "จัดการ LINE OA", category: "main" },
+    { href: "/admin/line-chat", icon: "fa-comments", label: "แชทสด LINE", category: "main" },
+    { href: "/admin/analytics", icon: "fa-chart-line", label: "สถิติและวิเคราะห์", category: "main" },
     { href: "/admin/members", icon: "fa-users", label: "สมาชิก", category: "main" },
     { href: "/admin/officers", icon: "fa-user-shield", label: "จัดการเจ้าหน้าที่", category: "main" },
     { href: "/admin/report", icon: "fa-file-chart-column", label: "รายงาน", category: "main" },

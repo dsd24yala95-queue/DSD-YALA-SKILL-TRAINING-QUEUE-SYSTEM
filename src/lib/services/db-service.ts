@@ -4,7 +4,8 @@ export interface MasterCourse {
     durationDays: number;
     maxSeats: number;
     currentQueue: number;
-    Date: string;
+    Date?: string;
+    DateEnd?: string;
     LocationName?: string;
     LocationGPS?: string;
     status: "active" | "inactive";
@@ -16,6 +17,8 @@ export interface MasterBranch {
     levels: string;
     maxQueue: number;
     currentQueue: number;
+    Date?: string;
+    DateEnd?: string;
     LocationName?: string;
     LocationGPS?: string;
     status: "active" | "inactive";

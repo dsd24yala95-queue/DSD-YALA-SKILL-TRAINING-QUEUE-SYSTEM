@@ -51,7 +51,7 @@ export async function GET() {
 // POST: Admin sends a reply message to LINE User via Push Message API
 export async function POST(req: Request) {
     try {
-        const { errorResponse, user: staffUser } = await checkStaffAuth();
+        const { errorResponse, session: authSession } = await checkStaffAuth();
         if (errorResponse) return errorResponse;
 
         const body = await req.json();
@@ -61,20 +61,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "กรุณาระบุ sessionId และข้อความตอบกลับ" }, { status: 400 });
         }
 
-        const session = await prisma.lineChatSession.findUnique({
+        const chatSession = await prisma.lineChatSession.findUnique({
             where: { id: sessionId }
         });
 
-        if (!session) {
+        if (!chatSession) {
             return NextResponse.json({ error: "ไม่พบเซสชันการสนทนา" }, { status: 404 });
         }
 
-        const senderName = staffUser?.fullName || "เจ้าหน้าที่ สพร.24 ยะลา";
+        const senderName = authSession?.user?.name || "เจ้าหน้าที่ สพร.24 ยะลา";
 
         // Save Admin Chat Message to Database
         const newMessage = await prisma.lineChatMessage.create({
             data: {
-                sessionId: session.id,
+                sessionId: chatSession.id,
                 sender: "admin",
                 senderName,
                 message: message.trim(),
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
 
         // Update Session Metadata (Reset unreadCount)
         await prisma.lineChatSession.update({
-            where: { id: session.id },
+            where: { id: chatSession.id },
             data: {
                 lastMessage: `[แอดมิน] ${message.trim()}`,
                 lastMessageAt: new Date(),
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
 
         // Send Push Message to LINE User if accessToken is available
         const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-        if (token && session.lineUserId) {
+        if (token && chatSession.lineUserId) {
             try {
                 const res = await fetch("https://api.line.me/v2/bot/message/push", {
                     method: "POST",
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
                         "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        to: session.lineUserId,
+                        to: chatSession.lineUserId,
                         messages: [{ type: "text", text: message.trim() }]
                     })
                 });

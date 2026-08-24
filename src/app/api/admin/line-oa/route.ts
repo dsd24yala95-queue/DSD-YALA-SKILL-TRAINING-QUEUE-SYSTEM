@@ -144,7 +144,8 @@ export async function POST(req: Request) {
         for (const user of targetUsers) {
             if (!user.lineUserId) continue;
 
-            const userName = user.fullName || user.phoneNumber;
+            const userName = user.fullName || user.phoneNumber || "สมาชิก";
+            const currentLineUserId: string = user.lineUserId;
 
             try {
                 let msgPayload;
@@ -202,14 +203,14 @@ export async function POST(req: Request) {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        to: user.lineUserId,
+                        to: currentLineUserId,
                         messages: [msgPayload],
                     }),
                 });
 
                 if (response.ok) {
                     sent++;
-                    details.push({ userId: user.id, name: userName, lineUserId: user.lineUserId, status: "success" });
+                    details.push({ userId: user.id, name: userName, lineUserId: currentLineUserId, status: "success" });
                     
                     // Create Notification log entry for user
                     try {
@@ -229,13 +230,13 @@ export async function POST(req: Request) {
                     failed++;
                     const errRes = await response.json().catch(() => ({ message: "LINE API returned non-200" }));
                     const reason = errRes.message || "บล็อก LINE OA / ID ไม่ถูกต้อง";
-                    details.push({ userId: user.id, name: userName, lineUserId: user.lineUserId, status: "failed", reason });
-                    console.error(`Failed to send to ${user.lineUserId}:`, errRes);
+                    details.push({ userId: user.id, name: userName, lineUserId: currentLineUserId, status: "failed", reason });
+                    console.error(`Failed to send to ${currentLineUserId}:`, errRes);
                 }
             } catch (err: any) {
                 failed++;
-                details.push({ userId: user.id, name: userName, lineUserId: user.lineUserId, status: "failed", reason: err.message || "Network Error" });
-                console.error(`Error sending to ${user.lineUserId}:`, err);
+                details.push({ userId: user.id, name: userName, lineUserId: currentLineUserId, status: "failed", reason: err.message || "Network Error" });
+                console.error(`Error sending to ${currentLineUserId}:`, err);
             }
         }
 
