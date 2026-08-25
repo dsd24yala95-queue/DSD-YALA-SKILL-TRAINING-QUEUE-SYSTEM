@@ -112,7 +112,8 @@ export async function POST(req: Request) {
         if (!lineRes.ok) {
             const errData = await lineRes.json().catch(() => ({ message: "Failed to send message to LINE" }));
             console.error("LINE Push Error:", errData);
-            return NextResponse.json({ error: errData.message || "ไม่สามารถส่งข้อความไปยัง LINE ได้" }, { status: 500 });
+            const thaiError = "ส่งข้อความไม่สำเร็จ: สมาชิกอาจบล็อก LINE OA, ยกเลิกการเป็นเพื่อน หรือ LINE User ID ไม่ถูกต้อง";
+            return NextResponse.json({ error: thaiError, details: errData }, { status: 400 });
         }
 
         // Save admin message to database
