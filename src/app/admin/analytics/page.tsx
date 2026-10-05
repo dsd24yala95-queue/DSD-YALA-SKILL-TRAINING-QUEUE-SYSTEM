@@ -25,9 +25,25 @@ interface AnalyticsData {
     hourlyData: Array<{ hour: string; count: number }>;
 }
 
+interface CsatStats {
+    totalSent: number;
+    totalResponded: number;
+    responseRate: number;
+    avgRating: number;
+    starDistribution: Record<number, number>;
+    latestComments: Array<{
+        itemName: string;
+        bookingType: string;
+        rating: number;
+        comment: string;
+        respondedAt: string;
+    }>;
+}
+
 export default function AdminAnalyticsPage() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<AnalyticsData | null>(null);
+    const [csat, setCsat] = useState<CsatStats | null>(null);
 
     const fetchAnalytics = useCallback(async () => {
         setLoading(true);
@@ -43,9 +59,20 @@ export default function AdminAnalyticsPage() {
         }
     }, []);
 
+    const fetchCsat = useCallback(async () => {
+        try {
+            const res = await fetch("/api/csat");
+            if (res.ok) {
+                const result = await res.json();
+                setCsat(result);
+            }
+        } catch {}
+    }, []);
+
     useEffect(() => {
         fetchAnalytics();
-    }, [fetchAnalytics]);
+        fetchCsat();
+    }, [fetchAnalytics, fetchCsat]);
 
     // ===== Export CSV Summary =====
     const handleExportCSV = () => {
@@ -290,6 +317,90 @@ export default function AdminAnalyticsPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* ⭐ CSAT Survey Section */}
+                    {csat && (
+                        <div className="mt-6">
+                            <h2 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-star text-yellow-500"></i>
+                                ผลการสำรวจความพึงพอใจหลังรับบริการ (CSAT)
+                            </h2>
+
+                            {/* CSAT KPI Cards */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+                                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
+                                    <p className="text-xs text-yellow-700 font-semibold">คะแนนเฉลี่ย</p>
+                                    <p className="text-3xl font-black text-yellow-600">{csat.avgRating}<span className="text-sm font-bold text-yellow-400">/5</span></p>
+                                    <p className="text-xs text-yellow-500">{"⭐".repeat(Math.round(csat.avgRating))}</p>
+                                </div>
+                                <div className="bg-white/80 border border-slate-200 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
+                                    <p className="text-xs text-slate-500 font-semibold">อัตราการตอบกลับ</p>
+                                    <p className="text-3xl font-black text-indigo-600">{csat.responseRate}<span className="text-sm font-bold text-slate-400">%</span></p>
+                                    <p className="text-xs text-slate-400">{csat.totalResponded}/{csat.totalSent} คน</p>
+                                </div>
+                                <div className="bg-white/80 border border-slate-200 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
+                                    <p className="text-xs text-slate-500 font-semibold">ส่งแบบสอบถาม</p>
+                                    <p className="text-3xl font-black text-slate-700">{csat.totalSent}</p>
+                                    <p className="text-xs text-slate-400">รายการทั้งหมด</p>
+                                </div>
+                                <div className="bg-white/80 border border-slate-200 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
+                                    <p className="text-xs text-slate-500 font-semibold">ผู้ตอบกลับ</p>
+                                    <p className="text-3xl font-black text-emerald-600">{csat.totalResponded}</p>
+                                    <p className="text-xs text-slate-400">ราย</p>
+                                </div>
+                            </div>
+
+                            {/* Star Distribution + Latest Comments */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {/* Star Distribution Bar Chart */}
+                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+                                    <h3 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                                        <i className="fa-solid fa-chart-bar text-yellow-500"></i> การกระจายคะแนน
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {[5, 4, 3, 2, 1].map((star) => {
+                                            const count = csat.starDistribution[star] || 0;
+                                            const pct = csat.totalResponded > 0 ? Math.round((count / csat.totalResponded) * 100) : 0;
+                                            return (
+                                                <div key={star} className="flex items-center gap-3">
+                                                    <span className="text-xs font-bold text-slate-600 w-12 text-right">{"⭐".repeat(star)}</span>
+                                                    <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full transition-all duration-700"
+                                                            style={{ width: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-slate-500 w-10">{count} ({pct}%)</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Latest 10 Comments */}
+                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+                                    <h3 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                                        <i className="fa-solid fa-comments text-indigo-500"></i> ความคิดเห็นล่าสุด
+                                    </h3>
+                                    {csat.latestComments.length === 0 ? (
+                                        <p className="text-xs text-slate-400 text-center py-6">ยังไม่มีความคิดเห็น</p>
+                                    ) : (
+                                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                            {csat.latestComments.map((c, i) => (
+                                                <div key={i} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-xs font-bold text-slate-700 truncate">{c.itemName}</span>
+                                                        <span className="text-xs text-yellow-500 font-bold">{"⭐".repeat(c.rating)}</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500">{c.comment}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

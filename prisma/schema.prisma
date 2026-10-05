@@ -28,6 +28,7 @@ model User {
 
   bookings      QueueBooking[]
   notifications Notification[]
+  csatSurveys   CsatSurvey[]
 }
 
 model MasterCourse {
@@ -73,6 +74,8 @@ model QueueBooking {
   isAcknowledged Boolean  @default(false) // User acknowledged
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  csatSurvey    CsatSurvey?
 }
 
 model Notification {
@@ -118,4 +121,21 @@ model LineChatMessage {
   messageType   String          @default("text") // "text", "image", "sticker", "file"
   read          Boolean         @default(false)
   createdAt     DateTime        @default(now())
+}
+
+model CsatSurvey {
+  id            String        @id @default(uuid())
+  bookingId     String        @unique
+  userId        String
+  lineUserId    String?
+  bookingType   String                      // "test" | "training"
+  itemName      String                      // ชื่อหลักสูตร/สาขา
+  rating        Int?                        // 1-5 ดาว (null = ยังไม่ตอบ)
+  comment       String?                     // ความคิดเห็นเพิ่มเติม (optional)
+  sentAt        DateTime      @default(now())
+  respondedAt   DateTime?
+  status        String        @default("sent") // "sent" | "responded" | "expired"
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking       QueueBooking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }

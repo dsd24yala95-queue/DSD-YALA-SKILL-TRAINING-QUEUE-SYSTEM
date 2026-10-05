@@ -362,6 +362,22 @@ export async function PUT(req: Request) {
             }
         }
 
+        // ─── Auto-Trigger CSAT Survey when status → "completed" ──────────────
+        if (status === "completed" && booking.user?.lineUserId) {
+            try {
+                const { sendCsatCard } = await import("@/lib/services/csat-service");
+                await sendCsatCard({
+                    bookingId: booking.id,
+                    userId: booking.userId,
+                    lineUserId: booking.user.lineUserId,
+                    bookingType: booking.bookingType,
+                    itemName: booking.itemName,
+                });
+            } catch (e) {
+                console.error("[CSAT] Failed to send CSAT card:", e);
+            }
+        }
+
         return NextResponse.json(booking);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

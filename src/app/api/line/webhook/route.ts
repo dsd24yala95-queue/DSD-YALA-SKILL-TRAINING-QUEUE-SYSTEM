@@ -59,7 +59,38 @@ export async function POST(req: Request) {
                     });
                 }
 
-                // ─── 3. EVENT: MESSAGE (Text) ────────────────────────────────
+                // ─── 3. EVENT: POSTBACK (CSAT Star Rating) ──────────────────
+                else if (event.type === "postback") {
+                    const data = event.postback?.data || "";
+                    // Format: csat:<bookingId>:<rating>
+                    if (data.startsWith("csat:")) {
+                        const parts = data.split(":");
+                        const bookingId = parts[1];
+                        const rating = parseInt(parts[2], 10);
+                        if (bookingId && rating >= 1 && rating <= 5) {
+                            try {
+                                await (prisma as any).csatSurvey.update({
+                                    where: { bookingId },
+                                    data: {
+                                        rating,
+                                        respondedAt: new Date(),
+                                        status: "responded",
+                                    },
+                                });
+                                // Send thank-you reply
+                                const stars = "⭐".repeat(rating);
+                                const thankMsg = `${stars} ขอบคุณสำหรับคะแนน ${rating}/5 ดาวครับ!\n\nความคิดเห็นของคุณมีคุณค่ามากสำหรับ สพร.24 ยะลา เราจะนำไปปรับปรุงการบริการให้ดีขึ้นครับ 🙏`;
+                                if (accessToken && event.replyToken) {
+                                    await sendLineReply(event.replyToken, thankMsg, accessToken);
+                                }
+                            } catch (e) {
+                                console.error("[CSAT Postback] Error saving rating:", e);
+                            }
+                        }
+                    }
+                }
+
+                // ─── 4. EVENT: MESSAGE (Text) ────────────────────────────────
                 else if (event.type === "message" && event.message?.type === "text") {
                     const text = event.message.text.trim();
                     const replyToken = event.replyToken;
