@@ -92,10 +92,13 @@ export async function GET(req: Request) {
         let users: any[] = [];
 
         if (courseId) {
-            // Fetch members who have a booking entry for this specific course
+            // Fetch members who have a booking entry for this specific course or matching itemName
             const bookings = await prisma.queueBooking.findMany({
                 where: {
-                    itemId: courseId,
+                    OR: [
+                        { itemId: courseId },
+                        ...(courseName ? [{ itemName: { equals: courseName, mode: "insensitive" as const } }] : [])
+                    ],
                     ...(mode !== "all" ? { bookingType: mode } : {}),
                 },
                 include: {
@@ -104,10 +107,11 @@ export async function GET(req: Request) {
                 orderBy: { queueNumber: "asc" },
             });
 
-            // Deduplicate by userId
+            // Deduplicate by userId and ignore records without user
             const seen = new Set<string>();
             users = bookings
                 .filter((q) => {
+                    if (!q.user) return false;
                     if (seen.has(q.userId)) return false;
                     seen.add(q.userId);
                     return true;
@@ -129,6 +133,9 @@ export async function GET(req: Request) {
             });
 
             // 2. Merge key fields from the user table that might not be in profileJson
+            if (!profile.reg_citizenid && user.idCard) {
+                profile.reg_citizenid = user.idCard;
+            }
             if (!profile.reg_telephone && user.phoneNumber) {
                 profile.reg_telephone = user.phoneNumber;
             }
@@ -139,8 +146,33 @@ export async function GET(req: Request) {
                 profile.regist_date = new Date(user.createdAt).toISOString();
             }
 
+            // Extract name if missing in profile
+            if ((!profile.reg_firstname || !profile.reg_lastname) && user.fullName) {
+                let name = user.fullName.trim();
+                let title = profile.reg_title || "001";
+                if (name.startsWith("001") || name.startsWith("นาย ")) {
+                    title = "001";
+                    name = name.replace(/^001\s*/, "").replace(/^นาย\s*/, "");
+                } else if (name.startsWith("003") || name.startsWith("นางสาว ")) {
+                    title = "003";
+                    name = name.replace(/^003\s*/, "").replace(/^นางสาว\s*/, "");
+                } else if (name.startsWith("002") || name.startsWith("นาง ")) {
+                    title = "002";
+                    name = name.replace(/^002\s*/, "").replace(/^นาง\s*/, "");
+                }
+                profile.reg_title = title;
+
+                const parts = name.split(/\s+/);
+                if (parts.length >= 2) {
+                    if (!profile.reg_firstname) profile.reg_firstname = parts[0];
+                    if (!profile.reg_lastname) profile.reg_lastname = parts.slice(1).join(" ");
+                } else if (parts.length === 1 && !profile.reg_firstname) {
+                    profile.reg_firstname = parts[0];
+                }
+            }
+
             // 3. Strip "data:image/...;base64," prefix from profileImage (DSD standard = raw Base64 only)
-            if (profile.profileImage && profile.profileImage.startsWith("data:")) {
+            if (profile.profileImage && typeof profile.profileImage === "string" && profile.profileImage.startsWith("data:")) {
                 profile.profileImage = profile.profileImage.replace(/^data:image\/\w+;base64,/, "");
             }
 

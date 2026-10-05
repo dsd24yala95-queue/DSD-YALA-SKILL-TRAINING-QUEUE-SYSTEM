@@ -1,61 +1,65 @@
 import { z } from "zod";
 
-// 100% compliant schema with DSD standard
+// Helper to safely coerce any value (number, null, boolean, undefined) into string with a default
+const str = (defaultVal = "") =>
+    z.preprocess((val) => (val === null || val === undefined ? defaultVal : String(val)), z.string().default(defaultVal));
+
+// 100% compliant schema with DSD standard (50 fields)
 export const ProfileSchema = z.object({
-  register_type: z.string().optional().default(""),
-  reg_title: z.string().optional().default("001"),
-  reg_firstname: z.string().optional().default(""),
-  reg_lastname: z.string().optional().default(""),
-  reg_firstnameEng: z.string().optional().default(""),
-  reg_lastnameEng: z.string().optional().default(""),
-  reg_citizenid: z.string().length(13, "Citizen ID must be 13 characters").optional().default(""),
-  reg_birth: z.string().optional().default(""), // ISO format date string e.g., 2006-12-31T00:00:00
-  reg_telephone: z.string().optional().default(""),
-  reg_email: z.string().optional().default(""),
-  reg_address_no: z.string().optional().default(""),
-  reg_address_moo: z.string().optional().default(""),
-  reg_address_street: z.string().optional().default(""),
-  reg_address_soi: z.string().optional().default(""),
-  reg_address_province: z.string().optional().default(""),
-  reg_address_district: z.string().optional().default(""),
-  reg_address_subdistrict: z.string().optional().default(""),
-  reg_education: z.string().optional().default(""),
-  reg_education_section: z.string().optional().default(""),
-  reg_body_state: z.string().optional().default("0"),
-  reg_body_state_detail: z.string().optional().default(""),
-  work_state: z.string().optional().default("0"),
-  work_section: z.string().optional().default("0"),
-  work_section_gov: z.string().optional().default(""),
-  work_section_self: z.string().optional().default(""),
-  work_section_detail: z.string().optional().default("0"),
-  work_salary: z.string().optional().default(""),
-  work_occupation: z.string().optional().default(""),
-  work_position: z.string().optional().default(""),
-  work_experience: z.string().optional().default(""),
-  work_place: z.string().optional().default(""),
-  work_province: z.string().optional().default(""),
-  work_telephone: z.string().optional().default(""),
-  work_fax: z.string().optional().default(""),
-  work_group: z.string().optional().default(""),
-  work_group_other: z.string().optional().default(""),
-  unwork_type: z.string().optional().default("15"),
-  unwork_other: z.string().optional().default(""),
-  info_type: z.string().optional().default("04"),
-  info_agree: z.string().optional().default("0"),
-  info_findjob: z.string().optional().default("0"),
-  info_findjob_detail: z.string().optional().default(""),
-  info_findjob_detail_industry: z.string().optional().default(""),
-  sign_img: z.string().optional().default(""),
-  regist_date: z.string().optional().default(""), // ISO format datetime
-  official: z.string().optional().default(""),
-  gender: z.string().optional().default("1"),
-  nationality: z.string().optional().default("099"),
-  postcode: z.string().optional().default(""),
-  info_findjob_country: z.string().optional().default(""),
-  industry_desc: z.string().optional().default("00"),
-  profileImage: z.string().optional().default(""),
-  info_findjob_detail_industry_desc: z.string().optional().default("00"),
-  reg_title_en: z.string().optional().default("Mr."),
+  register_type: str(""),
+  reg_title: str("001"),
+  reg_firstname: str(""),
+  reg_lastname: str(""),
+  reg_firstnameEng: str(""),
+  reg_lastnameEng: str(""),
+  reg_citizenid: str(""),
+  reg_birth: str(""), // ISO format date string e.g., 2006-12-31T00:00:00
+  reg_telephone: str(""),
+  reg_email: str(""),
+  reg_address_no: str(""),
+  reg_address_moo: str(""),
+  reg_address_street: str(""),
+  reg_address_soi: str(""),
+  reg_address_province: str(""),
+  reg_address_district: str(""),
+  reg_address_subdistrict: str(""),
+  reg_education: str(""),
+  reg_education_section: str(""),
+  reg_body_state: str("0"),
+  reg_body_state_detail: str(""),
+  work_state: str("0"),
+  work_section: str("0"),
+  work_section_gov: str(""),
+  work_section_self: str(""),
+  work_section_detail: str("0"),
+  work_salary: str(""),
+  work_occupation: str(""),
+  work_position: str(""),
+  work_experience: str(""),
+  work_place: str(""),
+  work_province: str(""),
+  work_telephone: str(""),
+  work_fax: str(""),
+  work_group: str(""),
+  work_group_other: str(""),
+  unwork_type: str("15"),
+  unwork_other: str(""),
+  info_type: str("04"),
+  info_agree: str("0"),
+  info_findjob: str("0"),
+  info_findjob_detail: str(""),
+  info_findjob_detail_industry: str(""),
+  sign_img: str(""),
+  regist_date: str(""), // ISO format datetime
+  official: str(""),
+  gender: str("1"),
+  nationality: str("099"),
+  postcode: str(""),
+  info_findjob_country: str(""),
+  industry_desc: str("00"),
+  profileImage: str(""),
+  info_findjob_detail_industry_desc: str("00"),
+  reg_title_en: str("Mr."),
 }).passthrough(); // Allow any other extra fields safely just in case
 
 export type ProfileData = z.infer<typeof ProfileSchema>;
@@ -75,7 +79,7 @@ export function parseProfileJson(rawJson: string | null | undefined, userContext
             mapped.reg_citizenid = mapped.reg_pid;
         }
         if (!mapped.reg_birth && mapped.reg_bdate) {
-            mapped.reg_birth = mapped.reg_bdate.includes("T") ? mapped.reg_bdate : `${mapped.reg_bdate}T00:00:00`;
+            mapped.reg_birth = String(mapped.reg_bdate).includes("T") ? String(mapped.reg_bdate) : `${mapped.reg_bdate}T00:00:00`;
         }
         if (!mapped.reg_address_no && mapped.reg_addr_no !== undefined) mapped.reg_address_no = mapped.reg_addr_no;
         if (!mapped.reg_address_moo && mapped.reg_addr_moo !== undefined) mapped.reg_address_moo = mapped.reg_addr_moo;
@@ -91,7 +95,7 @@ export function parseProfileJson(rawJson: string | null | undefined, userContext
         legacyKeys.forEach(key => delete mapped[key]);
 
         // Fix image format if it contains data uri
-        if (mapped.profileImage && mapped.profileImage.startsWith("data:image")) {
+        if (mapped.profileImage && typeof mapped.profileImage === "string" && mapped.profileImage.startsWith("data:image")) {
             mapped.profileImage = mapped.profileImage.replace(/^data:image\/\w+;base64,/, '');
         }
 
@@ -100,11 +104,22 @@ export function parseProfileJson(rawJson: string | null | undefined, userContext
             mapped.regist_date = userContext?.createdAt ? new Date(userContext.createdAt).toISOString() : new Date().toISOString();
         }
 
-        // Zod validation and defaulting
+        // Zod validation and defaulting with safe coercion
         return ProfileSchema.parse(mapped);
     } catch (e) {
         console.error("Failed to parse profile JSON:", e);
-        return ProfileSchema.parse({}); // Fallback to safe defaults
+        try {
+            const raw = JSON.parse(rawJson);
+            const fallback: any = ProfileSchema.parse({});
+            Object.keys(raw).forEach((k) => {
+                if (raw[k] !== undefined && raw[k] !== null) {
+                    fallback[k] = String(raw[k]);
+                }
+            });
+            return fallback;
+        } catch {
+            return ProfileSchema.parse({});
+        }
     }
 }
 
