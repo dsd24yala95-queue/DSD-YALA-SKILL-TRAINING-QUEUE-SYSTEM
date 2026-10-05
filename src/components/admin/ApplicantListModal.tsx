@@ -64,6 +64,7 @@ export default function ApplicantListModal({
 }: ApplicantListModalProps) {
     const [applicants, setApplicants] = useState<Applicant[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sessionExpired, setSessionExpired] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
@@ -71,6 +72,7 @@ export default function ApplicantListModal({
 
         async function fetchApplicants() {
             setLoading(true);
+            setSessionExpired(false);
             try {
                 const res = await fetch("/api/admin/queues");
                 if (res.ok) {
@@ -95,6 +97,7 @@ export default function ApplicantListModal({
                 } else {
                     const errData = await res.json().catch(() => ({}));
                     if (res.status === 401 || res.status === 403) {
+                        setSessionExpired(true);
                         toast.error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบแอดมินใหม่อีกครั้ง");
                     } else {
                         toast.error(errData.error || "ไม่สามารถดึงรายชื่อผู้สมัครได้");
@@ -206,6 +209,22 @@ export default function ApplicantListModal({
                             <div className="py-16 flex flex-col items-center justify-center gap-2 print:hidden">
                                 <span className="loading loading-spinner loading-md text-indigo-600"></span>
                                 <p className="text-xs font-medium text-slate-400">กำลังโหลดรายชื่อผู้สมัคร...</p>
+                            </div>
+                        ) : sessionExpired ? (
+                            <div className="py-12 flex flex-col items-center justify-center text-center p-6 bg-amber-50/70 rounded-2xl border border-amber-200/80 my-2 print:hidden">
+                                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl mb-3 shadow-inner">
+                                    <i className="fa-solid fa-lock"></i>
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-800 mb-1">เซสชันหมดอายุแล้ว</h4>
+                                <p className="text-xs text-slate-500 mb-4 max-w-xs">
+                                    ระบบจำกัดเวลาเซสชันแอดมินไว้ที่ 1 ชั่วโมง เพื่อความปลอดภัย กรุณาเข้าสู่ระบบใหม่อีกครั้งเพื่อเรียกดูรายชื่อ
+                                </p>
+                                <a
+                                    href="/login/admin"
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2"
+                                >
+                                    <i className="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบแอดมินใหม่
+                                </a>
                             </div>
                         ) : filteredList.length === 0 ? (
                             <div className="py-12 text-center text-slate-400 print:py-4">
