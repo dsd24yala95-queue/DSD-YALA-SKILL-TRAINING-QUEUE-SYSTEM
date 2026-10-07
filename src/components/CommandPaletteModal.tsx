@@ -17,6 +17,7 @@ const COMMAND_ITEMS = [
     { title: "จัดการข้อมูลสมาชิก", href: "/admin/members", category: "เมนูหลัก", icon: "fa-users", desc: "ดูประวัติ ตรวจสอบสมาชิก" },
     { title: "จัดการเจ้าหน้าที่ & สิทธิ์", href: "/admin/officers", category: "ระบบ", icon: "fa-user-shield", desc: "กำหนดสิทธิ์ผู้ดูแลระบบ" },
     { title: "ออกรายงาน & Export", href: "/admin/report", category: "รายงาน", icon: "fa-file-chart-column", desc: "ดาวน์โหลดรายงานสถิติ" },
+    { title: "ส่งออก DSD JSON (50 ฟิลด์)", href: "/admin/export-json", category: "รายงาน", icon: "fa-file-code", desc: "ส่งออกไฟล์มาตรฐานกรมพัฒนาฝีมือแรงงาน" },
     { title: "หน้าหลักบริการประชาชน", href: "/", category: "ภายนอก", icon: "fa-house", desc: "สลับไปยังหน้าหลักของระบบ" },
 ];
 

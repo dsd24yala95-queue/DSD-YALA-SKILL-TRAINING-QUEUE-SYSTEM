@@ -21,6 +21,7 @@ const menuItems = [
     { href: "/admin/members", icon: "fa-users", label: "สมาชิก", category: "main" },
     { href: "/admin/officers", icon: "fa-user-shield", label: "จัดการเจ้าหน้าที่", category: "main" },
     { href: "/admin/report", icon: "fa-file-chart-column", label: "รายงาน", category: "main" },
+    { href: "/admin/export-json", icon: "fa-file-code", label: "ส่งออก DSD JSON", category: "main" },
 ];
 
 export default function AdminSidebar() {

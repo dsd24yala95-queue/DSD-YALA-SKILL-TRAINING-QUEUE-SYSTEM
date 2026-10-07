@@ -29,8 +29,6 @@ export const ProfileSchema = z.object({
   reg_body_state_detail: str(""),
   work_state: str("0"),
   work_section: str("0"),
-  work_section_gov: str(""),
-  work_section_self: str(""),
   work_section_detail: str("0"),
   work_salary: str(""),
   work_occupation: str(""),
@@ -41,7 +39,6 @@ export const ProfileSchema = z.object({
   work_telephone: str(""),
   work_fax: str(""),
   work_group: str(""),
-  work_group_other: str(""),
   unwork_type: str("15"),
   unwork_other: str(""),
   info_type: str("04"),
@@ -59,7 +56,6 @@ export const ProfileSchema = z.object({
   industry_desc: str("00"),
   profileImage: str(""),
   info_findjob_detail_industry_desc: str("00"),
-  reg_title_en: str("Mr."),
 }).passthrough(); // Allow any other extra fields safely just in case
 
 export type ProfileData = z.infer<typeof ProfileSchema>;

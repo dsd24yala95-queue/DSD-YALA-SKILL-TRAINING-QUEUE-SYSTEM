@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -379,6 +380,9 @@ export default function AdminReportPage() {
                     <button onClick={openJsonModal} className="flex items-center gap-2 px-4 py-2 bg-violet-50 border border-violet-100 rounded-2xl text-xs font-semibold text-violet-600 hover:bg-violet-100 transition-all shadow-sm">
                         <i className="fa-solid fa-file-code"></i> JSON (DSD)
                     </button>
+                    <Link href="/admin/export-json" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-2xl text-xs font-semibold transition-all shadow-sm">
+                        <i className="fa-solid fa-cloud-arrow-down"></i> ศูนย์ส่งออก DSD JSON
+                    </Link>
                 </div>
             </div>
 

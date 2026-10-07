@@ -17,6 +17,7 @@ const PATH_MAP: { [key: string]: { label: string; icon: string; category: string
     "/admin/members": { label: "จัดการข้อมูลสมาชิก", icon: "fa-users", category: "ฐานข้อมูล" },
     "/admin/officers": { label: "จัดการบัญชีเจ้าหน้าที่ & สิทธิ์", icon: "fa-user-shield", category: "ผู้ดูแลระบบ" },
     "/admin/report": { label: "รายงานสถิติและส่งออกข้อมูล", icon: "fa-file-chart-column", category: "รายงาน" },
+    "/admin/export-json": { label: "ส่งออกข้อมูลมาตรฐานกรมฯ (DSD JSON)", icon: "fa-file-code", category: "รายงาน" },
 };
 
 export default function AdminHeader() {

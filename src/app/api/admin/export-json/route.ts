@@ -18,7 +18,7 @@ import { parseProfileJson } from "@/lib/jsonEngine";
  *     before writing the output.
  */
 
-// Ordered list of the 50 DSD-standard fields (output order must match reference)
+// Ordered list of the 50 DSD-standard fields (exact 50 fields matching official reference)
 const DSD_FIELD_ORDER = [
     "register_type",
     "reg_title",
@@ -43,8 +43,6 @@ const DSD_FIELD_ORDER = [
     "reg_body_state_detail",
     "work_state",
     "work_section",
-    "work_section_gov",
-    "work_section_self",
     "work_section_detail",
     "work_salary",
     "work_occupation",
@@ -55,7 +53,6 @@ const DSD_FIELD_ORDER = [
     "work_telephone",
     "work_fax",
     "work_group",
-    "work_group_other",
     "unwork_type",
     "unwork_other",
     "info_type",
@@ -73,7 +70,6 @@ const DSD_FIELD_ORDER = [
     "industry_desc",
     "profileImage",
     "info_findjob_detail_industry_desc",
-    "reg_title_en",
 ] as const;
 
 import { checkStaffAuth } from "@/lib/auth-guard";
