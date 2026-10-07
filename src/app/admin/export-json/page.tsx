@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,6 +20,7 @@ interface MasterItem {
 }
 
 export default function AdminExportJsonPage() {
+    const searchParams = useSearchParams();
     const [courses, setCourses] = useState<MasterItem[]>([]);
     const [branches, setBranches] = useState<MasterItem[]>([]);
     const [totalMembers, setTotalMembers] = useState<number>(0);
@@ -26,6 +28,18 @@ export default function AdminExportJsonPage() {
     const [activeTab, setActiveTab] = useState<"training" | "test" | "all">("training");
     const [searchQuery, setSearchQuery] = useState("");
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+    // Sync tab from URL query params (e.g. ?tab=training or ?tab=test or ?search=...)
+    useEffect(() => {
+        const tabParam = searchParams.get("tab");
+        if (tabParam === "training" || tabParam === "test" || tabParam === "all") {
+            setActiveTab(tabParam);
+        }
+        const searchParam = searchParams.get("search");
+        if (searchParam) {
+            setSearchQuery(searchParam);
+        }
+    }, [searchParams]);
 
     // Preview Modal State
     const [previewModalOpen, setPreviewModalOpen] = useState(false);

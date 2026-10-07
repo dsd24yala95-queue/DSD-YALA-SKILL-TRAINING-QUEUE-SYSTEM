@@ -33,7 +33,44 @@ export default function AdminSidebar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+    const [exportJsonOpen, setExportJsonOpen] = useState(false);
+    const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
+    const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
     const profileRef = useRef<HTMLDivElement>(null);
+
+    // Auto expand exportJson submenu if currently on /admin/export-json
+    useEffect(() => {
+        if (pathname?.startsWith("/admin/export-json")) {
+            setExportJsonOpen(true);
+        }
+    }, [pathname]);
+
+    // Fetch quick branches & courses for Export JSON sub-menu
+    useEffect(() => {
+        const fetchMasterData = async () => {
+            try {
+                const [cRes, bRes] = await Promise.all([
+                    fetch("/api/master/courses"),
+                    fetch("/api/master/branches")
+                ]);
+                if (cRes.ok) {
+                    const cData = await cRes.json();
+                    if (Array.isArray(cData)) {
+                        setCourses(cData.slice(0, 6).map((c: any) => ({ id: c.id, name: c.courseName })));
+                    }
+                }
+                if (bRes.ok) {
+                    const bData = await bRes.json();
+                    if (Array.isArray(bData)) {
+                        setBranches(bData.slice(0, 6).map((b: any) => ({ id: b.id, name: b.branchName })));
+                    }
+                }
+            } catch (err) {
+                // Ignore silent fetch error in sidebar
+            }
+        };
+        fetchMasterData();
+    }, []);
 
     // Global Ctrl+K / Cmd+K listener to open Command Palette
     useEffect(() => {
@@ -167,6 +204,107 @@ export default function AdminSidebar() {
                                 <p className="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">เมนูการใช้งาน</p>
                                 {menuItems.map((item) => {
                                     const isActive = pathname === item.href;
+                                    const isExportJson = item.href === "/admin/export-json";
+
+                                    if (isExportJson) {
+                                        return (
+                                            <div key={item.href} className="space-y-1">
+                                                <div
+                                                    onClick={() => setExportJsonOpen((prev) => !prev)}
+                                                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                                                        isActive
+                                                            ? "bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white shadow-md shadow-indigo-500/20"
+                                                            : "text-gray-300 hover:text-white hover:bg-white/5"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3.5 min-w-0">
+                                                        <i className={`fa-solid ${item.icon} w-5 text-center text-sm text-indigo-400`}></i>
+                                                        <span className="truncate">{item.label}</span>
+                                                    </div>
+                                                    <i className={`fa-solid fa-chevron-down text-xs transition-transform duration-200 ${exportJsonOpen ? "rotate-180" : ""}`}></i>
+                                                </div>
+
+                                                {/* Mobile Submenu Accordion */}
+                                                <AnimatePresence>
+                                                    {exportJsonOpen && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: "auto" }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            className="pl-6 pr-2 py-1 space-y-1 overflow-hidden"
+                                                        >
+                                                            {/* 1. ฝึกอบรม */}
+                                                            <div className="space-y-1">
+                                                                <Link
+                                                                    href="/admin/export-json?tab=training"
+                                                                    onClick={() => setMobileOpen(false)}
+                                                                    className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-amber-300 hover:bg-white/5 transition-all"
+                                                                >
+                                                                    <span className="flex items-center gap-2">
+                                                                        <i className="fa-solid fa-graduation-cap text-amber-400"></i>
+                                                                        1. งานฝึกอบรม
+                                                                    </span>
+                                                                    <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-200">
+                                                                        {courses.length}
+                                                                    </span>
+                                                                </Link>
+                                                                {courses.slice(0, 3).map((c) => (
+                                                                    <Link
+                                                                        key={c.id}
+                                                                        href={`/admin/export-json?tab=training&search=${encodeURIComponent(c.name)}`}
+                                                                        onClick={() => setMobileOpen(false)}
+                                                                        className="block pl-6 pr-2 py-1.5 rounded-lg text-[11px] text-gray-400 hover:text-white hover:bg-white/5 truncate transition-all"
+                                                                        title={c.name}
+                                                                    >
+                                                                        • {c.name}
+                                                                    </Link>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* 2. ทดสอบมาตรฐาน */}
+                                                            <div className="space-y-1 pt-1">
+                                                                <Link
+                                                                    href="/admin/export-json?tab=test"
+                                                                    onClick={() => setMobileOpen(false)}
+                                                                    className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-cyan-300 hover:bg-white/5 transition-all"
+                                                                >
+                                                                    <span className="flex items-center gap-2">
+                                                                        <i className="fa-solid fa-clipboard-check text-cyan-400"></i>
+                                                                        2. งานทดสอบมาตรฐาน
+                                                                    </span>
+                                                                    <span className="text-[10px] bg-cyan-500/20 px-1.5 py-0.5 rounded text-cyan-200">
+                                                                        {branches.length}
+                                                                    </span>
+                                                                </Link>
+                                                                {branches.slice(0, 3).map((b) => (
+                                                                    <Link
+                                                                        key={b.id}
+                                                                        href={`/admin/export-json?tab=test&search=${encodeURIComponent(b.name)}`}
+                                                                        onClick={() => setMobileOpen(false)}
+                                                                        className="block pl-6 pr-2 py-1.5 rounded-lg text-[11px] text-gray-400 hover:text-white hover:bg-white/5 truncate transition-all"
+                                                                        title={b.name}
+                                                                    >
+                                                                        • {b.name}
+                                                                    </Link>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* 3. ดูทั้งหมด */}
+                                                            <Link
+                                                                href="/admin/export-json"
+                                                                onClick={() => setMobileOpen(false)}
+                                                                className="block px-3 py-1.5 mt-1 rounded-xl text-[11px] font-medium text-indigo-300 hover:text-indigo-200 hover:bg-indigo-500/10 transition-all text-center"
+                                                            >
+                                                                <i className="fa-solid fa-arrow-up-right-from-square mr-1"></i>
+                                                                เปิดศูนย์ส่งออก DSD JSON ทั้งหมด
+                                                            </Link>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        );
+                                    }
+
                                     return (
                                         <Link
                                             key={item.href}
@@ -277,6 +415,143 @@ export default function AdminSidebar() {
 
                     {filteredMenuItems.map((item) => {
                         const isActive = pathname === item.href;
+                        const isExportJson = item.href === "/admin/export-json";
+
+                        if (isExportJson) {
+                            return (
+                                <div key={item.href} className="relative group">
+                                    <div
+                                        onClick={() => {
+                                            if (isCollapsed) {
+                                                router.push("/admin/export-json");
+                                            } else {
+                                                setExportJsonOpen((prev) => !prev);
+                                            }
+                                        }}
+                                        className={`flex items-center gap-3.5 rounded-xl transition-all duration-200 cursor-pointer select-none ${
+                                            isCollapsed
+                                                ? "w-12 h-12 justify-center mx-auto"
+                                                : "px-3.5 py-2.5 text-xs font-semibold justify-between"
+                                        } ${
+                                            isActive
+                                                ? "bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white shadow-md shadow-indigo-500/20"
+                                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3.5 min-w-0">
+                                            <i className={`fa-solid ${item.icon} ${isCollapsed ? "text-base text-indigo-400" : "text-sm w-5 text-center text-indigo-400"}`}></i>
+                                            {!isCollapsed && <span className="truncate">{item.label}</span>}
+                                        </div>
+                                        {!isCollapsed && (
+                                            <i className={`fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200 ${exportJsonOpen ? "rotate-180 text-white" : ""}`}></i>
+                                        )}
+                                    </div>
+
+                                    {/* Desktop Expanded Submenu Accordion */}
+                                    {!isCollapsed && (
+                                        <AnimatePresence>
+                                            {exportJsonOpen && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: "auto" }}
+                                                    exit={{ opacity: 0, height: 0 }}
+                                                    className="pl-5 pr-1 py-1.5 space-y-1 overflow-hidden"
+                                                >
+                                                    {/* 1. ฝึกอบรม */}
+                                                    <div className="space-y-0.5">
+                                                        <Link
+                                                            href="/admin/export-json?tab=training"
+                                                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-amber-300 hover:bg-white/5 transition-all"
+                                                        >
+                                                            <span className="flex items-center gap-1.5 truncate">
+                                                                <i className="fa-solid fa-graduation-cap text-amber-400 text-xs"></i>
+                                                                1. ฝึกอบรม
+                                                            </span>
+                                                            <span className="text-[9px] bg-amber-500/20 px-1.5 py-0.2 rounded text-amber-200 font-mono">
+                                                                {courses.length}
+                                                            </span>
+                                                        </Link>
+                                                        {courses.slice(0, 3).map((c) => (
+                                                            <Link
+                                                                key={c.id}
+                                                                href={`/admin/export-json?tab=training&search=${encodeURIComponent(c.name)}`}
+                                                                className="block pl-5 pr-2 py-1 rounded-md text-[10px] text-gray-400 hover:text-white hover:bg-white/5 truncate transition-all"
+                                                                title={c.name}
+                                                            >
+                                                                • {c.name}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* 2. ทดสอบมาตรฐาน */}
+                                                    <div className="space-y-0.5 pt-1">
+                                                        <Link
+                                                            href="/admin/export-json?tab=test"
+                                                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-cyan-300 hover:bg-white/5 transition-all"
+                                                        >
+                                                            <span className="flex items-center gap-1.5 truncate">
+                                                                <i className="fa-solid fa-clipboard-check text-cyan-400 text-xs"></i>
+                                                                2. ทดสอบมาตรฐาน
+                                                            </span>
+                                                            <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.5 rounded text-cyan-200 font-mono">
+                                                                {branches.length}
+                                                            </span>
+                                                        </Link>
+                                                        {branches.slice(0, 3).map((b) => (
+                                                            <Link
+                                                                key={b.id}
+                                                                href={`/admin/export-json?tab=test&search=${encodeURIComponent(b.name)}`}
+                                                                className="block pl-5 pr-2 py-1 rounded-md text-[10px] text-gray-400 hover:text-white hover:bg-white/5 truncate transition-all"
+                                                                title={b.name}
+                                                            >
+                                                                • {b.name}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* 3. ดูทั้งหมด */}
+                                                    <Link
+                                                        href="/admin/export-json"
+                                                        className="block px-2 py-1.5 mt-1 rounded-lg text-[10px] font-semibold text-indigo-300 hover:text-indigo-200 hover:bg-indigo-500/15 transition-all text-center border border-indigo-500/20"
+                                                    >
+                                                        <i className="fa-solid fa-arrow-up-right-from-square mr-1"></i>
+                                                        ศูนย์ส่งออก DSD JSON
+                                                    </Link>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    )}
+
+                                    {/* DataPulse Hover Tooltip for Collapsed Mode */}
+                                    {isCollapsed && (
+                                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-2xl border border-slate-700 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-50 min-w-[180px]">
+                                            <div className="font-bold text-white mb-1.5 flex items-center gap-2 border-b border-slate-700 pb-1">
+                                                <i className="fa-solid fa-file-code text-indigo-400"></i>
+                                                ส่งออก DSD JSON
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Link
+                                                    href="/admin/export-json?tab=training"
+                                                    className="flex items-center justify-between text-[11px] text-amber-300 hover:text-amber-200 p-1 hover:bg-white/5 rounded"
+                                                >
+                                                    <span>🎓 1. ฝึกอบรม</span>
+                                                    <span className="text-[10px] text-gray-400">({courses.length})</span>
+                                                </Link>
+                                                <Link
+                                                    href="/admin/export-json?tab=test"
+                                                    className="flex items-center justify-between text-[11px] text-cyan-300 hover:text-cyan-200 p-1 hover:bg-white/5 rounded"
+                                                >
+                                                    <span>📋 2. ทดสอบมาตรฐาน</span>
+                                                    <span className="text-[10px] text-gray-400">({branches.length})</span>
+                                                </Link>
+                                            </div>
+                                            <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-4 border-transparent border-r-slate-900"></div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         return (
                             <div key={item.href} className="relative group">
                                 <Link
